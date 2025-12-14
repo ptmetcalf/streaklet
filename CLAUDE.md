@@ -38,6 +38,26 @@ Configuration in `.coveragerc` excludes tests, migrations, and templates from co
 
 ## Development Commands
 
+### Setup Local Environment
+
+**Important**: Use a virtual environment for local development to avoid system package conflicts.
+
+```bash
+# Create virtual environment (first time only)
+python3 -m venv .venv
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt ruff
+
+# When done working
+deactivate
+```
+
+The `.venv` directory is git-ignored. Always activate the venv before running tests or linting locally.
+
 ### Docker Development
 ```bash
 # Build and run with Docker Compose
@@ -52,6 +72,9 @@ docker stop streaklet && docker rm streaklet && docker run -d --name streaklet -
 
 ### Local Development
 ```bash
+# Activate venv first (if not already)
+source .venv/bin/activate
+
 # Run development server
 ./dev.sh run
 # OR: uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
@@ -87,11 +110,11 @@ alembic downgrade -1
 
 ### Linting and Code Quality
 ```bash
-# Install ruff
-pip install ruff
+# Activate venv first (if not already)
+source .venv/bin/activate
 
 # Check for syntax errors and undefined names (CI uses this)
-ruff check app/ tests/ --select=E9,F63,F7,F82 --show-source
+ruff check app/ tests/ --select=E9,F63,F7,F82
 
 # Check all rules
 ruff check app/ tests/
