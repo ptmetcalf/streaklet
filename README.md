@@ -4,12 +4,14 @@ A self-hosted, Dockerized daily streak tracker for maintaining consistent habits
 
 ## Features
 
-- Mobile-first daily checklist interface
-- Automatic streak tracking based on completed days
-- Customizable tasks with required/optional flags
-- Timezone-aware daily tracking
-- Persistent SQLite database
-- No login required (designed for personal/LAN use)
+- **Multi-User Profiles**: Support for multiple users with completely isolated data
+- **Mobile-first** daily checklist interface
+- **Automatic streak tracking** based on completed days
+- **Customizable tasks** with required/optional flags
+- **Timezone-aware** daily tracking
+- **Calendar history view** with completion stats
+- **Persistent SQLite database**
+- **Simple profile management** - no authentication required (designed for family/household use)
 
 ## Quick Start
 
@@ -32,6 +34,28 @@ docker pull ghcr.io/YOUR_USERNAME/streaklet:latest
 # (Update image in docker-compose.yml first)
 docker compose up
 ```
+
+## Multi-User Profiles
+
+Streaklet supports multiple users with completely isolated data. Each profile has:
+- Separate tasks
+- Independent daily checks and completion tracking
+- Individual streak counts
+- Isolated history
+
+### How It Works
+
+1. **Profile Selection**: Visit `/profiles` to create or select a profile
+2. **Browser Storage**: Selected profile is stored in browser localStorage
+3. **Data Isolation**: All API requests include the profile context via `X-Profile-Id` header
+4. **Default Tasks**: New profiles automatically get 5 starter tasks
+
+### Profile Management
+
+- Create profiles with custom names and colors
+- Switch between profiles via the dropdown in the header
+- Delete profiles (requires at least one profile to remain)
+- No authentication - perfect for families or personal use on a trusted network
 
 ## Configuration
 
@@ -60,18 +84,41 @@ app/
     config.py          # Environment variables
     db.py              # Database session management
     time.py            # Timezone helpers
+    profile_context.py # Profile ID dependency injection
   models/              # SQLAlchemy ORM models
+    profile.py         # Profile model
+    task.py            # Task model
+    task_check.py      # Task check model
+    daily_status.py    # Daily status model
   schemas/             # Pydantic request/response models
+    profile.py         # Profile schemas
+    task.py            # Task schemas
+    ...
   services/            # Business logic
+    profiles.py        # Profile CRUD operations
     tasks.py           # Task CRUD operations
     checks.py          # Daily check management
     streaks.py         # Streak calculation
+    history.py         # Calendar history
   api/                 # API routes
-    routes_tasks.py
-    routes_days.py
-    routes_streaks.py
+    routes_profiles.py # Profile management endpoints
+    routes_tasks.py    # Task endpoints
+    routes_days.py     # Daily checklist endpoints
+    routes_streaks.py  # Streak endpoints
+    routes_history.py  # History endpoints
   web/                 # HTML templates/static files
+    templates/
+      base.html        # Base template with profile store
+      index.html       # Today's checklist
+      settings.html    # Task management
+      history.html     # Calendar view
+      profiles.html    # Profile management
+    static/
+      css/style.css    # Styles
 migrations/            # Alembic database migrations
+  versions/
+    001_initial.py     # Initial schema
+    002_add_profiles.py # Multi-user profiles
 tests/                 # Pytest test suite
 ```
 
@@ -105,24 +152,54 @@ alembic downgrade -1
 
 ## API Endpoints
 
-- `GET /api/tasks` - List all tasks
+All endpoints (except `/api/profiles`) accept an optional `X-Profile-Id` header to specify which profile's data to access. If not provided, defaults to profile ID 1.
+
+### Profile Management
+- `GET /api/profiles` - List all profiles
+- `POST /api/profiles` - Create a new profile (auto-seeds default tasks)
+- `GET /api/profiles/{id}` - Get a single profile
+- `PUT /api/profiles/{id}` - Update a profile
+- `DELETE /api/profiles/{id}` - Delete a profile (requires at least one profile to remain)
+
+### Tasks
+- `GET /api/tasks` - List all tasks for the current profile
 - `POST /api/tasks` - Create a new task
 - `PUT /api/tasks/{id}` - Update a task
 - `DELETE /api/tasks/{id}` - Delete a task
+
+### Daily Checklist
 - `GET /api/days/today` - Get today's checklist and status
 - `PUT /api/days/{date}/checks/{task_id}` - Toggle task completion
+
+### Streaks
 - `GET /api/streak` - Get current streak information
+
+### History
+- `GET /api/history/{year}/{month}` - Get calendar data and stats for a month
+
+### Example with Profile Header
+
+```bash
+# Get tasks for profile 2
+curl -H "X-Profile-Id: 2" http://localhost:8080/api/tasks
+
+# Check a task for profile 1
+curl -X PUT -H "X-Profile-Id: 1" \
+  -H "Content-Type: application/json" \
+  -d '{"checked": true}' \
+  http://localhost:8080/api/days/2025-12-14/checks/1
+```
 
 ## Default Tasks
 
-On first run, the following tasks are seeded:
-1. Follow a diet
-2. 30 minute workout
-3. 30 minute workout
-4. Read 10 pages
-5. 20 minutes of hobby time
+When creating a new profile, the following 5 starter tasks are automatically created:
+1. Follow a diet (required)
+2. 30 minute workout (required)
+3. Read 10 pages (required)
+4. 20 minutes of hobby time (required)
+5. Drink 8 glasses of water (optional)
 
-You can modify these in the Settings screen after starting the application.
+You can modify, add, or delete these tasks in the Settings screen. Each profile's tasks are completely independent.
 
 ## Homelab Deployment
 
