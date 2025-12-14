@@ -6,6 +6,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Streaklet is a self-hosted daily habit streak tracker with multi-user profile support. Built with FastAPI, SQLAlchemy, and SQLite, designed for family/household use without authentication. Each profile has completely isolated data (tasks, checks, streaks, history).
 
+## CI/CD Pipeline
+
+The repository has automated CI/CD workflows:
+
+### GitHub Actions Workflows
+
+**`ci.yml`** - Comprehensive CI pipeline (runs on all pushes/PRs):
+- **Lint**: Code quality checks with ruff
+- **Test**: Unit tests with coverage reporting
+- **Test Docker**: Builds Docker image and runs tests inside container
+- **Integration**: Spins up full stack and tests API endpoints
+- **Test Summary**: Aggregates all test results
+
+**`docker-publish.yml`** - Docker image publishing (runs on main branch/tags):
+- Runs tests first
+- Builds multi-platform Docker image (amd64, arm64)
+- Publishes to GitHub Container Registry (ghcr.io)
+
+All workflows must pass before merging PRs.
+
+### Coverage Reports
+
+Coverage reports are generated in CI and uploaded to Codecov (if configured). Local coverage:
+```bash
+pytest --cov=app --cov-report=html
+# Open htmlcov/index.html in browser
+```
+
+Configuration in `.coveragerc` excludes tests, migrations, and templates from coverage.
+
 ## Development Commands
 
 ### Docker Development
@@ -53,6 +83,21 @@ python -m pytest tests/test_profiles.py::test_create_profile -v
 
 # Rollback one migration
 alembic downgrade -1
+```
+
+### Linting and Code Quality
+```bash
+# Install ruff
+pip install ruff
+
+# Check for syntax errors and undefined names (CI uses this)
+ruff check app/ tests/ --select=E9,F63,F7,F82 --show-source
+
+# Check all rules
+ruff check app/ tests/
+
+# Auto-fix issues
+ruff check app/ tests/ --fix
 ```
 
 ## Architecture
