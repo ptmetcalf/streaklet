@@ -146,6 +146,133 @@ curl http://localhost:8080/static/sw.js
 curl -I http://localhost:8080/static/icons/icon-192x192.png
 ```
 
+## Backup & Data Import/Export
+
+Streaklet includes built-in backup and restore functionality to protect your data and enable migration between instances.
+
+### Features
+
+- **Export individual profiles** or all profiles at once
+- **JSON format** - human-readable and editable
+- **Import modes**:
+  - **Replace**: Delete existing data and replace with imported data
+  - **Merge**: Keep existing data and add imported data (skips duplicates)
+- **Complete data export**: Includes profile info, tasks, check history, and daily completion records
+
+### Using the UI
+
+#### Export a Profile
+
+1. Navigate to the **Profiles** page
+2. Click the **Export** button on the profile card
+3. A JSON file will be downloaded with the profile's data
+4. Store this file in a safe location
+
+#### Import a Profile
+
+1. Navigate to the **Profiles** page
+2. Click the **Import** button on the profile card
+3. Select the JSON backup file
+4. Choose import mode:
+   - **OK** = Replace (deletes existing data)
+   - **Cancel** = Merge (keeps existing data)
+5. The profile data will be imported
+
+#### Export All Profiles
+
+1. Navigate to the **Profiles** page
+2. Click **Export All Profiles** at the top
+3. A JSON file with all profiles will be downloaded
+
+#### Import All Profiles
+
+1. Navigate to the **Profiles** page
+2. Click **Import All Profiles** at the top
+3. Select the JSON backup file
+4. Choose import mode (Replace or Merge)
+5. All profiles will be imported
+
+### Using the API
+
+#### Export Single Profile
+
+```bash
+# Download profile 1 data
+curl -O http://localhost:8080/api/profiles/1/export
+```
+
+#### Import Single Profile
+
+```bash
+# Replace mode (delete existing data)
+curl -X POST http://localhost:8080/api/profiles/1/import \
+  -F "file=@backup.json" \
+  -F "mode=replace"
+
+# Merge mode (keep existing data)
+curl -X POST http://localhost:8080/api/profiles/1/import \
+  -F "file=@backup.json" \
+  -F "mode=merge"
+```
+
+#### Export All Profiles
+
+```bash
+curl -O http://localhost:8080/api/profiles/export/all
+```
+
+#### Import All Profiles
+
+```bash
+curl -X POST http://localhost:8080/api/profiles/import/all \
+  -F "file=@all_profiles_backup.json" \
+  -F "mode=replace"
+```
+
+### Backup File Format
+
+Single profile export:
+```json
+{
+  "version": "1.0",
+  "export_date": "2025-12-14T22:30:00Z",
+  "profile": {
+    "id": 1,
+    "name": "John",
+    "color": "#3b82f6"
+  },
+  "tasks": [...],
+  "task_checks": [...],
+  "daily_status": [...]
+}
+```
+
+All profiles export:
+```json
+{
+  "version": "1.0",
+  "export_date": "2025-12-14T22:30:00Z",
+  "profiles": [
+    {
+      "version": "1.0",
+      "export_date": "2025-12-14T22:30:00Z",
+      "profile": {...},
+      "tasks": [...],
+      "task_checks": [...],
+      "daily_status": [...]
+    }
+  ]
+}
+```
+
+### Best Practices
+
+- **Regular backups**: Export your data regularly (weekly or monthly)
+- **Before updates**: Always export before updating Streaklet
+- **Multiple locations**: Store backups in multiple locations (local + cloud)
+- **Test restores**: Periodically test importing backups to verify they work
+- **Version control**: Keep dated backup files (e.g., `streaklet_john_2025-12-14.json`)
+
 ## Development
 
 ### Project Structure
@@ -233,6 +360,12 @@ All endpoints (except `/api/profiles`) accept an optional `X-Profile-Id` header 
 - `GET /api/profiles/{id}` - Get a single profile
 - `PUT /api/profiles/{id}` - Update a profile
 - `DELETE /api/profiles/{id}` - Delete a profile (requires at least one profile to remain)
+
+### Backup & Import
+- `GET /api/profiles/{id}/export` - Export profile data as JSON
+- `POST /api/profiles/{id}/import` - Import profile data from JSON file
+- `GET /api/profiles/export/all` - Export all profiles as JSON
+- `POST /api/profiles/import/all` - Import all profiles from JSON file
 
 ### Tasks
 - `GET /api/tasks` - List all tasks for the current profile

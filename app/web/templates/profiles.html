@@ -7,6 +7,21 @@
     <header class="header">
         <h1>Select Your Profile</h1>
         <p class="subheader">Choose a profile to start tracking your tasks</p>
+        <div class="backup-actions">
+            <button @click="exportAllProfiles()" class="btn btn-secondary">
+                Export All Profiles
+            </button>
+            <button @click="$refs.importAllFile.click()" class="btn btn-secondary">
+                Import All Profiles
+            </button>
+            <input
+                type="file"
+                x-ref="importAllFile"
+                @change="importAllProfiles($event)"
+                accept="application/json,.json"
+                style="display: none;"
+            >
+        </div>
     </header>
 
     <div class="profile-grid" x-show="!showCreateModal && !showEditModal">
@@ -23,9 +38,22 @@
                     <button @click="editProfile(profile)" class="btn btn-secondary">
                         Edit
                     </button>
+                    <button @click="exportProfile(profile)" class="btn btn-secondary">
+                        Export
+                    </button>
+                    <button @click="importProfileClick(profile)" class="btn btn-secondary">
+                        Import
+                    </button>
                     <button @click="deleteProfile(profile)" class="btn btn-danger" x-show="profiles.length > 1">
                         Delete
                     </button>
+                    <input
+                        type="file"
+                        :ref="`importFile${profile.id}`"
+                        @change="importProfile(profile, $event)"
+                        accept="application/json,.json"
+                        style="display: none;"
+                    >
                 </div>
             </div>
         </template>
@@ -103,6 +131,13 @@
 </div>
 
 <style>
+.backup-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
 .profile-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -349,6 +384,145 @@ function profileManager() {
             } catch (error) {
                 alert('Failed to delete profile');
                 console.error('Delete profile error:', error);
+            }
+        },
+
+        // Export single profile
+        async exportProfile(profile) {
+            try {
+                const response = await fetch(`/api/profiles/${profile.id}/export`);
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+
+                // Trigger download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `streaklet_${profile.name.replace(/\s+/g, '_').toLowerCase()}_backup.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                alert(`Profile "${profile.name}" exported successfully!`);
+            } catch (error) {
+                alert('Failed to export profile');
+                console.error('Export profile error:', error);
+            }
+        },
+
+        // Trigger import file dialog
+        importProfileClick(profile) {
+            const fileInput = this.$refs[`importFile${profile.id}`];
+            if (fileInput) {
+                fileInput.click();
+            }
+        },
+
+        // Import single profile
+        async importProfile(profile, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const mode = confirm('Choose import mode:\n\nOK = Replace (delete existing data)\nCancel = Merge (keep existing data)') ? 'replace' : 'merge';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('mode', mode);
+
+            try {
+                const response = await fetch(`/api/profiles/${profile.id}/import`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.detail || 'Import failed');
+                    return;
+                }
+
+                const result = await response.json();
+                alert(result.message);
+                await this.loadProfiles();
+
+                // Reload page if importing into current profile
+                const currentProfileId = parseInt(localStorage.getItem('streaklet_profile_id'));
+                if (currentProfileId === profile.id) {
+                    window.location.reload();
+                }
+            } catch (error) {
+                alert('Failed to import profile');
+                console.error('Import profile error:', error);
+            } finally {
+                // Reset file input
+                event.target.value = '';
+            }
+        },
+
+        // Export all profiles
+        async exportAllProfiles() {
+            try {
+                const response = await fetch('/api/profiles/export/all');
+                if (!response.ok) {
+                    throw new Error('Export failed');
+                }
+
+                // Trigger download
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'streaklet_all_profiles_backup.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                alert('All profiles exported successfully!');
+            } catch (error) {
+                alert('Failed to export profiles');
+                console.error('Export all profiles error:', error);
+            }
+        },
+
+        // Import all profiles
+        async importAllProfiles(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const mode = confirm('Choose import mode:\n\nOK = Replace (delete existing data)\nCancel = Merge (keep existing data)') ? 'replace' : 'merge';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('mode', mode);
+
+            try {
+                const response = await fetch('/api/profiles/import/all', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.detail || 'Import failed');
+                    return;
+                }
+
+                const result = await response.json();
+                alert(result.message);
+                await this.loadProfiles();
+
+                // Reload page to refresh all data
+                window.location.reload();
+            } catch (error) {
+                alert('Failed to import profiles');
+                console.error('Import all profiles error:', error);
+            } finally {
+                // Reset file input
+                event.target.value = '';
             }
         }
     };
