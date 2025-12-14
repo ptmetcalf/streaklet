@@ -7,8 +7,8 @@ from contextlib import asynccontextmanager
 import os
 
 from app.core.db import engine, get_db, Base
-from app.api import routes_tasks, routes_days, routes_streaks
-from app.services import tasks as task_service
+from app.api import routes_tasks, routes_days, routes_streaks, routes_history
+from app.services import tasks as task_service, history as history_service
 
 
 @asynccontextmanager
@@ -33,6 +33,7 @@ templates = Jinja2Templates(directory="app/web/templates")
 app.include_router(routes_tasks.router)
 app.include_router(routes_days.router)
 app.include_router(routes_streaks.router)
+app.include_router(routes_history.router)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -89,6 +90,45 @@ async def settings(request: Request):
     """Settings page for managing tasks."""
     return templates.TemplateResponse("settings.html", {
         "request": request
+    })
+
+
+@app.get("/history", response_class=HTMLResponse)
+async def history(
+    request: Request,
+    year: int = None,
+    month: int = None,
+    db: Session = Depends(get_db)
+):
+    """History page showing calendar of completed days."""
+    from app.services import streaks as streak_service
+    from app.core.time import get_today
+
+    today = get_today()
+
+    # Default to current month if not specified
+    if year is None or month is None:
+        year = today.year
+        month = today.month
+
+    # Get calendar data for the month
+    calendar_data = history_service.get_calendar_month_data(db, year, month)
+    streak_info = streak_service.get_streak_info(db)
+
+    # Convert date to string for JSON serialization
+    streak_dict = {
+        "current_streak": streak_info["current_streak"],
+        "today_complete": streak_info["today_complete"],
+        "last_completed_date": streak_info["last_completed_date"].isoformat() if streak_info["last_completed_date"] else None
+    }
+
+    return templates.TemplateResponse("history.html", {
+        "request": request,
+        "year": year,
+        "month": month,
+        "calendar_data": calendar_data,
+        "streak": streak_dict,
+        "today": today.isoformat()
     })
 
 

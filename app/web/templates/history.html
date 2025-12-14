@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Streaklet - History{% endblock %}
+
+{% block content %}
+<div class="container" x-data="calendar()">
+    <header>
+        <div class="header-content">
+            <h1>Completion History</h1>
+        </div>
+        <div class="calendar-nav">
+            <a :href="`/history?year=${prevYear}&month=${prevMonth}`" class="nav-arrow">‹</a>
+            <div class="calendar-month-year" x-text="monthYearDisplay"></div>
+            <a :href="`/history?year=${nextYear}&month=${nextMonth}`" class="nav-arrow">›</a>
+        </div>
+        <div class="streak-summary">
+            <div class="streak-stat">
+                <div class="streak-value" x-text="streak.current_streak"></div>
+                <div class="streak-label">Current Streak</div>
+            </div>
+            <div class="streak-stat">
+                <div class="streak-value" x-text="completionRate + '%'"></div>
+                <div class="streak-label">This Month</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="calendar-container">
+        <div class="calendar-grid">
+            <!-- Weekday headers -->
+            <template x-for="day in weekdays" :key="day">
+                <div class="calendar-header" x-text="day"></div>
+            </template>
+
+            <!-- Calendar days -->
+            <template x-for="day in calendarDays" :key="day.key">
+                <div
+                    class="calendar-day"
+                    :class="{
+                        'empty': day.isEmpty,
+                        'completed': day.isCompleted,
+                        'incomplete': day.isIncomplete,
+                        'future': day.isFuture,
+                        'today': day.isToday
+                    }"
+                >
+                    <div class="day-number" x-text="day.dayNumber"></div>
+                </div>
+            </template>
+        </div>
+
+        <div class="calendar-legend">
+            <div class="legend-item">
+                <div class="legend-box completed"></div>
+                <span>Completed</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box incomplete"></div>
+                <span>Incomplete</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box future"></div>
+                <span>Future</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function calendar() {
+    return {
+        year: {{ year }},
+        month: {{ month }},
+        calendarData: {{ calendar_data | tojson }},
+        streak: {{ streak | tojson }},
+        today: '{{ today }}',
+        weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+
+        get monthYearDisplay() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            return `${monthNames[this.month - 1]} ${this.year}`;
+        },
+
+        get prevYear() {
+            return this.month === 1 ? this.year - 1 : this.year;
+        },
+
+        get prevMonth() {
+            return this.month === 1 ? 12 : this.month - 1;
+        },
+
+        get nextYear() {
+            return this.month === 12 ? this.year + 1 : this.year;
+        },
+
+        get nextMonth() {
+            return this.month === 12 ? 1 : this.month + 1;
+        },
+
+        get calendarDays() {
+            const days = [];
+            const firstDay = this.calendarData.first_day_weekday; // 0 = Monday
+            const daysInMonth = this.calendarData.days_in_month;
+
+            // Add empty cells for days before month starts
+            for (let i = 0; i < firstDay; i++) {
+                days.push({ isEmpty: true, key: `empty-${i}` });
+            }
+
+            // Add actual days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${this.year}-${String(this.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayData = this.calendarData.days[dateStr];
+
+                days.push({
+                    dayNumber: day,
+                    dateStr: dateStr,
+                    isCompleted: dayData && dayData.completed,
+                    isIncomplete: dayData && !dayData.completed && dateStr <= this.today,
+                    isFuture: dateStr > this.today,
+                    isToday: dateStr === this.today,
+                    isEmpty: false,
+                    key: dateStr
+                });
+            }
+
+            return days;
+        },
+
+        get completionRate() {
+            const todayDate = new Date(this.today);
+            const completed = Object.entries(this.calendarData.days)
+                .filter(([date, data]) => {
+                    const d = new Date(date);
+                    return data.completed && d <= todayDate;
+                })
+                .length;
+
+            const total = Object.entries(this.calendarData.days)
+                .filter(([date]) => {
+                    const d = new Date(date);
+                    return d <= todayDate;
+                })
+                .length;
+
+            return total > 0 ? Math.round((completed / total) * 100) : 0;
+        }
+    }
+}
+</script>
+{% endblock %}
