@@ -5,10 +5,10 @@ from app.services import tasks as task_service
 from app.schemas.task import TaskCreate
 
 
-def test_seed_default_tasks(test_db: Session):
+def test_seed_default_tasks(test_db: Session, sample_profiles):
     """Test seeding default tasks on empty database."""
-    task_service.seed_default_tasks(test_db)
-    tasks = task_service.get_tasks(test_db)
+    task_service.seed_default_tasks(test_db, profile_id=1)
+    tasks = task_service.get_tasks(test_db, profile_id=1)
 
     assert len(tasks) == 5
     assert tasks[0].title == "Follow a diet"
@@ -16,11 +16,11 @@ def test_seed_default_tasks(test_db: Session):
     assert tasks[0].is_active is True
 
 
-def test_seed_default_tasks_not_duplicate(test_db: Session):
+def test_seed_default_tasks_not_duplicate(test_db: Session, sample_profiles):
     """Test that seeding doesn't duplicate tasks."""
-    task_service.seed_default_tasks(test_db)
-    task_service.seed_default_tasks(test_db)
-    tasks = task_service.get_tasks(test_db)
+    task_service.seed_default_tasks(test_db, profile_id=1)
+    task_service.seed_default_tasks(test_db, profile_id=1)
+    tasks = task_service.get_tasks(test_db, profile_id=1)
 
     assert len(tasks) == 5
 

@@ -7,18 +7,21 @@ from contextlib import asynccontextmanager
 import os
 
 from app.core.db import engine, get_db, Base
-from app.api import routes_tasks, routes_days, routes_streaks, routes_history
-from app.services import tasks as task_service, history as history_service
+from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles
+from app.services import tasks as task_service, history as history_service, profiles as profile_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize database and seed default tasks on startup."""
+    """Initialize database, run migrations, and seed default profile on startup."""
     Base.metadata.create_all(bind=engine)
 
     db = next(get_db())
     try:
-        task_service.seed_default_tasks(db)
+        # Seed default profile (will only create if it doesn't exist)
+        profile_service.seed_default_profile(db)
+        # Seed default tasks for profile 1 (will only create if none exist)
+        task_service.seed_default_tasks(db, profile_id=1)
     finally:
         db.close()
 
@@ -34,54 +37,14 @@ app.include_router(routes_tasks.router)
 app.include_router(routes_days.router)
 app.include_router(routes_streaks.router)
 app.include_router(routes_history.router)
+app.include_router(routes_profiles.router)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: Session = Depends(get_db)):
-    """Home page with today's checklist."""
-    from app.services import checks as check_service
-    from app.services import streaks as streak_service
-    from app.core.time import get_today
-
-    today = get_today()
-    check_service.ensure_checks_exist_for_date(db, today)
-
-    active_tasks = task_service.get_active_tasks(db)
-    checks_map = {
-        check.task_id: check
-        for check in check_service.get_checks_for_date(db, today)
-    }
-
-    tasks_with_checks = []
-    for task in active_tasks:
-        check = checks_map.get(task.id)
-        tasks_with_checks.append({
-            "id": task.id,
-            "title": task.title,
-            "sort_order": task.sort_order,
-            "is_required": task.is_required,
-            "is_active": task.is_active,
-            "checked": check.checked if check else False,
-            "checked_at": check.checked_at.isoformat() if check and check.checked_at else None,
-        })
-
-    streak_info = streak_service.get_streak_info(db)
-    is_complete = check_service.is_day_complete(db, today)
-
-    from app.models.daily_status import DailyStatus
-    daily_status = db.query(DailyStatus).filter(DailyStatus.date == today).first()
-
-    day_data = {
-        "date": today,
-        "tasks": tasks_with_checks,
-        "all_required_complete": is_complete,
-        "completed_at": daily_status.completed_at if daily_status else None,
-        "streak": streak_info,
-    }
-
+async def home(request: Request):
+    """Home page with today's checklist - data fetched client-side."""
     return templates.TemplateResponse("index.html", {
-        "request": request,
-        "day_data": day_data
+        "request": request
     })
 
 
@@ -94,41 +57,27 @@ async def settings(request: Request):
 
 
 @app.get("/history", response_class=HTMLResponse)
-async def history(
-    request: Request,
-    year: int = None,
-    month: int = None,
-    db: Session = Depends(get_db)
-):
-    """History page showing calendar of completed days."""
-    from app.services import streaks as streak_service
+async def history(request: Request):
+    """History page showing calendar of completed days - data fetched client-side."""
     from app.core.time import get_today
 
     today = get_today()
-
-    # Default to current month if not specified
-    if year is None or month is None:
-        year = today.year
-        month = today.month
-
-    # Get calendar data for the month
-    calendar_data = history_service.get_calendar_month_data(db, year, month)
-    streak_info = streak_service.get_streak_info(db)
-
-    # Convert date to string for JSON serialization
-    streak_dict = {
-        "current_streak": streak_info["current_streak"],
-        "today_complete": streak_info["today_complete"],
-        "last_completed_date": streak_info["last_completed_date"].isoformat() if streak_info["last_completed_date"] else None
-    }
-
+    # Pass default values for template - actual data should be fetched client-side
     return templates.TemplateResponse("history.html", {
         "request": request,
-        "year": year,
-        "month": month,
-        "calendar_data": calendar_data,
-        "streak": streak_dict,
+        "year": today.year,
+        "month": today.month,
+        "calendar_data": {"days_in_month": 0, "first_day_weekday": 0, "days": {}},
+        "streak": {"current_streak": 0, "today_complete": False, "last_completed_date": None},
         "today": today.isoformat()
+    })
+
+
+@app.get("/profiles", response_class=HTMLResponse)
+async def profiles(request: Request):
+    """Profile management page for selecting and managing user profiles."""
+    return templates.TemplateResponse("profiles.html", {
+        "request": request
     })
 
 

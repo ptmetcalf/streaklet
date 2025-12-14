@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Profiles - Streaklet{% endblock %}
+
+{% block content %}
+<div class="container" x-data="profileManager()">
+    <header class="header">
+        <h1>Select Your Profile</h1>
+        <p class="subheader">Choose a profile to start tracking your tasks</p>
+    </header>
+
+    <div class="profile-grid" x-show="!showCreateModal && !showEditModal">
+        <template x-for="profile in profiles" :key="profile.id">
+            <div class="profile-card" :style="`border-left: 4px solid ${profile.color}`">
+                <div class="profile-info">
+                    <h3 x-text="profile.name"></h3>
+                    <div class="profile-color" :style="`background: ${profile.color}`"></div>
+                </div>
+                <div class="profile-actions">
+                    <button @click="selectProfile(profile)" class="btn btn-primary">
+                        Select
+                    </button>
+                    <button @click="editProfile(profile)" class="btn btn-secondary">
+                        Edit
+                    </button>
+                    <button @click="deleteProfile(profile)" class="btn btn-danger" x-show="profiles.length > 1">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </template>
+
+        <div class="profile-card profile-card-create" @click="showCreateModal = true">
+            <div class="create-icon">+</div>
+            <h3>Create New Profile</h3>
+        </div>
+    </div>
+
+    <!-- Create Profile Modal -->
+    <div class="modal" x-show="showCreateModal" @click.self="showCreateModal = false">
+        <div class="modal-content">
+            <h2>Create New Profile</h2>
+            <form @submit.prevent="createProfile">
+                <div class="form-group">
+                    <label for="create-name">Profile Name</label>
+                    <input
+                        type="text"
+                        id="create-name"
+                        x-model="newProfile.name"
+                        required
+                        maxlength="100"
+                        placeholder="Enter profile name"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="create-color">Profile Color</label>
+                    <input
+                        type="color"
+                        id="create-color"
+                        x-model="newProfile.color"
+                    >
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Profile</button>
+                    <button type="button" @click="showCreateModal = false" class="btn btn-secondary">Cancel</button>
+                </div>
+                <p x-show="createError" class="error" x-text="createError"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal" x-show="showEditModal" @click.self="showEditModal = false">
+        <div class="modal-content">
+            <h2>Edit Profile</h2>
+            <form @submit.prevent="updateProfile">
+                <div class="form-group">
+                    <label for="edit-name">Profile Name</label>
+                    <input
+                        type="text"
+                        id="edit-name"
+                        x-model="editingProfile.name"
+                        required
+                        maxlength="100"
+                    >
+                </div>
+                <div class="form-group">
+                    <label for="edit-color">Profile Color</label>
+                    <input
+                        type="color"
+                        id="edit-color"
+                        x-model="editingProfile.color"
+                    >
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="button" @click="showEditModal = false" class="btn btn-secondary">Cancel</button>
+                </div>
+                <p x-show="editError" class="error" x-text="editError"></p>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.profile-card-create {
+    border: 2px dashed #ccc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    min-height: 180px;
+}
+
+.profile-card-create:hover {
+    border-color: #3b82f6;
+    background: #f8fafc;
+}
+
+.create-icon {
+    font-size: 3rem;
+    color: #3b82f6;
+    margin-bottom: 0.5rem;
+}
+
+.profile-info {
+    margin-bottom: 1rem;
+}
+
+.profile-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+}
+
+.profile-color {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+}
+
+.profile-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.form-group input[type="color"] {
+    height: 50px;
+    cursor: pointer;
+}
+
+.form-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.error {
+    color: #ef4444;
+    margin-top: 0.5rem;
+}
+</style>
+
+<script>
+function profileManager() {
+    return {
+        profiles: [],
+        showCreateModal: false,
+        showEditModal: false,
+        newProfile: { name: '', color: '#3b82f6' },
+        editingProfile: { id: null, name: '', color: '' },
+        createError: '',
+        editError: '',
+
+        async init() {
+            await this.loadProfiles();
+        },
+
+        async loadProfiles() {
+            try {
+                const response = await fetch('/api/profiles');
+                this.profiles = await response.json();
+            } catch (error) {
+                console.error('Failed to load profiles:', error);
+            }
+        },
+
+        selectProfile(profile) {
+            localStorage.setItem('streaklet_profile_id', profile.id);
+            localStorage.setItem('streaklet_profile_name', profile.name);
+            window.location.href = '/';
+        },
+
+        async createProfile() {
+            this.createError = '';
+            try {
+                const response = await fetch('/api/profiles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.newProfile)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    this.createError = error.detail || 'Failed to create profile';
+                    return;
+                }
+
+                const profile = await response.json();
+                await this.loadProfiles();
+                this.showCreateModal = false;
+                this.newProfile = { name: '', color: '#3b82f6' };
+                this.selectProfile(profile);
+            } catch (error) {
+                this.createError = 'Failed to create profile';
+                console.error('Create profile error:', error);
+            }
+        },
+
+        editProfile(profile) {
+            this.editingProfile = { ...profile };
+            this.showEditModal = true;
+            this.editError = '';
+        },
+
+        async updateProfile() {
+            this.editError = '';
+            try {
+                const response = await fetch(`/api/profiles/${this.editingProfile.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: this.editingProfile.name,
+                        color: this.editingProfile.color
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    this.editError = error.detail || 'Failed to update profile';
+                    return;
+                }
+
+                await this.loadProfiles();
+                this.showEditModal = false;
+
+                // Update localStorage if editing current profile
+                const currentProfileId = parseInt(localStorage.getItem('streaklet_profile_id'));
+                if (currentProfileId === this.editingProfile.id) {
+                    localStorage.setItem('streaklet_profile_name', this.editingProfile.name);
+                }
+            } catch (error) {
+                this.editError = 'Failed to update profile';
+                console.error('Update profile error:', error);
+            }
+        },
+
+        async deleteProfile(profile) {
+            if (!confirm(`Are you sure you want to delete "${profile.name}"? This will permanently delete all tasks, checks, and history for this profile.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/profiles/${profile.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.detail || 'Failed to delete profile');
+                    return;
+                }
+
+                // Clear localStorage if deleting current profile
+                const currentProfileId = parseInt(localStorage.getItem('streaklet_profile_id'));
+                if (currentProfileId === profile.id) {
+                    localStorage.removeItem('streaklet_profile_id');
+                    localStorage.removeItem('streaklet_profile_name');
+                }
+
+                await this.loadProfiles();
+            } catch (error) {
+                alert('Failed to delete profile');
+                console.error('Delete profile error:', error);
+            }
+        }
+    };
+}
+</script>
+{% endblock %}

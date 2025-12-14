@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import and_
 from app.models.daily_status import DailyStatus
 from datetime import date
 from calendar import monthrange
 from typing import Dict, Any
 
 
-def get_calendar_month_data(db: Session, year: int, month: int) -> Dict[str, Any]:
+def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int) -> Dict[str, Any]:
     """
-    Get calendar data for a specific month.
+    Get calendar data for a specific month for a profile.
 
     Returns:
     - days_in_month: number of days in the month
@@ -22,10 +23,13 @@ def get_calendar_month_data(db: Session, year: int, month: int) -> Dict[str, Any
     # Get first day weekday (0=Monday in Python)
     first_day_weekday = first_day.weekday()
 
-    # Query all daily statuses for the month
+    # Query all daily statuses for the month for this profile
     completed_days = db.query(DailyStatus).filter(
-        DailyStatus.date >= first_day,
-        DailyStatus.date <= last_day
+        and_(
+            DailyStatus.date >= first_day,
+            DailyStatus.date <= last_day,
+            DailyStatus.user_id == profile_id
+        )
     ).all()
 
     # Create a map of date -> completion status
@@ -59,9 +63,9 @@ def get_calendar_month_data(db: Session, year: int, month: int) -> Dict[str, Any
     }
 
 
-def get_month_completion_stats(db: Session, year: int, month: int) -> Dict[str, Any]:
+def get_month_completion_stats(db: Session, year: int, month: int, profile_id: int) -> Dict[str, Any]:
     """
-    Get completion statistics for a month.
+    Get completion statistics for a month for a profile.
 
     Returns:
     - total_days: total days in month up to today
@@ -88,11 +92,14 @@ def get_month_completion_stats(db: Session, year: int, month: int) -> Dict[str, 
     # Count total days that should be evaluated
     total_days = (end_date - first_day).days + 1
 
-    # Count completed days
+    # Count completed days for this profile
     completed_count = db.query(DailyStatus).filter(
-        DailyStatus.date >= first_day,
-        DailyStatus.date <= end_date,
-        DailyStatus.completed_at.isnot(None)
+        and_(
+            DailyStatus.date >= first_day,
+            DailyStatus.date <= end_date,
+            DailyStatus.completed_at.isnot(None),
+            DailyStatus.user_id == profile_id
+        )
     ).count()
 
     completion_rate = (completed_count / total_days * 100) if total_days > 0 else 0

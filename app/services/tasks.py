@@ -14,43 +14,49 @@ DEFAULT_TASKS = [
 ]
 
 
-def seed_default_tasks(db: Session) -> None:
-    """Seed default tasks if the tasks table is empty."""
-    count = db.query(func.count(Task.id)).scalar()
+def seed_default_tasks(db: Session, profile_id: int = 1) -> None:
+    """Seed default tasks for a specific profile if no tasks exist for that profile."""
+    count = db.query(func.count(Task.id)).filter(Task.user_id == profile_id).scalar()
     if count == 0:
         for task_data in DEFAULT_TASKS:
-            task = Task(**task_data)
+            task = Task(**task_data, user_id=profile_id)
             db.add(task)
         db.commit()
 
 
-def get_tasks(db: Session) -> List[Task]:
-    """Get all tasks ordered by sort_order."""
-    return db.query(Task).order_by(Task.sort_order).all()
+def get_tasks(db: Session, profile_id: int) -> List[Task]:
+    """Get all tasks for a profile ordered by sort_order."""
+    return db.query(Task).filter(Task.user_id == profile_id).order_by(Task.sort_order).all()
 
 
-def get_active_tasks(db: Session) -> List[Task]:
-    """Get all active tasks ordered by sort_order."""
-    return db.query(Task).filter(Task.is_active == True).order_by(Task.sort_order).all()
+def get_active_tasks(db: Session, profile_id: int) -> List[Task]:
+    """Get all active tasks for a profile ordered by sort_order."""
+    return db.query(Task).filter(
+        Task.user_id == profile_id,
+        Task.is_active == True
+    ).order_by(Task.sort_order).all()
 
 
-def get_task_by_id(db: Session, task_id: int) -> Optional[Task]:
-    """Get a task by ID."""
-    return db.query(Task).filter(Task.id == task_id).first()
+def get_task_by_id(db: Session, task_id: int, profile_id: int) -> Optional[Task]:
+    """Get a task by ID for a specific profile."""
+    return db.query(Task).filter(
+        Task.id == task_id,
+        Task.user_id == profile_id
+    ).first()
 
 
-def create_task(db: Session, task: TaskCreate) -> Task:
-    """Create a new task."""
-    db_task = Task(**task.model_dump())
+def create_task(db: Session, task: TaskCreate, profile_id: int) -> Task:
+    """Create a new task for a profile."""
+    db_task = Task(**task.model_dump(), user_id=profile_id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
     return db_task
 
 
-def update_task(db: Session, task_id: int, task_update: TaskUpdate) -> Optional[Task]:
-    """Update a task."""
-    db_task = get_task_by_id(db, task_id)
+def update_task(db: Session, task_id: int, task_update: TaskUpdate, profile_id: int) -> Optional[Task]:
+    """Update a task for a profile."""
+    db_task = get_task_by_id(db, task_id, profile_id)
     if not db_task:
         return None
 
@@ -63,9 +69,9 @@ def update_task(db: Session, task_id: int, task_update: TaskUpdate) -> Optional[
     return db_task
 
 
-def delete_task(db: Session, task_id: int) -> bool:
-    """Delete a task (hard delete)."""
-    db_task = get_task_by_id(db, task_id)
+def delete_task(db: Session, task_id: int, profile_id: int) -> bool:
+    """Delete a task for a profile (hard delete)."""
+    db_task = get_task_by_id(db, task_id, profile_id)
     if not db_task:
         return False
 

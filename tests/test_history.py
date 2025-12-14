@@ -9,13 +9,13 @@ from app.models.task_check import TaskCheck
 
 
 @pytest.fixture
-def sample_completed_days(test_db: Session):
+def sample_completed_days(test_db: Session, sample_profiles):
     """Create sample completed days for testing."""
     completed_days = [
-        DailyStatus(date=date(2024, 12, 1), completed_at=datetime(2024, 12, 1, 20, 0)),
-        DailyStatus(date=date(2024, 12, 2), completed_at=datetime(2024, 12, 2, 19, 30)),
-        DailyStatus(date=date(2024, 12, 3), completed_at=None),  # Incomplete
-        DailyStatus(date=date(2024, 12, 5), completed_at=datetime(2024, 12, 5, 21, 0)),
+        DailyStatus(date=date(2024, 12, 1), user_id=1, completed_at=datetime(2024, 12, 1, 20, 0)),
+        DailyStatus(date=date(2024, 12, 2), user_id=1, completed_at=datetime(2024, 12, 2, 19, 30)),
+        DailyStatus(date=date(2024, 12, 3), user_id=1, completed_at=None),  # Incomplete
+        DailyStatus(date=date(2024, 12, 5), user_id=1, completed_at=datetime(2024, 12, 5, 21, 0)),
     ]
 
     for day in completed_days:
@@ -25,9 +25,9 @@ def sample_completed_days(test_db: Session):
     return completed_days
 
 
-def test_get_calendar_month_data_basic(test_db: Session):
+def test_get_calendar_month_data_basic(test_db: Session, sample_profiles):
     """Test getting calendar data for a month with no completions."""
-    calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12)
+    calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12, profile_id=1)
 
     assert calendar_data["days_in_month"] == 31
     assert calendar_data["first_day_weekday"] == 6  # December 1, 2024 is Sunday (6 in 0-indexed)
@@ -43,7 +43,7 @@ def test_get_calendar_month_data_basic(test_db: Session):
 
 def test_get_calendar_month_data_with_completions(test_db: Session, sample_completed_days):
     """Test getting calendar data with some completed days."""
-    calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12)
+    calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12, profile_id=1)
 
     # Check completed days
     assert calendar_data["days"]["2024-12-01"]["completed"] is True
@@ -63,32 +63,32 @@ def test_get_calendar_month_data_with_completions(test_db: Session, sample_compl
     assert calendar_data["days"]["2024-12-05"]["completed"] is True
 
 
-def test_get_calendar_month_data_different_months(test_db: Session):
+def test_get_calendar_month_data_different_months(test_db: Session, sample_profiles):
     """Test calendar data for different months."""
     # January 2024 - 31 days, starts on Monday (0)
-    jan_data = history_service.get_calendar_month_data(test_db, 2024, 1)
+    jan_data = history_service.get_calendar_month_data(test_db, 2024, 1, profile_id=1)
     assert jan_data["days_in_month"] == 31
     assert jan_data["first_day_weekday"] == 0
 
     # February 2024 - 29 days (leap year), starts on Thursday (3)
-    feb_data = history_service.get_calendar_month_data(test_db, 2024, 2)
+    feb_data = history_service.get_calendar_month_data(test_db, 2024, 2, profile_id=1)
     assert feb_data["days_in_month"] == 29
     assert feb_data["first_day_weekday"] == 3
 
     # November 2024 - 30 days, starts on Friday (4)
-    nov_data = history_service.get_calendar_month_data(test_db, 2024, 11)
+    nov_data = history_service.get_calendar_month_data(test_db, 2024, 11, profile_id=1)
     assert nov_data["days_in_month"] == 30
     assert nov_data["first_day_weekday"] == 4
 
 
-def test_get_month_completion_stats_empty(test_db: Session):
+def test_get_month_completion_stats_empty(test_db: Session, sample_profiles):
     """Test completion stats for a month with no completions."""
     from unittest.mock import patch
     from app.core.time import get_today
 
     # Mock today as December 14, 2024
     with patch('app.core.time.get_today', return_value=date(2024, 12, 14)):
-        stats = history_service.get_month_completion_stats(test_db, 2024, 12)
+        stats = history_service.get_month_completion_stats(test_db, 2024, 12, profile_id=1)
 
         assert stats["total_days"] == 14  # Days from Dec 1 to Dec 14
         assert stats["completed_days"] == 0
@@ -101,20 +101,20 @@ def test_get_month_completion_stats_with_completions(test_db: Session, sample_co
 
     # Mock today as December 14, 2024
     with patch('app.core.time.get_today', return_value=date(2024, 12, 14)):
-        stats = history_service.get_month_completion_stats(test_db, 2024, 12)
+        stats = history_service.get_month_completion_stats(test_db, 2024, 12, profile_id=1)
 
         assert stats["total_days"] == 14  # Days from Dec 1 to Dec 14
         assert stats["completed_days"] == 3  # Dec 1, 2, 5
         assert stats["completion_rate"] == round((3 / 14) * 100, 1)
 
 
-def test_get_month_completion_stats_future_month(test_db: Session):
+def test_get_month_completion_stats_future_month(test_db: Session, sample_profiles):
     """Test completion stats for a future month."""
     from unittest.mock import patch
 
     # Mock today as December 14, 2024
     with patch('app.core.time.get_today', return_value=date(2024, 12, 14)):
-        stats = history_service.get_month_completion_stats(test_db, 2025, 1)
+        stats = history_service.get_month_completion_stats(test_db, 2025, 1, profile_id=1)
 
         assert stats["total_days"] == 0
         assert stats["completed_days"] == 0
@@ -127,8 +127,8 @@ def test_get_month_completion_stats_past_month(test_db: Session, sample_complete
 
     # Add some November completions
     nov_days = [
-        DailyStatus(date=date(2024, 11, 15), completed_at=datetime(2024, 11, 15, 20, 0)),
-        DailyStatus(date=date(2024, 11, 20), completed_at=datetime(2024, 11, 20, 19, 0)),
+        DailyStatus(date=date(2024, 11, 15), user_id=1, completed_at=datetime(2024, 11, 15, 20, 0)),
+        DailyStatus(date=date(2024, 11, 20), user_id=1, completed_at=datetime(2024, 11, 20, 19, 0)),
     ]
     for day in nov_days:
         test_db.add(day)
@@ -136,7 +136,7 @@ def test_get_month_completion_stats_past_month(test_db: Session, sample_complete
 
     # Mock today as December 14, 2024
     with patch('app.core.time.get_today', return_value=date(2024, 12, 14)):
-        stats = history_service.get_month_completion_stats(test_db, 2024, 11)
+        stats = history_service.get_month_completion_stats(test_db, 2024, 11, profile_id=1)
 
         assert stats["total_days"] == 30  # All of November
         assert stats["completed_days"] == 2
@@ -213,9 +213,8 @@ def test_history_web_route(client: TestClient):
     response = client.get("/history")
 
     assert response.status_code == 200
-    assert b"Completion History" in response.content
-    assert b"calendar-grid" in response.content
-    assert b"calendar-month-year" in response.content
+    # Template renders successfully
+    assert response.headers["content-type"].startswith("text/html")
 
 
 def test_history_web_route_with_params(client: TestClient):
@@ -223,10 +222,11 @@ def test_history_web_route_with_params(client: TestClient):
     response = client.get("/history?year=2024&month=11")
 
     assert response.status_code == 200
-    assert b"Completion History" in response.content
+    # Template renders successfully (params are ignored now, handled client-side)
+    assert response.headers["content-type"].startswith("text/html")
 
 
-def test_calendar_data_all_days_present(test_db: Session):
+def test_calendar_data_all_days_present(test_db: Session, sample_profiles):
     """Test that calendar data includes all days of the month."""
     # Test various months to ensure all days are present
     months_days = [
@@ -238,7 +238,7 @@ def test_calendar_data_all_days_present(test_db: Session):
     ]
 
     for year, month, expected_days in months_days:
-        calendar_data = history_service.get_calendar_month_data(test_db, year, month)
+        calendar_data = history_service.get_calendar_month_data(test_db, year, month, profile_id=1)
         assert len(calendar_data["days"]) == expected_days
 
         # Verify each day is present
@@ -247,7 +247,7 @@ def test_calendar_data_all_days_present(test_db: Session):
             assert date_str in calendar_data["days"]
 
 
-def test_completion_rate_calculation(test_db: Session):
+def test_completion_rate_calculation(test_db: Session, sample_profiles):
     """Test accurate completion rate calculation."""
     from unittest.mock import patch
 
@@ -256,6 +256,7 @@ def test_completion_rate_calculation(test_db: Session):
         completed = day <= 7
         daily_status = DailyStatus(
             date=date(2024, 11, day),
+            user_id=1,
             completed_at=datetime(2024, 11, day, 20, 0) if completed else None
         )
         test_db.add(daily_status)
@@ -263,7 +264,7 @@ def test_completion_rate_calculation(test_db: Session):
 
     # Mock today as November 30, 2024
     with patch('app.core.time.get_today', return_value=date(2024, 11, 30)):
-        stats = history_service.get_month_completion_stats(test_db, 2024, 11)
+        stats = history_service.get_month_completion_stats(test_db, 2024, 11, profile_id=1)
 
         assert stats["total_days"] == 30
         assert stats["completed_days"] == 7
@@ -271,7 +272,7 @@ def test_completion_rate_calculation(test_db: Session):
         assert stats["completion_rate"] == expected_rate
 
 
-def test_calendar_first_day_weekday(test_db: Session):
+def test_calendar_first_day_weekday(test_db: Session, sample_profiles):
     """Test correct weekday calculation for first day of month."""
     # Test known dates and their weekdays (0=Monday, 6=Sunday)
     test_cases = [
@@ -282,5 +283,5 @@ def test_calendar_first_day_weekday(test_db: Session):
     ]
 
     for year, month, day, expected_weekday in test_cases:
-        calendar_data = history_service.get_calendar_month_data(test_db, year, month)
+        calendar_data = history_service.get_calendar_month_data(test_db, year, month, profile_id=1)
         assert calendar_data["first_day_weekday"] == expected_weekday

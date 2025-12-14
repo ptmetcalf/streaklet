@@ -7,6 +7,51 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+    <script>
+        // Alpine.js profile store - manages profile selection via localStorage
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('profile', {
+                id: parseInt(localStorage.getItem('streaklet_profile_id')) || null,
+                name: localStorage.getItem('streaklet_profile_name') || null,
+
+                setProfile(id, name) {
+                    this.id = id;
+                    this.name = name;
+                    localStorage.setItem('streaklet_profile_id', id);
+                    localStorage.setItem('streaklet_profile_name', name);
+                },
+
+                clearProfile() {
+                    this.id = null;
+                    this.name = null;
+                    localStorage.removeItem('streaklet_profile_id');
+                    localStorage.removeItem('streaklet_profile_name');
+                }
+            });
+        });
+
+        // Helper function to fetch with X-Profile-Id header
+        function fetchWithProfile(url, options = {}) {
+            const profileId = parseInt(localStorage.getItem('streaklet_profile_id')) || 1;
+            return fetch(url, {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'X-Profile-Id': profileId
+                }
+            });
+        }
+
+        // Check if profile is selected on page load (except on /profiles page)
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentPath = window.location.pathname;
+            const profileId = localStorage.getItem('streaklet_profile_id');
+
+            if (currentPath !== '/profiles' && !profileId) {
+                window.location.href = '/profiles';
+            }
+        });
+    </script>
 </head>
 <body>
     {% block content %}{% endblock %}
@@ -20,6 +65,9 @@
         </a>
         <a href="/settings" class="{{ 'active' if request.url.path == '/settings' else '' }}">
             Settings
+        </a>
+        <a href="/profiles" class="{{ 'active' if request.url.path == '/profiles' else '' }}">
+            Profiles
         </a>
     </nav>
 </body>
