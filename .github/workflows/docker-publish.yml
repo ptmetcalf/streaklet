@@ -32,11 +32,26 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Debug - Check Python and module paths
+        run: |
+          echo "Python version:"
+          python --version
+          echo -e "\nPython path:"
+          python -c "import sys; print('\n'.join(sys.path))"
+          echo -e "\nCurrent directory:"
+          pwd
+          echo -e "\nDirectory contents:"
+          ls -la
+          echo -e "\nApp directory:"
+          ls -la app/
+          echo -e "\nTests directory:"
+          ls -la tests/
+
       - name: Run tests
         env:
           PYTHONPATH: .
         run: |
-          pytest -v --tb=short
+          pytest -v --tb=short || (echo "Tests failed with exit code $?"; exit 1)
 
   build-and-push:
     runs-on: ubuntu-latest
