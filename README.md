@@ -9,6 +9,8 @@ A self-hosted, Dockerized daily streak tracker for maintaining consistent habits
 ## Features
 
 - **Multi-User Profiles**: Support for multiple users with completely isolated data
+- **Progressive Web App (PWA)**: Install on mobile devices for native app-like experience
+- **Offline Support**: Service worker caching for offline functionality
 - **Mobile-first** daily checklist interface
 - **Automatic streak tracking** based on completed days
 - **Customizable tasks** with required/optional flags
@@ -76,6 +78,73 @@ Configure via environment variables in `docker-compose.yml`:
 The SQLite database is stored in `./data/app.db` and mounted as a Docker volume. This ensures your streak data persists across container restarts.
 
 **Important**: Backup the `./data` directory regularly to preserve your streak history.
+
+## Progressive Web App (PWA)
+
+Streaklet is a fully installable Progressive Web App that works on mobile devices and desktops.
+
+### Features
+
+- **Install to Home Screen**: Add Streaklet to your device's home screen for quick access
+- **Offline Support**: Service worker caches data for offline functionality
+- **Native App Experience**: Runs in standalone mode without browser UI
+- **Automatic Updates**: Service worker automatically updates when new versions are deployed
+
+### Installing on Mobile
+
+#### iOS (iPhone/iPad)
+
+1. Open Streaklet in Safari
+2. Tap the Share button (square with arrow)
+3. Scroll down and tap "Add to Home Screen"
+4. Tap "Add" in the top right
+
+#### Android (Chrome)
+
+1. Open Streaklet in Chrome
+2. Tap the three-dot menu
+3. Select "Add to Home screen" or "Install app"
+4. Tap "Install" in the popup
+
+### Installing on Desktop
+
+#### Chrome/Edge
+
+1. Open Streaklet in Chrome or Edge
+2. Look for the install icon (+) in the address bar
+3. Click "Install" in the popup
+
+#### Other Browsers
+
+Most modern browsers support PWA installation. Look for an install prompt or check the browser menu.
+
+### Offline Functionality
+
+The service worker caches:
+- Static assets (CSS, HTML)
+- API responses for read operations
+- App icons and manifest
+
+When offline:
+- Previously loaded pages will still work
+- Recent task data will be accessible
+- Task completion will work with cached data
+- Changes sync automatically when back online
+
+### Testing PWA Installation
+
+To verify PWA features are working:
+
+```bash
+# Check manifest
+curl http://localhost:8080/static/manifest.json
+
+# Check service worker
+curl http://localhost:8080/static/sw.js
+
+# Check icons
+curl -I http://localhost:8080/static/icons/icon-192x192.png
+```
 
 ## Development
 
