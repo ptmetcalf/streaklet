@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/ptmetcalf/streaklet/actions/workflows/ci.yml/badge.svg)](https://github.com/ptmetcalf/streaklet/actions/workflows/ci.yml)
 [![Docker](https://github.com/ptmetcalf/streaklet/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/ptmetcalf/streaklet/actions/workflows/docker-publish.yml)
+[![codecov](https://codecov.io/gh/ptmetcalf/streaklet/branch/main/graph/badge.svg)](https://codecov.io/gh/ptmetcalf/streaklet)
 
 A self-hosted, Dockerized daily streak tracker for maintaining consistent habits.
 
