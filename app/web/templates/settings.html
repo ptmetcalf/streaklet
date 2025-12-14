@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Streaklet - Settings{% endblock %}
+
+{% block content %}
+<div class="container" x-data="settings()">
+    <header>
+        <h1>Task Settings</h1>
+    </header>
+
+    <div class="settings-section">
+        <h2>Tasks</h2>
+
+        <template x-for="task in tasks" :key="task.id">
+            <div class="task-list-item">
+                <div class="task-info">
+                    <div x-text="task.title"></div>
+                    <div style="font-size: 12px; color: #999; margin-top: 4px;">
+                        <span x-show="task.is_required">Required</span>
+                        <span x-show="!task.is_required">Optional</span>
+                        •
+                        <span x-show="task.is_active">Active</span>
+                        <span x-show="!task.is_active">Inactive</span>
+                    </div>
+                </div>
+                <div class="task-actions">
+                    <button class="btn-secondary" @click="editTask(task)">Edit</button>
+                    <button class="btn-danger" @click="deleteTask(task)">Delete</button>
+                </div>
+            </div>
+        </template>
+
+        <button class="btn-primary" @click="showAddForm = true" x-show="!showAddForm" style="margin-top: 16px; width: 100%;">
+            Add New Task
+        </button>
+
+        <div x-show="showAddForm" style="margin-top: 16px; padding: 16px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <h3 style="margin-bottom: 12px;">Add New Task</h3>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" x-model="newTask.title" placeholder="Task title">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" x-model="newTask.is_required">
+                    Required
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" x-model="newTask.is_active">
+                    Active
+                </label>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-primary" @click="addTask">Save</button>
+                <button class="btn-secondary" @click="showAddForm = false; resetNewTask()">Cancel</button>
+            </div>
+        </div>
+
+        <div x-show="editingTask" style="margin-top: 16px; padding: 16px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <h3 style="margin-bottom: 12px;">Edit Task</h3>
+            <template x-if="editingTask">
+                <div>
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" x-model="editingTask.title" placeholder="Task title">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" x-model="editingTask.is_required">
+                            Required
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" x-model="editingTask.is_active">
+                            Active
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn-primary" @click="updateTask">Save</button>
+                        <button class="btn-secondary" @click="editingTask = null">Cancel</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<script>
+function settings() {
+    return {
+        tasks: [],
+        showAddForm: false,
+        editingTask: null,
+        newTask: {
+            title: '',
+            is_required: true,
+            is_active: true,
+            sort_order: 0
+        },
+
+        async init() {
+            await this.loadTasks();
+        },
+
+        async loadTasks() {
+            const response = await fetch('/api/tasks');
+            this.tasks = await response.json();
+        },
+
+        resetNewTask() {
+            this.newTask = {
+                title: '',
+                is_required: true,
+                is_active: true,
+                sort_order: this.tasks.length + 1
+            };
+        },
+
+        async addTask() {
+            if (!this.newTask.title.trim()) return;
+
+            try {
+                const response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(this.newTask)
+                });
+
+                if (response.ok) {
+                    await this.loadTasks();
+                    this.showAddForm = false;
+                    this.resetNewTask();
+                }
+            } catch (error) {
+                console.error('Error adding task:', error);
+            }
+        },
+
+        editTask(task) {
+            this.editingTask = { ...task };
+        },
+
+        async updateTask() {
+            if (!this.editingTask) return;
+
+            try {
+                const response = await fetch(`/api/tasks/${this.editingTask.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: this.editingTask.title,
+                        is_required: this.editingTask.is_required,
+                        is_active: this.editingTask.is_active,
+                        sort_order: this.editingTask.sort_order
+                    })
+                });
+
+                if (response.ok) {
+                    await this.loadTasks();
+                    this.editingTask = null;
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+            }
+        },
+
+        async deleteTask(task) {
+            if (!confirm(`Delete "${task.title}"?`)) return;
+
+            try {
+                const response = await fetch(`/api/tasks/${task.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    await this.loadTasks();
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

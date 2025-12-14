@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Streaklet - Today's Checklist{% endblock %}
+
+{% block content %}
+<div class="container" x-data="checklist()">
+    <header>
+        <div class="header-content">
+            <div>
+                <h1>Today's Checklist</h1>
+                <div class="date">{{ day_data.date.strftime('%A, %B %d, %Y') }}</div>
+            </div>
+            <div class="streak-badge" x-text="'Day ' + streak"></div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" :style="`width: ${progress}%`"></div>
+        </div>
+        <div class="progress-text" x-text="`${completedCount}/${requiredCount} required tasks completed`"></div>
+    </header>
+
+    <div class="checklist">
+        <template x-for="task in tasks" :key="task.id">
+            <div
+                class="task-item"
+                :class="{ 'checked': task.checked }"
+                @click="toggleTask(task)"
+            >
+                <div class="checkbox">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <div class="task-title" x-text="task.title"></div>
+                <span class="task-badge" :class="{ 'required': task.is_required }" x-show="task.is_required">
+                    Required
+                </span>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script>
+function checklist() {
+    return {
+        tasks: {{ day_data.tasks | tojson }},
+        streak: {{ day_data.streak.current_streak }},
+
+        get completedCount() {
+            return this.tasks.filter(t => t.checked && t.is_required).length;
+        },
+
+        get requiredCount() {
+            return this.tasks.filter(t => t.is_required).length;
+        },
+
+        get progress() {
+            if (this.requiredCount === 0) return 100;
+            return Math.round((this.completedCount / this.requiredCount) * 100);
+        },
+
+        async toggleTask(task) {
+            const newChecked = !task.checked;
+
+            try {
+                const response = await fetch(`/api/days/{{ day_data.date }}/checks/${task.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ checked: newChecked })
+                });
+
+                if (response.ok) {
+                    task.checked = newChecked;
+                    task.checked_at = newChecked ? new Date().toISOString() : null;
+
+                    const streakResponse = await fetch('/api/streak');
+                    const streakData = await streakResponse.json();
+                    this.streak = streakData.current_streak;
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+            }
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Streaklet{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+</head>
+<body>
+    {% block content %}{% endblock %}
+
+    <nav class="nav">
+        <a href="/" class="{{ 'active' if request.url.path == '/' else '' }}">
+            Checklist
+        </a>
+        <a href="/settings" class="{{ 'active' if request.url.path == '/settings' else '' }}">
+            Settings
+        </a>
+    </nav>
+</body>
+</html>
