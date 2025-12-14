@@ -1,9 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import date, datetime
 from typing import Optional, List
 
 
 class TaskWithCheck(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     title: str
     sort_order: int
@@ -11,9 +13,6 @@ class TaskWithCheck(BaseModel):
     is_active: bool
     checked: bool
     checked_at: Optional[datetime]
-
-    class Config:
-        from_attributes = True
 
 
 class StreakInfo(BaseModel):
