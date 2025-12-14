@@ -3,12 +3,12 @@
 {% block title %}Streaklet - Today's Checklist{% endblock %}
 
 {% block content %}
-<div class="container" x-data="checklist()">
+<div class="container" x-data="checklist()" x-init="await loadTodayData()">
     <header>
         <div class="header-content">
             <div>
                 <h1>Today's Checklist</h1>
-                <div class="date">{{ day_data.date.strftime('%A, %B %d, %Y') }}</div>
+                <div class="date" x-text="formattedDate"></div>
             </div>
             <div class="streak-badge" x-text="'Day ' + streak"></div>
         </div>
@@ -42,8 +42,15 @@
 <script>
 function checklist() {
     return {
-        tasks: {{ day_data.tasks | tojson }},
-        streak: {{ day_data.streak.current_streak }},
+        tasks: [],
+        streak: 0,
+        date: null,
+
+        get formattedDate() {
+            if (!this.date) return '';
+            const d = new Date(this.date);
+            return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        },
 
         get completedCount() {
             return this.tasks.filter(t => t.checked && t.is_required).length;
@@ -58,11 +65,23 @@ function checklist() {
             return Math.round((this.completedCount / this.requiredCount) * 100);
         },
 
+        async loadTodayData() {
+            try {
+                const response = await fetchWithProfile('/api/days/today');
+                const data = await response.json();
+                this.tasks = data.tasks;
+                this.streak = data.streak.current_streak;
+                this.date = data.date;
+            } catch (error) {
+                console.error('Error loading today data:', error);
+            }
+        },
+
         async toggleTask(task) {
             const newChecked = !task.checked;
 
             try {
-                const response = await fetch(`/api/days/{{ day_data.date }}/checks/${task.id}`, {
+                const response = await fetchWithProfile(`/api/days/${this.date}/checks/${task.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ checked: newChecked })
@@ -72,7 +91,7 @@ function checklist() {
                     task.checked = newChecked;
                     task.checked_at = newChecked ? new Date().toISOString() : null;
 
-                    const streakResponse = await fetch('/api/streak');
+                    const streakResponse = await fetchWithProfile('/api/streak');
                     const streakData = await streakResponse.json();
                     this.streak = streakData.current_streak;
                 }
