@@ -4,9 +4,19 @@ from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 from datetime import date, datetime
 import os
+from freezegun import freeze_time
 
 from app.core.db import Base, get_db
 from app.main import app
+
+
+# Freeze time to a consistent datetime for all tests
+# Using 2025-12-14 12:00 PM America/Chicago timezone
+@pytest.fixture(scope="function", autouse=True)
+def frozen_time():
+    """Freeze time to ensure consistent dates across all test environments."""
+    with freeze_time("2025-12-14 12:00:00", tz_offset=-6):  # America/Chicago is UTC-6
+        yield
 
 
 @pytest.fixture(scope="function")
