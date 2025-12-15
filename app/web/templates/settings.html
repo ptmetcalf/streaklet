@@ -106,7 +106,7 @@ function settings() {
         },
 
         async loadTasks() {
-            const response = await fetch('/api/tasks');
+            const response = await fetchWithProfile('/api/tasks');
             this.tasks = await response.json();
         },
 
@@ -123,7 +123,7 @@ function settings() {
             if (!this.newTask.title.trim()) return;
 
             try {
-                const response = await fetch('/api/tasks', {
+                const response = await fetchWithProfile('/api/tasks', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(this.newTask)
@@ -147,7 +147,7 @@ function settings() {
             if (!this.editingTask) return;
 
             try {
-                const response = await fetch(`/api/tasks/${this.editingTask.id}`, {
+                const response = await fetchWithProfile(`/api/tasks/${this.editingTask.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -171,7 +171,7 @@ function settings() {
             if (!confirm(`Delete "${task.title}"?`)) return;
 
             try {
-                const response = await fetch(`/api/tasks/${task.id}`, {
+                const response = await fetchWithProfile(`/api/tasks/${task.id}`, {
                     method: 'DELETE'
                 });
 

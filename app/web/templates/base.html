@@ -80,8 +80,74 @@
             });
         }
     </script>
+    <style>
+        .profile-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, var(--profile-color, #3b82f6) 0%, color-mix(in srgb, var(--profile-color, #3b82f6) 80%, black) 100%);
+            color: white;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            z-index: 999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .profile-indicator-content {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .profile-indicator-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: white;
+            opacity: 0.9;
+        }
+        .profile-indicator-link {
+            color: white;
+            text-decoration: none;
+            opacity: 0.9;
+            font-size: 0.75rem;
+            transition: opacity 0.2s;
+        }
+        .profile-indicator-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+        .container {
+            padding-top: 2.5rem;
+        }
+    </style>
 </head>
 <body>
+    <!-- Profile Indicator -->
+    <div class="profile-indicator" x-data="{profileName: $store.profile.name || 'Default Profile', profileColor: '#3b82f6'}"
+         x-init="async () => {
+            if ($store.profile.id) {
+                try {
+                    const response = await fetch(`/api/profiles/${$store.profile.id}`);
+                    if (response.ok) {
+                        const profile = await response.json();
+                        profileName = profile.name;
+                        profileColor = profile.color;
+                        $el.style.setProperty('--profile-color', profileColor);
+                    }
+                } catch (e) {}
+            }
+         }">
+        <div class="profile-indicator-content">
+            <div class="profile-indicator-dot"></div>
+            <span x-text="profileName"></span>
+        </div>
+        <a href="/profiles" class="profile-indicator-link">Switch Profile</a>
+    </div>
+
     {% block content %}{% endblock %}
 
     <nav class="nav">
