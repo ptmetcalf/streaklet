@@ -3,7 +3,7 @@
 {% block title %}Streaklet - History{% endblock %}
 
 {% block content %}
-<div class="container" x-data="calendar()">
+<div class="container" x-data="calendar()" x-init="await loadHistoryData()">
     <header>
         <div class="header-content">
             <h1>Completion History</h1>
@@ -73,6 +73,7 @@ function calendar() {
         month: {{ month }},
         calendarData: {{ calendar_data | tojson }},
         streak: {{ streak | tojson }},
+        stats: null,
         today: '{{ today }}',
         weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
 
@@ -96,6 +97,34 @@ function calendar() {
 
         get nextMonth() {
             return this.month === 12 ? 1 : this.month + 1;
+        },
+
+        async loadHistoryData() {
+            try {
+                const response = await fetchWithProfile(`/api/history/${this.year}/${this.month}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.calendarData = data.calendar_data;
+                    this.stats = data.stats;
+                    this.year = data.year;
+                    this.month = data.month;
+                } else {
+                    console.error('Error loading history data:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error loading history data:', error);
+            }
+
+            try {
+                const streakResponse = await fetchWithProfile('/api/streak');
+                if (streakResponse.ok) {
+                    this.streak = await streakResponse.json();
+                } else {
+                    console.error('Error loading streak data:', await streakResponse.text());
+                }
+            } catch (error) {
+                console.error('Error loading streak data:', error);
+            }
         },
 
         get calendarDays() {
@@ -129,6 +158,10 @@ function calendar() {
         },
 
         get completionRate() {
+            if (this.stats && typeof this.stats.completion_rate === 'number') {
+                return Math.round(this.stats.completion_rate);
+            }
+
             const todayDate = new Date(this.today);
             const completed = Object.entries(this.calendarData.days)
                 .filter(([date, data]) => {

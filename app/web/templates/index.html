@@ -10,7 +10,7 @@
                 <h1>Today's Checklist</h1>
                 <div class="date" x-text="formattedDate"></div>
             </div>
-            <div class="streak-badge" x-text="'Day ' + streak"></div>
+            <div class="streak-badge" x-text="'Day ' + displayStreakDay"></div>
         </div>
         <div class="progress-bar">
             <div class="progress-fill" :style="`width: ${progress}%`"></div>
@@ -50,6 +50,10 @@ function checklist() {
             if (!this.date) return '';
             const d = new Date(this.date);
             return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        },
+
+        get displayStreakDay() {
+            return Math.max(1, this.streak || 0);
         },
 
         get completedCount() {

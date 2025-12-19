@@ -62,11 +62,30 @@ async def history(request: Request):
     from app.core.time import get_today
 
     today = get_today()
-    # Pass default values for template - actual data should be fetched client-side
+    year_param = request.query_params.get("year")
+    month_param = request.query_params.get("month")
+
+    try:
+        year = int(year_param) if year_param is not None else today.year
+    except ValueError:
+        year = today.year
+
+    try:
+        month = int(month_param) if month_param is not None else today.month
+    except ValueError:
+        month = today.month
+
+    if not (1 <= month <= 12):
+        month = today.month
+
+    if not (2000 <= year <= 2100):
+        year = today.year
+
+    # Pass default values for template - actual data fetched client-side
     return templates.TemplateResponse("history.html", {
         "request": request,
-        "year": today.year,
-        "month": today.month,
+        "year": year,
+        "month": month,
         "calendar_data": {"days_in_month": 0, "first_day_weekday": 0, "days": {}},
         "streak": {"current_streak": 0, "today_complete": False, "last_completed_date": None},
         "today": today.isoformat()
