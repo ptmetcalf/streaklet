@@ -57,6 +57,12 @@
             });
         }
 
+        // Helper for local date-only parsing to avoid UTC shifts.
+        function parseDateOnly(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
         // Check if profile is selected on page load (except on /profiles page)
         document.addEventListener('DOMContentLoaded', () => {
             const currentPath = window.location.pathname;

@@ -48,7 +48,7 @@ function checklist() {
 
         get formattedDate() {
             if (!this.date) return '';
-            const d = new Date(this.date);
+            const d = parseDateOnly(this.date);
             return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         },
 

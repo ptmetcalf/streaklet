@@ -162,17 +162,17 @@ function calendar() {
                 return Math.round(this.stats.completion_rate);
             }
 
-            const todayDate = new Date(this.today);
+            const todayDate = parseDateOnly(this.today);
             const completed = Object.entries(this.calendarData.days)
                 .filter(([date, data]) => {
-                    const d = new Date(date);
+                    const d = parseDateOnly(date);
                     return data.completed && d <= todayDate;
                 })
                 .length;
 
             const total = Object.entries(this.calendarData.days)
                 .filter(([date]) => {
-                    const d = new Date(date);
+                    const d = parseDateOnly(date);
                     return d <= todayDate;
                 })
                 .length;
