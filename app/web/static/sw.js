@@ -1,7 +1,7 @@
 // Service Worker for Streaklet PWA
-const CACHE_NAME = 'streaklet-v1';
-const STATIC_CACHE = 'streaklet-static-v1';
-const API_CACHE = 'streaklet-api-v1';
+const CACHE_NAME = 'streaklet-v2';
+const STATIC_CACHE = 'streaklet-static-v2';
+const API_CACHE = 'streaklet-api-v2';
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
@@ -50,6 +50,24 @@ self.addEventListener('fetch', (event) => {
 
   // API requests - network first, cache fallback
   if (url.pathname.startsWith('/api/')) {
+    if (url.pathname === '/api/days/today' || url.pathname === '/api/streak') {
+      event.respondWith(
+        fetch(request, { cache: 'no-store' }).catch(() => {
+          return new Response(
+            JSON.stringify({
+              error: 'Offline',
+              message: 'You are currently offline. Please check your connection.'
+            }),
+            {
+              status: 503,
+              headers: { 'Content-Type': 'application/json' }
+            }
+          );
+        })
+      );
+      return;
+    }
+
     event.respondWith(
       fetch(request)
         .then((response) => {
