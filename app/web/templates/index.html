@@ -45,6 +45,8 @@ function checklist() {
         tasks: [],
         streak: 0,
         date: null,
+        todayComplete: false,
+        lastCompletedDate: null,
 
         get formattedDate() {
             if (!this.date) return '';
@@ -53,7 +55,28 @@ function checklist() {
         },
 
         get displayStreakDay() {
-            return Math.max(1, this.streak || 0);
+            const currentStreak = this.streak || 0;
+            if (this.todayComplete) {
+                return Math.max(1, currentStreak);
+            }
+            if (!this.date) {
+                return Math.max(1, currentStreak);
+            }
+            if (!this.lastCompletedDate) {
+                return 1;
+            }
+
+            const today = parseDateOnly(this.date);
+            const lastCompleted = parseDateOnly(this.lastCompletedDate);
+            const diffDays = Math.round((today - lastCompleted) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                return Math.max(1, currentStreak + 1);
+            }
+            if (diffDays === 0) {
+                return Math.max(1, currentStreak);
+            }
+            return 1;
         },
 
         get completedCount() {
@@ -75,6 +98,8 @@ function checklist() {
                 const data = await response.json();
                 this.tasks = data.tasks;
                 this.streak = data.streak.current_streak;
+                this.todayComplete = data.streak.today_complete;
+                this.lastCompletedDate = data.streak.last_completed_date;
                 this.date = data.date;
             } catch (error) {
                 console.error('Error loading today data:', error);
@@ -98,6 +123,8 @@ function checklist() {
                     const streakResponse = await fetchWithProfile('/api/streak');
                     const streakData = await streakResponse.json();
                     this.streak = streakData.current_streak;
+                    this.todayComplete = streakData.today_complete;
+                    this.lastCompletedDate = streakData.last_completed_date;
                 }
             } catch (error) {
                 console.error('Error updating task:', error);
