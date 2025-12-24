@@ -19,8 +19,8 @@
                         <span x-show="task.is_required">Required</span>
                         <span x-show="!task.is_required">Optional</span>
                         •
-                        <span x-show="task.is_active">Active</span>
-                        <span x-show="!task.is_active">Inactive</span>
+                        <span x-show="task.is_active">Enabled</span>
+                        <span x-show="!task.is_active">Disabled</span>
                     </div>
                 </div>
                 <div class="task-actions">
@@ -35,34 +35,66 @@
         </button>
 
         <div x-show="showAddForm" style="margin-top: 16px; padding: 16px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <h3 style="margin-bottom: 12px;">Add New Task</h3>
-            <div class="form-group">
-                <label>Title</label>
-                <input type="text" x-model="newTask.title" placeholder="Task title">
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" x-model="newTask.is_required">
-                    Required
-                </label>
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" x-model="newTask.is_active">
-                    Active
-                </label>
-            </div>
+            <h3 style="margin-bottom: 16px;">Add New Task</h3>
 
-            <!-- Fitbit Goal Configuration -->
-            <div x-show="fitbitConnected" style="margin-top: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9;">
-                <h4 style="margin-bottom: 12px; font-size: 14px;">Fitbit Goal (Optional)</h4>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.fitbit_auto_check">
-                        Auto-check when goal met
+            <!-- Task Type Selector (only show if Fitbit connected) -->
+            <div x-show="fitbitConnected" class="form-group" style="margin-bottom: 20px;">
+                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Task Type</label>
+                <div style="display: flex; gap: 24px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="taskType" value="manual" x-model="newTask.taskType" @change="onTaskTypeChange">
+                        <span>Manual</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="radio" name="taskType" value="fitbit" x-model="newTask.taskType" @change="onTaskTypeChange">
+                        <span>Fitbit Goal</span>
                     </label>
                 </div>
-                <div x-show="newTask.fitbit_auto_check">
+            </div>
+
+            <!-- Manual Task Fields -->
+            <div x-show="newTask.taskType === 'manual'">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" x-model="newTask.title" placeholder="Task title">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="newTask.is_required">
+                        Required
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="newTask.is_active">
+                        Enabled
+                    </label>
+                </div>
+            </div>
+
+            <!-- Fitbit Task Fields -->
+            <div x-show="newTask.taskType === 'fitbit'">
+                <div class="form-group">
+                    <label>Select Goal Template</label>
+                    <select x-model="newTask.fitbitTemplate" @change="applyFitbitTemplate" style="font-size: 14px;">
+                        <option value="">-- Choose a goal --</option>
+                        <option value="steps_10k">Walk 10,000 steps</option>
+                        <option value="steps_8k">Walk 8,000 steps</option>
+                        <option value="steps_5k">Walk 5,000 steps</option>
+                        <option value="sleep_7h">Sleep 7+ hours</option>
+                        <option value="sleep_8h">Sleep 8+ hours</option>
+                        <option value="active_30m">30 minutes active</option>
+                        <option value="active_60m">60 minutes active</option>
+                        <option value="floors_10">Climb 10 floors</option>
+                        <option value="calories_2000">Burn 2,000 calories</option>
+                        <option value="distance_3mi">Walk 3 miles</option>
+                        <option value="distance_5mi">Walk 5 miles</option>
+                        <option value="custom">Custom goal...</option>
+                    </select>
+                </div>
+
+                <!-- Custom Fitbit Goal (shown when "Custom goal..." selected) -->
+                <div x-show="newTask.fitbitTemplate === 'custom'" style="margin-top: 16px; padding: 16px; background: #f9f9f9; border-radius: 4px;">
                     <div class="form-group">
                         <label>Metric Type</label>
                         <select x-model="newTask.fitbit_metric_type">
@@ -91,9 +123,33 @@
                             <input type="number"
                                    x-model="newTask.fitbit_goal_value"
                                    placeholder="e.g., 10000"
-                                   step="1">
+                                   step="any">
                         </div>
                     </div>
+                </div>
+
+                <!-- Preview of generated title -->
+                <div x-show="newTask.title" style="margin-top: 12px; padding: 12px; background: #e3f2fd; border-radius: 4px; font-size: 14px;">
+                    <strong>Task will be created as:</strong> <span x-text="newTask.title"></span>
+                </div>
+
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>
+                        <input type="checkbox" x-model="newTask.is_required">
+                        Required
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="newTask.is_active">
+                        Enabled
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="newTask.fitbit_auto_check">
+                        Auto-complete when goal met
+                    </label>
                 </div>
             </div>
 
@@ -120,7 +176,7 @@
                     <div class="form-group">
                         <label>
                             <input type="checkbox" x-model="editingTask.is_active">
-                            Active
+                            Enabled
                         </label>
                     </div>
 
@@ -130,7 +186,7 @@
                         <div class="form-group">
                             <label>
                                 <input type="checkbox" x-model="editingTask.fitbit_auto_check">
-                                Auto-check when goal met
+                                Auto-complete when goal met
                             </label>
                         </div>
                         <div x-show="editingTask.fitbit_auto_check">
@@ -162,7 +218,7 @@
                                     <input type="number"
                                            x-model="editingTask.fitbit_goal_value"
                                            placeholder="e.g., 10000"
-                                           step="1">
+                                           step="any">
                                 </div>
                             </div>
                         </div>
@@ -194,7 +250,7 @@
 
         <!-- Connected State -->
         <div x-show="fitbitConnected" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <div style="font-weight: 600; margin-bottom: 4px;">✓ Connected to Fitbit</div>
                     <div style="font-size: 14px; color: #666;">
@@ -202,6 +258,11 @@
                             Last synced: <span x-text="formatSyncTime(fitbitLastSync)"></span>
                         </span>
                         <span x-show="!fitbitLastSync">Never synced</span>
+                    </div>
+                    <div style="font-size: 14px; margin-top: 8px;">
+                        <a href="/fitbit" style="color: var(--primary-color); text-decoration: none;">
+                            View Fitbit Metrics & Trends →
+                        </a>
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
@@ -212,33 +273,6 @@
                     <button class="btn-danger" @click="disconnectFitbit">
                         Disconnect
                     </button>
-                </div>
-            </div>
-
-            <!-- Today's Metrics Dashboard -->
-            <div x-show="Object.keys(todayMetrics).length > 0" style="margin-top: 20px;">
-                <h3 style="margin-bottom: 12px;">Today's Stats</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;">
-                    <div x-show="todayMetrics.steps" class="metric-card">
-                        <div style="font-size: 24px;">👟</div>
-                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="todayMetrics.steps || '-'"></div>
-                        <div style="font-size: 12px; color: #666;">Steps</div>
-                    </div>
-                    <div x-show="todayMetrics.sleep_minutes" class="metric-card">
-                        <div style="font-size: 24px;">😴</div>
-                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="formatHours(todayMetrics.sleep_minutes)"></div>
-                        <div style="font-size: 12px; color: #666;">Sleep</div>
-                    </div>
-                    <div x-show="todayMetrics.active_minutes" class="metric-card">
-                        <div style="font-size: 24px;">🔥</div>
-                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="todayMetrics.active_minutes || '-'"></div>
-                        <div style="font-size: 12px; color: #666;">Active Min</div>
-                    </div>
-                    <div x-show="todayMetrics.resting_heart_rate" class="metric-card">
-                        <div style="font-size: 24px;">❤️</div>
-                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="todayMetrics.resting_heart_rate || '-'"></div>
-                        <div style="font-size: 12px; color: #666;">Resting HR</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -262,6 +296,8 @@ function settings() {
         showAddForm: false,
         editingTask: null,
         newTask: {
+            taskType: 'manual',  // 'manual' or 'fitbit'
+            fitbitTemplate: '',
             title: '',
             is_required: true,
             is_active: true,
@@ -270,6 +306,20 @@ function settings() {
             fitbit_goal_value: null,
             fitbit_goal_operator: 'gte',
             fitbit_auto_check: false
+        },
+
+        fitbitTemplates: {
+            'steps_10k': { metric: 'steps', operator: 'gte', value: 10000, title: 'Walk 10,000 steps' },
+            'steps_8k': { metric: 'steps', operator: 'gte', value: 8000, title: 'Walk 8,000 steps' },
+            'steps_5k': { metric: 'steps', operator: 'gte', value: 5000, title: 'Walk 5,000 steps' },
+            'sleep_7h': { metric: 'sleep_minutes', operator: 'gte', value: 420, title: 'Sleep 7+ hours' },
+            'sleep_8h': { metric: 'sleep_minutes', operator: 'gte', value: 480, title: 'Sleep 8+ hours' },
+            'active_30m': { metric: 'active_minutes', operator: 'gte', value: 30, title: '30 minutes active' },
+            'active_60m': { metric: 'active_minutes', operator: 'gte', value: 60, title: '60 minutes active' },
+            'floors_10': { metric: 'floors', operator: 'gte', value: 10, title: 'Climb 10 floors' },
+            'calories_2000': { metric: 'calories_burned', operator: 'gte', value: 2000, title: 'Burn 2,000 calories' },
+            'distance_3mi': { metric: 'distance', operator: 'gte', value: 3, title: 'Walk 3 miles' },
+            'distance_5mi': { metric: 'distance', operator: 'gte', value: 5, title: 'Walk 5 miles' }
         },
 
         // Fitbit state
@@ -303,6 +353,8 @@ function settings() {
 
         resetNewTask() {
             this.newTask = {
+                taskType: 'manual',
+                fitbitTemplate: '',
                 title: '',
                 is_required: true,
                 is_active: true,
@@ -314,20 +366,64 @@ function settings() {
             };
         },
 
-        async addTask() {
-            if (!this.newTask.title.trim()) {
-                alert('Please enter a task title');
+        onTaskTypeChange() {
+            // Reset task-specific fields when switching types
+            if (this.newTask.taskType === 'manual') {
+                this.newTask.fitbitTemplate = '';
+                this.newTask.fitbit_metric_type = null;
+                this.newTask.fitbit_goal_value = null;
+                this.newTask.fitbit_auto_check = false;
+            } else {
+                this.newTask.title = '';
+            }
+        },
+
+        applyFitbitTemplate() {
+            if (this.newTask.fitbitTemplate === 'custom') {
+                // Clear fields for custom entry
+                this.newTask.title = '';
+                this.newTask.fitbit_metric_type = null;
+                this.newTask.fitbit_goal_value = null;
+                this.newTask.fitbit_goal_operator = 'gte';
                 return;
             }
 
-            // Validate Fitbit fields if auto-check is enabled
-            if (this.newTask.fitbit_auto_check) {
-                if (!this.newTask.fitbit_metric_type) {
-                    alert('Please select a Fitbit metric type');
+            const template = this.fitbitTemplates[this.newTask.fitbitTemplate];
+            if (template) {
+                this.newTask.fitbit_metric_type = template.metric;
+                this.newTask.fitbit_goal_operator = template.operator;
+                this.newTask.fitbit_goal_value = template.value;
+                this.newTask.title = template.title;
+                this.newTask.fitbit_auto_check = true;  // Enable auto-complete by default for templates
+            }
+        },
+
+        async addTask() {
+            // Validation based on task type
+            if (this.newTask.taskType === 'manual') {
+                if (!this.newTask.title.trim()) {
+                    alert('Please enter a task title');
                     return;
                 }
-                if (!this.newTask.fitbit_goal_value) {
-                    alert('Please enter a goal value');
+            } else if (this.newTask.taskType === 'fitbit') {
+                if (!this.newTask.fitbitTemplate) {
+                    alert('Please select a Fitbit goal template');
+                    return;
+                }
+                if (this.newTask.fitbitTemplate === 'custom') {
+                    if (!this.newTask.fitbit_metric_type) {
+                        alert('Please select a Fitbit metric type');
+                        return;
+                    }
+                    if (!this.newTask.fitbit_goal_value) {
+                        alert('Please enter a goal value');
+                        return;
+                    }
+                    // Auto-generate title for custom Fitbit tasks
+                    this.newTask.title = this.generateFitbitTitle();
+                }
+                if (!this.newTask.title) {
+                    alert('Task title could not be generated');
                     return;
                 }
             }
@@ -350,6 +446,49 @@ function settings() {
             } catch (error) {
                 console.error('Error adding task:', error);
                 alert('Error creating task: ' + error.message);
+            }
+        },
+
+        generateFitbitTitle() {
+            // Generate title based on metric, operator, and value
+            const metricNames = {
+                'steps': 'steps',
+                'active_minutes': 'minutes active',
+                'sleep_minutes': 'hours sleep',
+                'sleep_score': 'sleep score',
+                'distance': 'miles',
+                'floors': 'floors',
+                'calories_burned': 'calories',
+                'resting_heart_rate': 'bpm resting heart rate'
+            };
+
+            const metric = this.newTask.fitbit_metric_type;
+            const value = this.newTask.fitbit_goal_value;
+            const operator = this.newTask.fitbit_goal_operator;
+
+            if (!metric || !value) return '';
+
+            const metricName = metricNames[metric] || metric;
+            let formattedValue = value;
+
+            // Convert sleep minutes to hours for display
+            if (metric === 'sleep_minutes') {
+                formattedValue = Math.floor(value / 60);
+            }
+
+            // Format based on operator
+            if (operator === 'gte') {
+                if (metric === 'steps') return `Walk ${formattedValue.toLocaleString()} ${metricName}`;
+                if (metric === 'sleep_minutes') return `Sleep ${formattedValue}+ hours`;
+                if (metric === 'active_minutes') return `${formattedValue} ${metricName}`;
+                if (metric === 'distance') return `Walk ${formattedValue} ${metricName}`;
+                if (metric === 'floors') return `Climb ${formattedValue} ${metricName}`;
+                if (metric === 'calories_burned') return `Burn ${formattedValue.toLocaleString()} ${metricName}`;
+                return `${formattedValue} ${metricName}`;
+            } else if (operator === 'lte') {
+                return `Max ${formattedValue} ${metricName}`;
+            } else {
+                return `Exactly ${formattedValue} ${metricName}`;
             }
         },
 

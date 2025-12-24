@@ -3,6 +3,7 @@
 {% block title %}Streaklet - Fitbit Metrics{% endblock %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
 <div class="container" x-data="fitbitMetrics()">
     <header>
         <h1>Fitbit Metrics</h1>
@@ -22,21 +23,84 @@
 
     <!-- Connected State -->
     <div x-show="fitbitConnected">
-        <!-- Date Selector -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-            <div>
-                <input type="date"
-                       x-model="selectedDate"
-                       @change="loadMetricsForDate"
-                       :max="today"
-                       style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+        <!-- Tabs -->
+        <div style="display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color);">
+            <button @click="currentTab = 'trends'; loadTrendData()"
+                    :class="currentTab === 'trends' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Trends
+            </button>
+            <button @click="currentTab = 'daily'; loadMetricsForDate()"
+                    :class="currentTab === 'daily' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Daily View
+            </button>
+        </div>
+
+        <!-- Trends Tab -->
+        <div x-show="currentTab === 'trends'">
+            <!-- Date Range Selector -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div>
+                    <label style="font-weight: 600; margin-right: 8px;">Time Range:</label>
+                    <select x-model="trendRange" @change="loadTrendData" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                        <option value="7">Last 7 Days</option>
+                        <option value="14">Last 14 Days</option>
+                        <option value="30">Last 30 Days</option>
+                    </select>
+                </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary" @click="previousDay">← Previous</button>
-                <button class="btn-secondary" @click="nextDay">Next →</button>
-                <button class="btn-secondary" @click="goToToday">Today</button>
+
+            <!-- Loading State -->
+            <div x-show="trendsLoading" style="text-align: center; padding: 40px; color: #666;">
+                Loading trends...
+            </div>
+
+            <!-- Charts -->
+            <div x-show="!trendsLoading" style="display: grid; grid-template-columns: 1fr; gap: 32px;">
+                <!-- Steps Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Steps</h3>
+                    <canvas id="stepsChart"></canvas>
+                </div>
+
+                <!-- Sleep Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Sleep</h3>
+                    <canvas id="sleepChart"></canvas>
+                </div>
+
+                <!-- Active Minutes Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Active Minutes</h3>
+                    <canvas id="activeMinutesChart"></canvas>
+                </div>
+
+                <!-- Heart Rate Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Resting Heart Rate</h3>
+                    <canvas id="heartRateChart"></canvas>
+                </div>
             </div>
         </div>
+
+        <!-- Daily View Tab -->
+        <div x-show="currentTab === 'daily'">
+            <!-- Date Selector -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div>
+                    <input type="date"
+                           x-model="selectedDate"
+                           @change="loadMetricsForDate"
+                           :max="today"
+                           style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary" @click="previousDay">← Previous</button>
+                    <button class="btn-secondary" @click="nextDay">Next →</button>
+                    <button class="btn-secondary" @click="goToToday">Today</button>
+                </div>
+            </div>
 
         <!-- Loading State -->
         <div x-show="loading" style="text-align: center; padding: 40px; color: #666;">
@@ -130,12 +194,13 @@
             </div>
         </div>
 
-        <!-- No Data State -->
-        <div x-show="!loading && Object.keys(metrics).length === 0"
-             style="text-align: center; padding: 40px; color: #666; border: 1px solid var(--border-color); border-radius: 4px;">
-            <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
-            <p>No Fitbit data available for <span x-text="formatDateDisplay(selectedDate)"></span></p>
-            <p style="font-size: 14px; margin-top: 8px;">Try selecting a different date or sync your Fitbit data.</p>
+            <!-- No Data State -->
+            <div x-show="!loading && Object.keys(metrics).length === 0"
+                 style="text-align: center; padding: 40px; color: #666; border: 1px solid var(--border-color); border-radius: 4px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                <p>No Fitbit data available for <span x-text="formatDateDisplay(selectedDate)"></span></p>
+                <p style="font-size: 14px; margin-top: 8px;">Try selecting a different date or sync your Fitbit data.</p>
+            </div>
         </div>
     </div>
 </div>
@@ -166,6 +231,39 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
+.tab-button {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.tab-active {
+    color: var(--primary-color);
+}
+
+.tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+.tab-inactive {
+    color: #666;
+}
+
+.tab-inactive:hover {
+    color: #333;
+}
 </style>
 
 <script>
@@ -177,10 +275,21 @@ function fitbitMetrics() {
         metrics: {},
         loading: false,
 
+        // Trends state
+        currentTab: 'trends',
+        trendRange: 7,
+        trendsLoading: false,
+        charts: {
+            steps: null,
+            sleep: null,
+            activeMinutes: null,
+            heartRate: null
+        },
+
         async init() {
             await this.checkFitbitConnection();
             if (this.fitbitConnected) {
-                await this.loadMetricsForDate();
+                await this.loadTrendData();
             }
         },
 
@@ -234,6 +343,175 @@ function fitbitMetrics() {
         goToToday() {
             this.selectedDate = this.today;
             this.loadMetricsForDate();
+        },
+
+        async loadTrendData() {
+            this.trendsLoading = true;
+            try {
+                // Calculate date range
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - this.trendRange + 1);
+
+                const startStr = startDate.toISOString().split('T')[0];
+                const endStr = endDate.toISOString().split('T')[0];
+
+                // Fetch historical data
+                const response = await fetchWithProfile(
+                    `/api/fitbit/metrics/history?start_date=${startStr}&end_date=${endStr}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Wait for DOM to be ready
+                    await this.$nextTick();
+
+                    // Create charts
+                    this.createCharts(data.metrics);
+                } else {
+                    console.error('Failed to load trend data');
+                }
+            } catch (error) {
+                console.error('Error loading trend data:', error);
+            } finally {
+                this.trendsLoading = false;
+            }
+        },
+
+        createCharts(metricsData) {
+            // Destroy existing charts
+            Object.values(this.charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+
+            const chartConfig = {
+                steps: {
+                    containerId: 'stepsChart',
+                    data: metricsData.steps || [],
+                    label: 'Steps',
+                    color: '#3b82f6',
+                    yAxisLabel: 'Steps',
+                    formatter: (val) => Math.round(val).toLocaleString()
+                },
+                sleep: {
+                    containerId: 'sleepChart',
+                    data: metricsData.sleep_minutes || [],
+                    label: 'Sleep',
+                    color: '#8b5cf6',
+                    yAxisLabel: 'Hours',
+                    transform: (v) => v / 60,
+                    formatter: (val) => {
+                        const hours = Math.floor(val);
+                        const mins = Math.round((val - hours) * 60);
+                        return `${hours}h ${mins}m`;
+                    }
+                },
+                activeMinutes: {
+                    containerId: 'activeMinutesChart',
+                    data: metricsData.active_minutes || [],
+                    label: 'Active Minutes',
+                    color: '#ef4444',
+                    yAxisLabel: 'Minutes',
+                    formatter: (val) => Math.round(val) + ' min'
+                },
+                heartRate: {
+                    containerId: 'heartRateChart',
+                    data: metricsData.resting_heart_rate || [],
+                    label: 'Resting HR',
+                    color: '#ec4899',
+                    yAxisLabel: 'BPM',
+                    formatter: (val) => Math.round(val) + ' bpm'
+                }
+            };
+
+            Object.keys(chartConfig).forEach(key => {
+                const config = chartConfig[key];
+                const container = document.getElementById(config.containerId);
+
+                if (!container) return;
+
+                const categories = config.data.map(d => {
+                    const date = new Date(d.date + 'T00:00:00');
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+
+                const values = config.data.map(d => {
+                    const val = config.transform ? config.transform(d.value) : d.value;
+                    return Math.round(val * 100) / 100; // Round to 2 decimals
+                });
+
+                const options = {
+                    series: [{
+                        name: config.label,
+                        data: values
+                    }],
+                    chart: {
+                        type: 'area',
+                        height: 300,
+                        toolbar: {
+                            show: false
+                        },
+                        zoom: {
+                            enabled: false
+                        },
+                        animations: {
+                            enabled: true,
+                            easing: 'easeinout',
+                            speed: 800
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        width: 3
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.6,
+                            opacityTo: 0.1,
+                            stops: [0, 90, 100]
+                        }
+                    },
+                    colors: [config.color],
+                    xaxis: {
+                        categories: categories,
+                        labels: {
+                            style: {
+                                fontSize: '12px'
+                            }
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: config.yAxisLabel,
+                            style: {
+                                fontSize: '12px',
+                                fontWeight: 500
+                            }
+                        },
+                        labels: {
+                            formatter: config.formatter || ((val) => Math.round(val).toLocaleString())
+                        }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: config.formatter || ((val) => Math.round(val).toLocaleString())
+                        }
+                    },
+                    grid: {
+                        borderColor: '#e5e7eb',
+                        strokeDashArray: 3
+                    }
+                };
+
+                this.charts[key] = new ApexCharts(container, options);
+                this.charts[key].render();
+            });
         },
 
         formatNumber(value) {

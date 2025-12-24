@@ -202,7 +202,7 @@ def get_metrics(
     return metrics
 
 
-@router.get("/daily-summary", response_model=FitbitDailySummary)
+@router.get("/daily-summary")
 def get_daily_summary(
     date: date = Query(..., description="Date to get metrics for"),
     db: Session = Depends(get_db),
@@ -211,7 +211,7 @@ def get_daily_summary(
     """
     Get all Fitbit metrics for a specific date.
 
-    Returns metrics grouped by type in a dictionary.
+    Returns metrics grouped by type with value, unit, and synced_at.
     """
     connection = fitbit_connection.get_connection(db, profile_id)
     if not connection:
@@ -222,6 +222,62 @@ def get_daily_summary(
         FitbitMetric.date == date
     ).all()
 
-    metrics_dict = {m.metric_type: m.value for m in metrics}
+    metrics_dict = {
+        m.metric_type: {
+            "value": m.value,
+            "unit": m.unit,
+            "synced_at": m.synced_at.isoformat() if m.synced_at else None
+        }
+        for m in metrics
+    }
 
-    return FitbitDailySummary(date=date, metrics=metrics_dict)
+    return {"date": date.isoformat(), "metrics": metrics_dict}
+
+
+@router.get("/metrics/history")
+def get_metrics_history(
+    start_date: date = Query(..., description="Start date (inclusive)"),
+    end_date: date = Query(..., description="End date (inclusive)"),
+    metric_types: Optional[str] = Query(None, description="Comma-separated list of metric types to include"),
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """
+    Get historical Fitbit metrics for a date range.
+
+    Returns metrics organized by date and metric type for charting.
+    """
+    connection = fitbit_connection.get_connection(db, profile_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail=_NOT_CONNECTED_DETAIL)
+
+    # Build query
+    query = db.query(FitbitMetric).filter(
+        FitbitMetric.user_id == profile_id,
+        FitbitMetric.date >= start_date,
+        FitbitMetric.date <= end_date
+    )
+
+    # Filter by metric types if specified
+    if metric_types:
+        types_list = [t.strip() for t in metric_types.split(',')]
+        query = query.filter(FitbitMetric.metric_type.in_(types_list))
+
+    metrics = query.order_by(FitbitMetric.date, FitbitMetric.metric_type).all()
+
+    # Organize data by metric type
+    data_by_type = {}
+    for metric in metrics:
+        if metric.metric_type not in data_by_type:
+            data_by_type[metric.metric_type] = []
+        data_by_type[metric.metric_type].append({
+            "date": metric.date.isoformat(),
+            "value": metric.value,
+            "unit": metric.unit
+        })
+
+    return {
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "metrics": data_by_type
+    }
