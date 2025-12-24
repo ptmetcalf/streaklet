@@ -9,6 +9,7 @@ A self-hosted, Dockerized daily streak tracker for maintaining consistent habits
 ## Features
 
 - **Multi-User Profiles**: Support for multiple users with completely isolated data
+- **Fitbit Integration**: Automatic task completion based on Fitbit metrics (steps, sleep, heart rate, etc.)
 - **Progressive Web App (PWA)**: Install on mobile devices for native app-like experience
 - **Offline Support**: Service worker caching for offline functionality
 - **Mobile-first** daily checklist interface
@@ -16,6 +17,7 @@ A self-hosted, Dockerized daily streak tracker for maintaining consistent habits
 - **Customizable tasks** with required/optional flags
 - **Timezone-aware** daily tracking
 - **Calendar history view** with completion stats
+- **Backup & restore** functionality for data protection
 - **Persistent SQLite database**
 - **Simple profile management** - no authentication required (designed for family/household use)
 
@@ -63,6 +65,117 @@ Streaklet supports multiple users with completely isolated data. Each profile ha
 - Switch between profiles via the dropdown in the header
 - Delete profiles (requires at least one profile to remain)
 - No authentication - perfect for families or personal use on a trusted network
+
+## Fitbit Integration
+
+Streaklet can automatically complete tasks based on your Fitbit data. Connect your Fitbit account and configure tasks to auto-complete when you hit specific metric goals (steps, sleep, active minutes, etc.).
+
+### How It Works
+
+1. **Connect Fitbit**: Navigate to Settings and click "Connect Fitbit" to authorize via OAuth 2.0
+2. **Configure Tasks**: Enable "Fitbit Auto-Check" on any task and set metric type + goal
+3. **Automatic Sync**: Data syncs hourly and auto-completes tasks when goals are met
+4. **Manual Sync**: Click "Sync Now" in Settings to immediately fetch latest data
+
+### Setting Up a Task with Fitbit
+
+When creating or editing a task:
+
+1. Enable **Fitbit Auto-Check**
+2. Select a **Metric Type**:
+   - `steps` - Daily step count
+   - `sleep_minutes` - Total sleep duration in minutes
+   - `active_minutes` - Active zone minutes (light + moderate + very active)
+   - `calories_burned` - Total calories burned
+   - `distance_km` - Distance traveled in kilometers
+   - `floors_climbed` - Floors climbed
+   - `resting_heart_rate` - Resting heart rate (BPM)
+   - `heart_rate_zones_cardio` - Minutes in cardio zone
+   - `heart_rate_zones_fat_burn` - Minutes in fat burn zone
+   - `heart_rate_zones_peak` - Minutes in peak zone
+
+3. Set **Goal Operator**:
+   - `>=` - Greater than or equal to (most common, e.g., "at least 10,000 steps")
+   - `<=` - Less than or equal to (e.g., "no more than 400 minutes sleep")
+   - `==` - Exactly equal to (rare use case)
+
+4. Enter **Goal Value** (numeric value to compare against)
+
+**Example**: Task "Walk 10,000 steps"
+- Metric Type: `steps`
+- Goal Operator: `>=`
+- Goal Value: `10000`
+
+When your Fitbit reports 10,000+ steps, this task auto-completes for the day.
+
+### Fitbit Connection Management
+
+#### Connecting
+
+1. Go to **Settings** page
+2. Click **Connect Fitbit** button
+3. Authorize Streaklet in the Fitbit OAuth flow
+4. You'll be redirected back with connection confirmed
+
+#### Status
+
+The Settings page shows:
+- Connection status (Connected/Not Connected)
+- Fitbit user display name
+- Last sync time and status
+- Manual sync button
+
+#### Disconnecting
+
+Click **Disconnect Fitbit** to:
+- Revoke OAuth tokens
+- Delete all stored Fitbit metrics
+- Disable Fitbit auto-check on all tasks
+
+### Data Syncing
+
+**Automatic Sync**: Runs every hour to fetch yesterday and today's data
+
+**Manual Sync**: Click "Sync Now" in Settings to immediately:
+1. Fetch latest Fitbit metrics for today and yesterday
+2. Store metrics in local database
+3. Auto-complete tasks that meet their goals
+
+**Historical Data**: Access the Fitbit Metrics page to view charts of historical data (last 30 days by default)
+
+### Privacy and Data Storage
+
+- OAuth tokens stored encrypted in SQLite database
+- Fitbit data stored locally per profile (complete data isolation)
+- No third-party data sharing
+- Disconnect anytime to delete all Fitbit data
+
+### Fitbit API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/fitbit/connect` | GET | Initiate OAuth flow |
+| `/api/fitbit/callback` | GET | OAuth callback (automatic) |
+| `/api/fitbit/connection` | GET | Get connection status |
+| `/api/fitbit/connection` | DELETE | Disconnect and delete data |
+| `/api/fitbit/sync` | POST | Trigger manual sync |
+| `/api/fitbit/sync-status` | GET | Get last sync time and status |
+| `/api/fitbit/metrics` | GET | Get metrics for date range |
+| `/api/fitbit/daily-summary` | GET | Get all metrics for specific date |
+| `/api/fitbit/metrics/history` | GET | Get historical metrics for charting |
+
+### Requirements
+
+To use Fitbit integration, you must configure environment variables:
+
+```bash
+FITBIT_CLIENT_ID=your_client_id
+FITBIT_CLIENT_SECRET=your_client_secret
+FITBIT_REDIRECT_URI=http://your-domain:8080/api/fitbit/callback
+APP_SECRET_KEY=your_secret_key_for_token_encryption
+```
+
+Register your application at [dev.fitbit.com](https://dev.fitbit.com) to obtain credentials.
 
 ## Configuration
 
