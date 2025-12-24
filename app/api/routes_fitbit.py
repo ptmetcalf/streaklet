@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from datetime import date
 from typing import Optional, List
 import secrets
+from urllib.parse import quote
 
 from app.core.db import get_db
 from app.core.profile_context import get_profile_id
@@ -72,7 +73,8 @@ async def oauth_callback(
     """
     # Check for OAuth errors
     if error:
-        return RedirectResponse(url=f"/settings?fitbit=error&message={error}")
+        safe_error = quote(error, safe="")
+        return RedirectResponse(url=f"/settings?fitbit=error&message={safe_error}")
 
     # Validate required parameters
     if not code or not state:
@@ -88,7 +90,8 @@ async def oauth_callback(
         await fitbit_oauth.exchange_code_for_tokens(db, code, profile_id)
         return RedirectResponse(url="/settings?fitbit=connected")
     except Exception as e:
-        return RedirectResponse(url=f"/settings?fitbit=error&message={str(e)}")
+        safe_message = quote(str(e), safe="")
+        return RedirectResponse(url=f"/settings?fitbit=error&message={safe_message}")
 
 
 @router.get("/connection", response_model=FitbitConnectionResponse)
