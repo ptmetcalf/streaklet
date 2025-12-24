@@ -15,7 +15,7 @@ from typing import Optional
 
 from app.core.config import settings
 from app.core.encryption import encrypt_token, decrypt_token
-from app.core.time import get_now
+from app.core.time import get_now, to_timezone_aware
 from app.models.fitbit_connection import FitbitConnection
 
 
@@ -230,7 +230,9 @@ def is_token_expired(connection: FitbitConnection) -> bool:
     """
     # Add 5-minute buffer to avoid race conditions
     buffer = timedelta(minutes=5)
-    return get_now() + buffer >= connection.token_expires_at
+    # Make token_expires_at timezone-aware if it isn't already (SQLite stores as naive)
+    expires_at = to_timezone_aware(connection.token_expires_at)
+    return get_now() + buffer >= expires_at
 
 
 async def ensure_valid_token(

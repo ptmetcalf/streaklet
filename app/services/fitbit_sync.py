@@ -49,7 +49,7 @@ async def upsert_metrics(
             "metric_type": metric_type,
             "value": metric_data["value"],
             "unit": metric_data.get("unit"),
-            "metadata": metric_data.get("metadata"),
+            "extra_data": metric_data.get("extra_data"),
             "synced_at": get_now()
         }
 
@@ -60,7 +60,7 @@ async def upsert_metrics(
             set_={
                 "value": stmt.excluded.value,
                 "unit": stmt.excluded.unit,
-                "metadata": stmt.excluded.metadata,
+                "extra_data": stmt.excluded.extra_data,
                 "synced_at": stmt.excluded.synced_at
             }
         )
