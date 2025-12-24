@@ -76,3 +76,89 @@ def test_delete_task(client: TestClient, sample_tasks):
     response = client.get("/api/tasks")
     tasks = response.json()
     assert len(tasks) == 2
+
+
+def test_create_task_with_fitbit_auto_check_missing_metric_type(client: TestClient, sample_profiles):
+    """Test creating task with fitbit_auto_check=True but missing metric_type."""
+    response = client.post("/api/tasks", json={
+        "title": "Fitbit Task",
+        "sort_order": 1,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_auto_check": True,
+        "fitbit_goal_value": 10000,
+        "fitbit_goal_operator": ">="
+    })
+
+    assert response.status_code == 422
+    assert "fitbit_metric_type is required" in response.text
+
+
+def test_create_task_with_fitbit_auto_check_empty_metric_type(client: TestClient, sample_profiles):
+    """Test creating task with fitbit_auto_check=True but empty metric_type."""
+    response = client.post("/api/tasks", json={
+        "title": "Fitbit Task",
+        "sort_order": 1,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_auto_check": True,
+        "fitbit_metric_type": "",
+        "fitbit_goal_value": 10000,
+        "fitbit_goal_operator": ">="
+    })
+
+    assert response.status_code == 422
+    assert "fitbit_metric_type is required" in response.text
+
+
+def test_create_task_with_fitbit_auto_check_missing_goal_value(client: TestClient, sample_profiles):
+    """Test creating task with fitbit_auto_check=True but missing goal_value."""
+    response = client.post("/api/tasks", json={
+        "title": "Fitbit Task",
+        "sort_order": 1,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_auto_check": True,
+        "fitbit_metric_type": "steps",
+        "fitbit_goal_operator": ">="
+    })
+
+    assert response.status_code == 422
+    assert "fitbit_goal_value is required" in response.text
+
+
+def test_create_task_with_fitbit_auto_check_missing_goal_operator(client: TestClient, sample_profiles):
+    """Test creating task with fitbit_auto_check=True but missing goal_operator."""
+    response = client.post("/api/tasks", json={
+        "title": "Fitbit Task",
+        "sort_order": 1,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_auto_check": True,
+        "fitbit_metric_type": "steps",
+        "fitbit_goal_value": 10000
+    })
+
+    assert response.status_code == 422
+    assert "fitbit_goal_operator is required" in response.text
+
+
+def test_create_task_with_fitbit_auto_check_all_fields_valid(client: TestClient, sample_profiles):
+    """Test creating task with fitbit_auto_check=True and all required fields."""
+    response = client.post("/api/tasks", json={
+        "title": "Fitbit Task",
+        "sort_order": 1,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_auto_check": True,
+        "fitbit_metric_type": "steps",
+        "fitbit_goal_value": 10000,
+        "fitbit_goal_operator": ">="
+    })
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["fitbit_auto_check"] is True
+    assert data["fitbit_metric_type"] == "steps"
+    assert data["fitbit_goal_value"] == 10000
+    assert data["fitbit_goal_operator"] == ">="
