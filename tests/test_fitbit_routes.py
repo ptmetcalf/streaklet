@@ -324,11 +324,24 @@ def test_fitbit_routes_respect_profile_header(client: TestClient, test_db, sampl
 
 
 def test_oauth_callback_with_error(client: TestClient, sample_profiles):
-    """Test OAuth callback when Fitbit returns an error."""
+    """Test OAuth callback when Fitbit returns a known error."""
     response = client.get("/api/fitbit/callback?error=access_denied&state=test_state", follow_redirects=False)
 
     assert response.status_code == 307
     assert "/settings?fitbit=error&message=access_denied" in response.headers["location"]
+
+
+def test_oauth_callback_with_unknown_error(client: TestClient, sample_profiles):
+    """Test OAuth callback with unknown error gets mapped to oauth_error."""
+    # Try to inject an unknown/malicious error code
+    response = client.get("/api/fitbit/callback?error=malicious_code&state=test_state", follow_redirects=False)
+
+    assert response.status_code == 307
+    location = response.headers["location"]
+
+    # Unknown error should be mapped to generic "oauth_error"
+    assert "/settings?fitbit=error&message=oauth_error" in location
+    assert "malicious_code" not in location
 
 
 def test_oauth_callback_missing_code(client: TestClient, sample_profiles):
