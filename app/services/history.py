@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 from app.models.daily_status import DailyStatus
+from app.models.fitbit_metric import FitbitMetric
 from datetime import date
 from calendar import monthrange
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int) -> Dict[str, Any]:
@@ -41,6 +42,26 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
         for status in completed_days
     }
 
+    # Query Fitbit metrics for the month
+    fitbit_metrics = db.query(FitbitMetric).filter(
+        and_(
+            FitbitMetric.user_id == profile_id,
+            FitbitMetric.date >= first_day,
+            FitbitMetric.date <= last_day
+        )
+    ).all()
+
+    # Organize Fitbit metrics by date
+    fitbit_by_date: Dict[str, Dict[str, Any]] = {}
+    for metric in fitbit_metrics:
+        date_str = metric.date.isoformat()
+        if date_str not in fitbit_by_date:
+            fitbit_by_date[date_str] = {}
+        fitbit_by_date[date_str][metric.metric_type] = {
+            'value': metric.value,
+            'unit': metric.unit
+        }
+
     # Build days dictionary with all dates in month
     days_dict = {}
     for day in range(1, days_in_month + 1):
@@ -55,6 +76,10 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
                 'completed': False,
                 'completed_at': None
             }
+
+        # Add Fitbit metrics if available
+        if date_str in fitbit_by_date:
+            days_dict[date_str]['fitbit_metrics'] = fitbit_by_date[date_str]
 
     return {
         'days_in_month': days_in_month,

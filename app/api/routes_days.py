@@ -30,9 +30,18 @@ def get_today_info(
         for check in check_service.get_checks_for_date(db, today, profile_id)
     }
 
+    # Get Fitbit progress for tasks with Fitbit goals
+    from app.services.fitbit_checks import get_task_fitbit_progress
+
     tasks_with_checks = []
     for task in active_tasks:
         check = checks_map.get(task.id)
+
+        # Get Fitbit progress if task has Fitbit goal
+        fitbit_progress = {}
+        if task.fitbit_metric_type and task.fitbit_goal_value:
+            fitbit_progress = get_task_fitbit_progress(db, task, today, profile_id)
+
         tasks_with_checks.append(
             TaskWithCheck(
                 id=task.id,
@@ -42,6 +51,15 @@ def get_today_info(
                 is_active=task.is_active,
                 checked=check.checked if check else False,
                 checked_at=check.checked_at if check else None,
+                # Fitbit fields
+                fitbit_metric_type=task.fitbit_metric_type,
+                fitbit_goal_value=task.fitbit_goal_value,
+                fitbit_goal_operator=task.fitbit_goal_operator,
+                fitbit_auto_check=task.fitbit_auto_check,
+                # Fitbit progress
+                fitbit_current_value=fitbit_progress.get("current_value"),
+                fitbit_goal_met=fitbit_progress.get("goal_met", False),
+                fitbit_unit=fitbit_progress.get("unit"),
             )
         )
 

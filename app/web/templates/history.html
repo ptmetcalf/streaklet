@@ -45,6 +45,20 @@
                     }"
                 >
                     <div class="day-number" x-text="day.dayNumber"></div>
+
+                    <!-- Tooltip with Fitbit metrics -->
+                    <div x-show="day.fitbitMetrics && !day.isEmpty" class="day-tooltip">
+                        <div class="tooltip-date" x-text="formatTooltipDate(day.dateStr)"></div>
+                        <div class="tooltip-metrics">
+                            <template x-for="metric in formatFitbitMetrics(day.fitbitMetrics)" :key="metric.label">
+                                <div class="tooltip-metric">
+                                    <span class="metric-icon" x-text="metric.icon"></span>
+                                    <span class="metric-label" x-text="metric.label"></span>
+                                    <span class="metric-value" x-text="metric.value"></span>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
                 </div>
             </template>
         </div>
@@ -150,11 +164,54 @@ function calendar() {
                     isFuture: dateStr > this.today,
                     isToday: dateStr === this.today,
                     isEmpty: false,
+                    fitbitMetrics: dayData && dayData.fitbit_metrics,
                     key: dateStr
                 });
             }
 
             return days;
+        },
+
+        formatTooltipDate(dateStr) {
+            if (!dateStr) return '';
+            const date = parseDateOnly(dateStr);
+            return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        },
+
+        formatFitbitMetrics(metrics) {
+            if (!metrics) return [];
+
+            const metricConfig = {
+                steps: { icon: '👟', label: 'Steps' },
+                sleep_minutes: { icon: '😴', label: 'Sleep', formatter: (v) => {
+                    const hours = Math.floor(v / 60);
+                    const mins = Math.round(v % 60);
+                    return `${hours}h ${mins}m`;
+                }},
+                active_minutes: { icon: '🔥', label: 'Active', formatter: (v) => `${Math.round(v)} min` },
+                resting_heart_rate: { icon: '❤️', label: 'Resting HR', formatter: (v) => `${Math.round(v)} bpm` },
+                distance: { icon: '🏃', label: 'Distance', formatter: (v) => `${v.toFixed(1)} mi` },
+                floors: { icon: '🪜', label: 'Floors', formatter: (v) => Math.round(v) },
+                calories_burned: { icon: '🔥', label: 'Calories', formatter: (v) => Math.round(v) },
+                sleep_score: { icon: '💤', label: 'Sleep Score', formatter: (v) => Math.round(v) }
+            };
+
+            return Object.entries(metrics)
+                .map(([type, data]) => {
+                    const config = metricConfig[type];
+                    if (!config) return null;
+
+                    const value = config.formatter
+                        ? config.formatter(data.value)
+                        : data.value.toLocaleString('en-US');
+
+                    return {
+                        icon: config.icon,
+                        label: config.label,
+                        value: value
+                    };
+                })
+                .filter(m => m !== null);
         },
 
         get completionRate() {
@@ -182,4 +239,106 @@ function calendar() {
     }
 }
 </script>
+
+<style>
+.calendar-day {
+    position: relative;
+}
+
+.day-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+    min-width: 200px;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+.calendar-day:hover .day-tooltip {
+    display: block;
+}
+
+/* Arrow pointing down from tooltip */
+.day-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: white;
+}
+
+.day-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 7px solid transparent;
+    border-top-color: var(--border-color);
+    margin-top: 1px;
+}
+
+.tooltip-date {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
+}
+
+.tooltip-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.tooltip-metric {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.metric-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.metric-label {
+    color: #666;
+    min-width: 80px;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: #333;
+    margin-left: auto;
+}
+
+/* Prevent tooltip from being cut off at edges */
+.calendar-day:first-child .day-tooltip,
+.calendar-day:nth-child(2) .day-tooltip {
+    left: 0;
+    transform: none;
+}
+
+.calendar-day:nth-last-child(1) .day-tooltip,
+.calendar-day:nth-last-child(2) .day-tooltip {
+    left: auto;
+    right: 0;
+    transform: none;
+}
+</style>
 {% endblock %}

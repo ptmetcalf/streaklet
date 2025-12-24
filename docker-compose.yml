@@ -1,5 +1,6 @@
 services:
   streaklet:
+    image: streaklet
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,10 +9,20 @@ services:
       - "8080:8080"
     volumes:
       - ./data:/data
+    env_file:
+      - .env
     environment:
-      - APP_TIMEZONE=America/Chicago
-      - DB_PATH=/data/app.db
-      - PORT=8080
+      - APP_TIMEZONE=${APP_TIMEZONE:-America/Chicago}
+      - DB_PATH=${DB_PATH:-/data/app.db}
+      - PORT=${PORT:-8080}
+      # Fitbit OAuth
+      - FITBIT_CLIENT_ID=${FITBIT_CLIENT_ID}
+      - FITBIT_CLIENT_SECRET=${FITBIT_CLIENT_SECRET}
+      - FITBIT_CALLBACK_URL=${FITBIT_CALLBACK_URL:-http://localhost:8080/api/fitbit/callback}
+      # Security
+      - APP_SECRET_KEY=${APP_SECRET_KEY}
+      # Sync settings
+      - FITBIT_SYNC_INTERVAL_HOURS=${FITBIT_SYNC_INTERVAL_HOURS:-1}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]

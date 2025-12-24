@@ -30,7 +30,16 @@
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                 </div>
-                <div class="task-title" x-text="task.title"></div>
+                <div class="task-content">
+                    <div class="task-title" x-text="task.title"></div>
+                    <!-- Fitbit Progress Badge -->
+                    <div x-show="task.fitbit_metric_type && task.fitbit_current_value != null"
+                         class="fitbit-progress"
+                         :class="{ 'goal-met': task.fitbit_goal_met }">
+                        <span class="fitbit-icon">📊</span>
+                        <span x-text="formatFitbitProgress(task)"></span>
+                    </div>
+                </div>
                 <span class="task-badge" :class="{ 'required': task.is_required }" x-show="task.is_required">
                     Required
                 </span>
@@ -92,6 +101,42 @@ function checklist() {
             return Math.round((this.completedCount / this.requiredCount) * 100);
         },
 
+        formatFitbitProgress(task) {
+            if (!task.fitbit_current_value || !task.fitbit_goal_value) return '';
+
+            const current = task.fitbit_current_value;
+            const goal = task.fitbit_goal_value;
+            const unit = task.fitbit_unit || '';
+
+            // Format based on metric type
+            if (task.fitbit_metric_type === 'sleep_minutes') {
+                const formatMinutes = (mins) => {
+                    const hours = Math.floor(mins / 60);
+                    const minutes = Math.round(mins % 60);
+                    return `${hours}h ${minutes}m`;
+                };
+                return `${formatMinutes(current)} / ${formatMinutes(goal)}`;
+            }
+
+            // Format numbers with commas for readability
+            const formatNumber = (num) => {
+                if (num >= 1000) {
+                    return num.toLocaleString('en-US');
+                }
+                return Math.round(num).toString();
+            };
+
+            const currentStr = formatNumber(current);
+            const goalStr = formatNumber(goal);
+
+            // Add unit if available
+            if (unit) {
+                return `${currentStr} / ${goalStr} ${unit}`;
+            }
+
+            return `${currentStr} / ${goalStr}`;
+        },
+
         async loadTodayData() {
             try {
                 const response = await fetchWithProfile('/api/days/today');
@@ -133,4 +178,40 @@ function checklist() {
     }
 }
 </script>
+
+<style>
+.task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.task-title {
+    font-weight: 500;
+}
+
+.fitbit-progress {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #666;
+    padding: 2px 8px;
+    background: #f0f0f0;
+    border-radius: 12px;
+    width: fit-content;
+}
+
+.fitbit-progress.goal-met {
+    background: #e8f5e9;
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+.fitbit-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+</style>
 {% endblock %}

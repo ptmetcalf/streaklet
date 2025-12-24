@@ -11,9 +11,13 @@ def test_seed_default_tasks(test_db: Session, sample_profiles):
     tasks = task_service.get_tasks(test_db, profile_id=1)
 
     assert len(tasks) == 5
-    assert tasks[0].title == "Follow a diet"
+    assert tasks[0].title == "Walk 10,000 steps"
     assert tasks[0].is_required is True
     assert tasks[0].is_active is True
+    # Verify Fitbit fields are present (may be None for non-Fitbit tasks)
+    assert hasattr(tasks[0], 'fitbit_metric_type')
+    assert tasks[0].fitbit_metric_type == "steps"
+    assert tasks[0].fitbit_goal_value == 10000
 
 
 def test_seed_default_tasks_not_duplicate(test_db: Session, sample_profiles):

@@ -6,11 +6,48 @@ from typing import List, Optional
 
 
 DEFAULT_TASKS = [
-    {"title": "Follow a diet", "sort_order": 1, "is_required": True, "is_active": True},
-    {"title": "30 minute workout", "sort_order": 2, "is_required": True, "is_active": True},
-    {"title": "30 minute workout", "sort_order": 3, "is_required": True, "is_active": True},
-    {"title": "Read 10 pages", "sort_order": 4, "is_required": True, "is_active": True},
-    {"title": "20 minutes of hobby time", "sort_order": 5, "is_required": True, "is_active": True},
+    {
+        "title": "Walk 10,000 steps",
+        "sort_order": 1,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_metric_type": "steps",
+        "fitbit_goal_value": 10000,
+        "fitbit_goal_operator": "gte",
+        "fitbit_auto_check": False  # User enables when connecting Fitbit
+    },
+    {
+        "title": "Sleep 7+ hours",
+        "sort_order": 2,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_metric_type": "sleep_minutes",
+        "fitbit_goal_value": 420,
+        "fitbit_goal_operator": "gte",
+        "fitbit_auto_check": False
+    },
+    {
+        "title": "30 minutes active",
+        "sort_order": 3,
+        "is_required": True,
+        "is_active": True,
+        "fitbit_metric_type": "active_minutes",
+        "fitbit_goal_value": 30,
+        "fitbit_goal_operator": "gte",
+        "fitbit_auto_check": False
+    },
+    {
+        "title": "Read 10 pages",
+        "sort_order": 4,
+        "is_required": True,
+        "is_active": True
+    },
+    {
+        "title": "20 minutes of hobby time",
+        "sort_order": 5,
+        "is_required": True,
+        "is_active": True
+    },
 ]
 
 

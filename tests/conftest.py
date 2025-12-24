@@ -1,5 +1,5 @@
 import pytest
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 from datetime import date, datetime
@@ -31,6 +31,14 @@ def test_db():
         f"sqlite:///{test_db_path}",
         connect_args={"check_same_thread": False}
     )
+
+    # Enable foreign keys for SQLite test database
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
     Base.metadata.create_all(bind=engine)
 
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

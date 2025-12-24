@@ -78,7 +78,52 @@
                             Active
                         </label>
                     </div>
-                    <div style="display: flex; gap: 8px;">
+
+                    <!-- Fitbit Goal Configuration -->
+                    <div x-show="fitbitConnected" style="margin-top: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9;">
+                        <h4 style="margin-bottom: 12px; font-size: 14px;">Fitbit Goal (Optional)</h4>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" x-model="editingTask.fitbit_auto_check">
+                                Auto-check when goal met
+                            </label>
+                        </div>
+                        <div x-show="editingTask.fitbit_auto_check">
+                            <div class="form-group">
+                                <label>Metric Type</label>
+                                <select x-model="editingTask.fitbit_metric_type">
+                                    <option value="">Select metric...</option>
+                                    <option value="steps">Steps</option>
+                                    <option value="active_minutes">Active Minutes</option>
+                                    <option value="sleep_minutes">Sleep Minutes</option>
+                                    <option value="sleep_score">Sleep Score</option>
+                                    <option value="distance">Distance (miles)</option>
+                                    <option value="floors">Floors Climbed</option>
+                                    <option value="calories_burned">Calories Burned</option>
+                                    <option value="resting_heart_rate">Resting Heart Rate</option>
+                                </select>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
+                                <div class="form-group">
+                                    <label>Operator</label>
+                                    <select x-model="editingTask.fitbit_goal_operator">
+                                        <option value="gte">At least (≥)</option>
+                                        <option value="lte">At most (≤)</option>
+                                        <option value="eq">Exactly (=)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Goal Value</label>
+                                    <input type="number"
+                                           x-model="editingTask.fitbit_goal_value"
+                                           placeholder="e.g., 10000"
+                                           step="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
                         <button class="btn-primary" @click="updateTask">Save</button>
                         <button class="btn-secondary" @click="editingTask = null">Cancel</button>
                     </div>
@@ -86,7 +131,84 @@
             </template>
         </div>
     </div>
+
+    <!-- Fitbit Integration Section -->
+    <div class="settings-section" style="margin-top: 32px;">
+        <h2>Fitbit Integration</h2>
+
+        <!-- Not Connected State -->
+        <div x-show="!fitbitConnected" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px; text-align: center;">
+            <p style="margin-bottom: 16px; color: #666;">
+                Connect your Fitbit account to automatically track steps, sleep, and activity.
+                Tasks can auto-check when you meet your fitness goals!
+            </p>
+            <button class="btn-primary" @click="connectFitbit">
+                Connect to Fitbit
+            </button>
+        </div>
+
+        <!-- Connected State -->
+        <div x-show="fitbitConnected" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <div style="font-weight: 600; margin-bottom: 4px;">✓ Connected to Fitbit</div>
+                    <div style="font-size: 14px; color: #666;">
+                        <span x-show="fitbitLastSync">
+                            Last synced: <span x-text="formatSyncTime(fitbitLastSync)"></span>
+                        </span>
+                        <span x-show="!fitbitLastSync">Never synced</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary" @click="manualSync" :disabled="isSyncing">
+                        <span x-show="!isSyncing">Sync Now</span>
+                        <span x-show="isSyncing">Syncing...</span>
+                    </button>
+                    <button class="btn-danger" @click="disconnectFitbit">
+                        Disconnect
+                    </button>
+                </div>
+            </div>
+
+            <!-- Today's Metrics Dashboard -->
+            <div x-show="Object.keys(todayMetrics).length > 0" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 12px;">Today's Stats</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px;">
+                    <div x-show="todayMetrics.steps" class="metric-card">
+                        <div style="font-size: 24px;">👟</div>
+                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="todayMetrics.steps || '-'"></div>
+                        <div style="font-size: 12px; color: #666;">Steps</div>
+                    </div>
+                    <div x-show="todayMetrics.sleep_minutes" class="metric-card">
+                        <div style="font-size: 24px;">😴</div>
+                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="formatHours(todayMetrics.sleep_minutes)"></div>
+                        <div style="font-size: 12px; color: #666;">Sleep</div>
+                    </div>
+                    <div x-show="todayMetrics.active_minutes" class="metric-card">
+                        <div style="font-size: 24px;">🔥</div>
+                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="todayMetrics.active_minutes || '-'"></div>
+                        <div style="font-size: 12px; color: #666;">Active Min</div>
+                    </div>
+                    <div x-show="todayMetrics.resting_heart_rate" class="metric-card">
+                        <div style="font-size: 24px;">❤️</div>
+                        <div style="font-size: 24px; font-weight: 600; margin: 8px 0;" x-text="todayMetrics.resting_heart_rate || '-'"></div>
+                        <div style="font-size: 12px; color: #666;">Resting HR</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<style>
+.metric-card {
+    padding: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    text-align: center;
+    background: var(--background-color);
+}
+</style>
 
 <script>
 function settings() {
@@ -101,8 +223,28 @@ function settings() {
             sort_order: 0
         },
 
+        // Fitbit state
+        fitbitConnected: false,
+        fitbitLastSync: null,
+        fitbitSyncStatus: null,
+        isSyncing: false,
+        todayMetrics: {},
+
         async init() {
             await this.loadTasks();
+            await this.loadFitbitStatus();
+
+            // Check for OAuth callback status
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('fitbit') === 'connected') {
+                await this.loadFitbitStatus();
+                await this.loadTodayMetrics();
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } else if (params.get('fitbit') === 'error') {
+                alert('Failed to connect to Fitbit: ' + (params.get('message') || 'Unknown error'));
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
         },
 
         async loadTasks() {
@@ -154,7 +296,11 @@ function settings() {
                         title: this.editingTask.title,
                         is_required: this.editingTask.is_required,
                         is_active: this.editingTask.is_active,
-                        sort_order: this.editingTask.sort_order
+                        sort_order: this.editingTask.sort_order,
+                        fitbit_metric_type: this.editingTask.fitbit_metric_type,
+                        fitbit_goal_value: this.editingTask.fitbit_goal_value,
+                        fitbit_goal_operator: this.editingTask.fitbit_goal_operator,
+                        fitbit_auto_check: this.editingTask.fitbit_auto_check
                     })
                 });
 
@@ -181,6 +327,116 @@ function settings() {
             } catch (error) {
                 console.error('Error deleting task:', error);
             }
+        },
+
+        // Fitbit methods
+        async loadFitbitStatus() {
+            try {
+                const response = await fetchWithProfile('/api/fitbit/connection');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.fitbitConnected = data.connected;
+                    this.fitbitLastSync = data.last_sync_at;
+                    this.fitbitSyncStatus = data.last_sync_status;
+
+                    if (this.fitbitConnected) {
+                        await this.loadTodayMetrics();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading Fitbit status:', error);
+            }
+        },
+
+        async connectFitbit() {
+            try {
+                const response = await fetchWithProfile('/api/fitbit/connect');
+                if (response.ok) {
+                    const data = await response.json();
+                    window.location.href = data.redirect_url;
+                }
+            } catch (error) {
+                console.error('Error connecting to Fitbit:', error);
+                alert('Failed to connect to Fitbit');
+            }
+        },
+
+        async disconnectFitbit() {
+            if (!confirm('Disconnect Fitbit and delete all Fitbit data?')) return;
+
+            try {
+                const response = await fetchWithProfile('/api/fitbit/connection', {
+                    method: 'DELETE'
+                });
+
+                if (response.ok || response.status === 204) {
+                    this.fitbitConnected = false;
+                    this.fitbitLastSync = null;
+                    this.todayMetrics = {};
+                    alert('Fitbit disconnected successfully');
+                }
+            } catch (error) {
+                console.error('Error disconnecting Fitbit:', error);
+                alert('Failed to disconnect Fitbit');
+            }
+        },
+
+        async manualSync() {
+            this.isSyncing = true;
+            try {
+                const response = await fetchWithProfile('/api/fitbit/sync', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    // Wait a moment for sync to complete
+                    setTimeout(async () => {
+                        await this.loadFitbitStatus();
+                        await this.loadTodayMetrics();
+                        this.isSyncing = false;
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Error syncing Fitbit:', error);
+                this.isSyncing = false;
+            }
+        },
+
+        async loadTodayMetrics() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const response = await fetchWithProfile(`/api/fitbit/daily-summary?date=${today}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.todayMetrics = data.metrics || {};
+                }
+            } catch (error) {
+                console.error('Error loading today metrics:', error);
+            }
+        },
+
+        formatSyncTime(timestamp) {
+            if (!timestamp) return '';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+
+            if (diffMins < 1) return 'just now';
+            if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+
+            const diffHours = Math.floor(diffMins / 60);
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        },
+
+        formatHours(minutes) {
+            if (!minutes) return '-';
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return `${hours}h ${mins}m`;
         }
     }
 }

@@ -14,6 +14,17 @@ class TaskWithCheck(BaseModel):
     checked: bool
     checked_at: Optional[datetime]
 
+    # Fitbit fields
+    fitbit_metric_type: Optional[str] = None
+    fitbit_goal_value: Optional[float] = None
+    fitbit_goal_operator: Optional[str] = None
+    fitbit_auto_check: bool = False
+
+    # Fitbit progress (populated if Fitbit goal configured)
+    fitbit_current_value: Optional[float] = None
+    fitbit_goal_met: bool = False
+    fitbit_unit: Optional[str] = None
+
 
 class StreakInfo(BaseModel):
     current_streak: int
