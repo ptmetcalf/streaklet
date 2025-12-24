@@ -29,7 +29,7 @@ def test_seed_default_tasks_not_duplicate(test_db: Session, sample_profiles):
     assert len(tasks) == 5
 
 
-def test_create_task(client: TestClient):
+def test_create_task(client: TestClient, sample_profiles):
     """Test creating a new task via API."""
     response = client.post("/api/tasks", json={
         "title": "New Task",

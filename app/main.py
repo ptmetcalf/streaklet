@@ -64,6 +64,14 @@ async def settings(request: Request):
     })
 
 
+@app.get("/fitbit", response_class=HTMLResponse)
+async def fitbit(request: Request):
+    """Fitbit metrics viewing page."""
+    return templates.TemplateResponse("fitbit.html", {
+        "request": request
+    })
+
+
 @app.get("/history", response_class=HTMLResponse)
 async def history(request: Request):
     """History page showing calendar of completed days - data fetched client-side."""

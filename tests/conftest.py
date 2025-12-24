@@ -8,6 +8,7 @@ from freezegun import freeze_time
 
 from app.core.db import Base, get_db
 from app.main import app
+from app.core.config import settings
 
 
 # Freeze time to a consistent datetime for all tests
@@ -17,6 +18,14 @@ def frozen_time():
     """Freeze time to ensure consistent dates across all test environments."""
     with freeze_time("2025-12-14 12:00:00", tz_offset=-6):  # America/Chicago is UTC-6
         yield
+
+
+@pytest.fixture(scope="session", autouse=True)
+def test_secret_key():
+    """Provide a deterministic secret key for encryption during tests."""
+    os.environ.setdefault("APP_SECRET_KEY", "test-secret-key")
+    settings.app_secret_key = os.environ["APP_SECRET_KEY"]
+    yield
 
 
 @pytest.fixture(scope="function")

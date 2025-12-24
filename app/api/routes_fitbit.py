@@ -28,6 +28,7 @@ from app.models.fitbit_metric import FitbitMetric
 
 
 router = APIRouter(prefix="/api/fitbit", tags=["fitbit"])
+_NOT_CONNECTED_DETAIL = "Not connected to Fitbit"
 
 
 # In-memory state storage (use Redis in production for multi-instance deployments)
@@ -117,9 +118,7 @@ async def disconnect_fitbit(
     - All FitbitMetric records (CASCADE)
     - Resets fitbit_auto_check on tasks to False
     """
-    success = await fitbit_connection.delete_connection(db, profile_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="No Fitbit connection found")
+    await fitbit_connection.delete_connection(db, profile_id)
     return None
 
 
@@ -137,7 +136,7 @@ async def manual_sync(
 
     connection = fitbit_connection.get_connection(db, profile_id)
     if not connection:
-        raise HTTPException(status_code=404, detail="No Fitbit connection found")
+        raise HTTPException(status_code=404, detail=_NOT_CONNECTED_DETAIL)
 
     try:
         # Sync recent data
@@ -163,7 +162,7 @@ def get_sync_status(
     """
     connection = fitbit_connection.get_connection(db, profile_id)
     if not connection:
-        raise HTTPException(status_code=404, detail="No Fitbit connection found")
+        raise HTTPException(status_code=404, detail=_NOT_CONNECTED_DETAIL)
 
     return FitbitSyncStatus(
         is_syncing=False,  # TODO: Check if sync task is running
@@ -185,12 +184,15 @@ def get_metrics(
 
     Optionally filter by metric types (e.g., "steps,sleep_minutes").
     """
+    connection = fitbit_connection.get_connection(db, profile_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail=_NOT_CONNECTED_DETAIL)
+
     query = db.query(FitbitMetric).filter(
         FitbitMetric.user_id == profile_id,
         FitbitMetric.date >= start_date,
         FitbitMetric.date <= end_date
     )
-
     if metric_types:
         types = [t.strip() for t in metric_types.split(",")]
         query = query.filter(FitbitMetric.metric_type.in_(types))
@@ -211,6 +213,10 @@ def get_daily_summary(
 
     Returns metrics grouped by type in a dictionary.
     """
+    connection = fitbit_connection.get_connection(db, profile_id)
+    if not connection:
+        raise HTTPException(status_code=404, detail=_NOT_CONNECTED_DETAIL)
+
     metrics = db.query(FitbitMetric).filter(
         FitbitMetric.user_id == profile_id,
         FitbitMetric.date == date

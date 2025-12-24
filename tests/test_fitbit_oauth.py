@@ -1,7 +1,7 @@
 """Tests for Fitbit OAuth service."""
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 from sqlalchemy.orm import Session
 
 from app.services import fitbit_oauth
@@ -23,15 +23,15 @@ def test_generate_auth_url():
 @pytest.mark.asyncio
 async def test_exchange_code_for_tokens(test_db: Session, sample_profiles):
     """Test exchanging authorization code for tokens."""
-    mock_response = AsyncMock()
-    mock_response.json = AsyncMock(return_value={
+    mock_response = Mock()
+    mock_response.json.return_value = {
         "access_token": "test_access_token",
         "refresh_token": "test_refresh_token",
         "user_id": "FITBIT123",
         "scope": "activity heartrate sleep profile",
         "expires_in": 28800
-    })
-    mock_response.raise_for_status = AsyncMock()
+    }
+    mock_response.raise_for_status = Mock()
 
     with patch("httpx.AsyncClient") as mock_client:
         mock_instance = AsyncMock()
@@ -68,7 +68,7 @@ async def test_exchange_code_updates_existing_connection(test_db: Session, sampl
     test_db.add(existing)
     test_db.commit()
 
-    mock_response = AsyncMock()
+    mock_response = Mock()
     mock_response.json.return_value = {
         "access_token": "new_access_token",
         "refresh_token": "new_refresh_token",
@@ -76,7 +76,7 @@ async def test_exchange_code_updates_existing_connection(test_db: Session, sampl
         "scope": "activity heartrate sleep profile",
         "expires_in": 28800
     }
-    mock_response.raise_for_status = AsyncMock()
+    mock_response.raise_for_status = Mock()
 
     with patch("httpx.AsyncClient") as mock_client:
         mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
@@ -111,13 +111,13 @@ async def test_refresh_access_token(test_db: Session, sample_profiles):
     test_db.add(connection)
     test_db.commit()
 
-    mock_response = AsyncMock()
+    mock_response = Mock()
     mock_response.json.return_value = {
         "access_token": "new_access_token",
         "refresh_token": "new_refresh_token",
         "expires_in": 28800
     }
-    mock_response.raise_for_status = AsyncMock()
+    mock_response.raise_for_status = Mock()
 
     with patch("httpx.AsyncClient") as mock_client:
         mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)
@@ -189,13 +189,13 @@ async def test_ensure_valid_token_refreshes_if_expired(test_db: Session, sample_
     test_db.add(connection)
     test_db.commit()
 
-    mock_response = AsyncMock()
+    mock_response = Mock()
     mock_response.json.return_value = {
         "access_token": "new_access_token",
         "refresh_token": "new_refresh_token",
         "expires_in": 28800
     }
-    mock_response.raise_for_status = AsyncMock()
+    mock_response.raise_for_status = Mock()
 
     with patch("httpx.AsyncClient") as mock_client:
         mock_client.return_value.__aenter__.return_value.post = AsyncMock(return_value=mock_response)

@@ -52,7 +52,52 @@
                     Active
                 </label>
             </div>
-            <div style="display: flex; gap: 8px;">
+
+            <!-- Fitbit Goal Configuration -->
+            <div x-show="fitbitConnected" style="margin-top: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9;">
+                <h4 style="margin-bottom: 12px; font-size: 14px;">Fitbit Goal (Optional)</h4>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" x-model="newTask.fitbit_auto_check">
+                        Auto-check when goal met
+                    </label>
+                </div>
+                <div x-show="newTask.fitbit_auto_check">
+                    <div class="form-group">
+                        <label>Metric Type</label>
+                        <select x-model="newTask.fitbit_metric_type">
+                            <option value="">Select metric...</option>
+                            <option value="steps">Steps</option>
+                            <option value="active_minutes">Active Minutes</option>
+                            <option value="sleep_minutes">Sleep Minutes</option>
+                            <option value="sleep_score">Sleep Score</option>
+                            <option value="distance">Distance (miles)</option>
+                            <option value="floors">Floors Climbed</option>
+                            <option value="calories_burned">Calories Burned</option>
+                            <option value="resting_heart_rate">Resting Heart Rate</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
+                        <div class="form-group">
+                            <label>Operator</label>
+                            <select x-model="newTask.fitbit_goal_operator">
+                                <option value="gte">At least (≥)</option>
+                                <option value="lte">At most (≤)</option>
+                                <option value="eq">Exactly (=)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Goal Value</label>
+                            <input type="number"
+                                   x-model="newTask.fitbit_goal_value"
+                                   placeholder="e.g., 10000"
+                                   step="1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
                 <button class="btn-primary" @click="addTask">Save</button>
                 <button class="btn-secondary" @click="showAddForm = false; resetNewTask()">Cancel</button>
             </div>
@@ -220,7 +265,11 @@ function settings() {
             title: '',
             is_required: true,
             is_active: true,
-            sort_order: 0
+            sort_order: 0,
+            fitbit_metric_type: null,
+            fitbit_goal_value: null,
+            fitbit_goal_operator: 'gte',
+            fitbit_auto_check: false
         },
 
         // Fitbit state
@@ -257,7 +306,11 @@ function settings() {
                 title: '',
                 is_required: true,
                 is_active: true,
-                sort_order: this.tasks.length + 1
+                sort_order: this.tasks.length + 1,
+                fitbit_metric_type: null,
+                fitbit_goal_value: null,
+                fitbit_goal_operator: 'gte',
+                fitbit_auto_check: false
             };
         },
 
