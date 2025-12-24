@@ -315,7 +315,22 @@ function settings() {
         },
 
         async addTask() {
-            if (!this.newTask.title.trim()) return;
+            if (!this.newTask.title.trim()) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            // Validate Fitbit fields if auto-check is enabled
+            if (this.newTask.fitbit_auto_check) {
+                if (!this.newTask.fitbit_metric_type) {
+                    alert('Please select a Fitbit metric type');
+                    return;
+                }
+                if (!this.newTask.fitbit_goal_value) {
+                    alert('Please enter a goal value');
+                    return;
+                }
+            }
 
             try {
                 const response = await fetchWithProfile('/api/tasks', {
@@ -328,9 +343,13 @@ function settings() {
                     await this.loadTasks();
                     this.showAddForm = false;
                     this.resetNewTask();
+                } else {
+                    const error = await response.json();
+                    alert('Error creating task: ' + (error.detail || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error adding task:', error);
+                alert('Error creating task: ' + error.message);
             }
         },
 
@@ -340,6 +359,23 @@ function settings() {
 
         async updateTask() {
             if (!this.editingTask) return;
+
+            if (!this.editingTask.title.trim()) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            // Validate Fitbit fields if auto-check is enabled
+            if (this.editingTask.fitbit_auto_check) {
+                if (!this.editingTask.fitbit_metric_type) {
+                    alert('Please select a Fitbit metric type');
+                    return;
+                }
+                if (!this.editingTask.fitbit_goal_value) {
+                    alert('Please enter a goal value');
+                    return;
+                }
+            }
 
             try {
                 const response = await fetchWithProfile(`/api/tasks/${this.editingTask.id}`, {
@@ -360,9 +396,13 @@ function settings() {
                 if (response.ok) {
                     await this.loadTasks();
                     this.editingTask = null;
+                } else {
+                    const error = await response.json();
+                    alert('Error updating task: ' + (error.detail || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error updating task:', error);
+                alert('Error updating task: ' + error.message);
             }
         },
 
