@@ -110,6 +110,7 @@ jobs:
 
       - name: Build and start services
         run: |
+          cp .env.example .env
           docker compose up -d --build
 
       - name: Wait for service to be healthy
