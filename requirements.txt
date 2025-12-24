@@ -27,4 +27,4 @@ python-dateutil==2.8.2
 
 # Fitbit Integration
 APScheduler==3.10.4
-cryptography==41.0.7
+cryptography==44.0.1
