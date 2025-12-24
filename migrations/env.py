@@ -10,6 +10,8 @@ sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..'
 from app.core.db import Base
 from app.core.config import settings
 from app.models import Task, DailyStatus, TaskCheck
+from app.models.fitbit_connection import FitbitConnection
+from app.models.fitbit_metric import FitbitMetric
 
 config = context.config
 

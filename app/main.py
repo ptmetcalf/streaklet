@@ -7,13 +7,13 @@ from contextlib import asynccontextmanager
 import os
 
 from app.core.db import engine, get_db, Base
-from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles
+from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit
 from app.services import tasks as task_service, history as history_service, profiles as profile_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Initialize database, run migrations, and seed default profile on startup."""
+    """Initialize database, run migrations, seed default profile, and start scheduler on startup."""
     Base.metadata.create_all(bind=engine)
 
     db = next(get_db())
@@ -25,7 +25,14 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
+    # Start Fitbit sync scheduler
+    from app.services.fitbit_scheduler import start_scheduler, shutdown_scheduler
+    start_scheduler()
+
     yield
+
+    # Shutdown scheduler
+    shutdown_scheduler()
 
 
 app = FastAPI(title="Streaklet", lifespan=lifespan)
@@ -38,6 +45,7 @@ app.include_router(routes_days.router)
 app.include_router(routes_streaks.router)
 app.include_router(routes_history.router)
 app.include_router(routes_profiles.router)
+app.include_router(routes_fitbit.router)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -52,6 +60,14 @@ async def home(request: Request):
 async def settings(request: Request):
     """Settings page for managing tasks."""
     return templates.TemplateResponse("settings.html", {
+        "request": request
+    })
+
+
+@app.get("/fitbit", response_class=HTMLResponse)
+async def fitbit(request: Request):
+    """Fitbit metrics viewing page."""
+    return templates.TemplateResponse("fitbit.html", {
         "request": request
     })
 

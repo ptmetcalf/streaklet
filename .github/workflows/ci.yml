@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   lint:
@@ -110,6 +110,7 @@ jobs:
 
       - name: Build and start services
         run: |
+          cp .env.example .env
           docker compose up -d --build
 
       - name: Wait for service to be healthy

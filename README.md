@@ -25,7 +25,8 @@ A self-hosted, Dockerized daily streak tracker for maintaining consistent habits
 
 ```bash
 # Start the application
-docker compose up --build
+docker build -t streaklet .
+docker compose up --no-build
 
 # Access at http://localhost:8080
 ```

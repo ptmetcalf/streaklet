@@ -1,0 +1,586 @@
+{% extends "base.html" %}
+
+{% block title %}Streaklet - Fitbit Metrics{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+<div class="container" x-data="fitbitMetrics()">
+    <header>
+        <h1>Fitbit Metrics</h1>
+    </header>
+
+    <!-- Not Connected State -->
+    <div x-show="!fitbitConnected" style="padding: 40px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px;">
+        <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+        <h2 style="margin-bottom: 8px;">Fitbit Not Connected</h2>
+        <p style="color: #666; margin-bottom: 24px;">
+            Connect your Fitbit account to view your fitness data here.
+        </p>
+        <a href="/settings" class="btn-primary" style="display: inline-block; text-decoration: none;">
+            Go to Settings to Connect
+        </a>
+    </div>
+
+    <!-- Connected State -->
+    <div x-show="fitbitConnected">
+        <!-- Tabs -->
+        <div style="display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color);">
+            <button @click="currentTab = 'daily'; loadMetricsForDate()"
+                    :class="currentTab === 'daily' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Daily View
+            </button>
+            <button @click="currentTab = 'trends'; loadTrendData()"
+                    :class="currentTab === 'trends' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Trends
+            </button>
+        </div>
+
+        <!-- Trends Tab -->
+        <div x-show="currentTab === 'trends'">
+            <!-- Date Range Selector -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div>
+                    <label style="font-weight: 600; margin-right: 8px;">Time Range:</label>
+                    <select x-model="trendRange" @change="loadTrendData" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                        <option value="7">Last 7 Days</option>
+                        <option value="14">Last 14 Days</option>
+                        <option value="30">Last 30 Days</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div x-show="trendsLoading" style="text-align: center; padding: 40px; color: #666;">
+                Loading trends...
+            </div>
+
+            <!-- Charts -->
+            <div x-show="!trendsLoading" style="display: grid; grid-template-columns: 1fr; gap: 32px;">
+                <!-- Steps Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Steps</h3>
+                    <div id="stepsChart"></div>
+                </div>
+
+                <!-- Sleep Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Sleep</h3>
+                    <div id="sleepChart"></div>
+                </div>
+
+                <!-- Active Minutes Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Active Minutes</h3>
+                    <div id="activeMinutesChart"></div>
+                </div>
+
+                <!-- Heart Rate Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Resting Heart Rate</h3>
+                    <div id="heartRateChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily View Tab -->
+        <div x-show="currentTab === 'daily'">
+            <!-- Date Selector -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <div>
+                    <input type="date"
+                           x-model="selectedDate"
+                           @change="loadMetricsForDate"
+                           :max="today"
+                           style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary" @click="previousDay">← Previous</button>
+                    <button class="btn-secondary" @click="nextDay">Next →</button>
+                    <button class="btn-secondary" @click="goToToday">Today</button>
+                </div>
+            </div>
+
+        <!-- Loading State -->
+        <div x-show="loading" style="text-align: center; padding: 40px; color: #666;">
+            Loading metrics...
+        </div>
+
+        <!-- Metrics Display -->
+        <div x-show="!loading && Object.keys(metrics).length > 0">
+            <!-- Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                <!-- Steps -->
+                <div x-show="metrics.steps" class="metric-card-large">
+                    <div class="metric-icon">👟</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.steps?.value)"></div>
+                    <div class="metric-label">Steps</div>
+                </div>
+
+                <!-- Sleep -->
+                <div x-show="metrics.sleep_minutes" class="metric-card-large">
+                    <div class="metric-icon">😴</div>
+                    <div class="metric-value" x-text="formatSleepHours(metrics.sleep_minutes?.value)"></div>
+                    <div class="metric-label">Sleep</div>
+                </div>
+
+                <!-- Active Minutes -->
+                <div x-show="metrics.active_minutes" class="metric-card-large">
+                    <div class="metric-icon">🔥</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.active_minutes?.value)"></div>
+                    <div class="metric-label">Active Minutes</div>
+                </div>
+
+                <!-- Calories -->
+                <div x-show="metrics.calories_burned" class="metric-card-large">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.calories_burned?.value)"></div>
+                    <div class="metric-label">Calories Burned</div>
+                </div>
+
+                <!-- Distance -->
+                <div x-show="metrics.distance" class="metric-card-large">
+                    <div class="metric-icon">🏃</div>
+                    <div class="metric-value" x-text="formatDecimal(metrics.distance?.value)"></div>
+                    <div class="metric-label">Distance (miles)</div>
+                </div>
+
+                <!-- Floors -->
+                <div x-show="metrics.floors" class="metric-card-large">
+                    <div class="metric-icon">🪜</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.floors?.value)"></div>
+                    <div class="metric-label">Floors Climbed</div>
+                </div>
+
+                <!-- Sleep Score -->
+                <div x-show="metrics.sleep_score" class="metric-card-large">
+                    <div class="metric-icon">⭐</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.sleep_score?.value)"></div>
+                    <div class="metric-label">Sleep Score</div>
+                </div>
+
+                <!-- Resting Heart Rate -->
+                <div x-show="metrics.resting_heart_rate" class="metric-card-large">
+                    <div class="metric-icon">❤️</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.resting_heart_rate?.value)"></div>
+                    <div class="metric-label">Resting HR (bpm)</div>
+                </div>
+            </div>
+
+            <!-- Detailed Metrics Table -->
+            <div style="margin-top: 32px;">
+                <h2 style="margin-bottom: 16px;">Detailed Metrics</h2>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-color);">
+                            <th style="text-align: left; padding: 12px;">Metric</th>
+                            <th style="text-align: right; padding: 12px;">Value</th>
+                            <th style="text-align: right; padding: 12px;">Unit</th>
+                            <th style="text-align: right; padding: 12px;">Synced At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="[key, data] in Object.entries(metrics)" :key="key">
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 12px;" x-text="formatMetricName(key)"></td>
+                                <td style="text-align: right; padding: 12px; font-weight: 600;" x-text="formatValue(data.value, key)"></td>
+                                <td style="text-align: right; padding: 12px; color: #666;" x-text="data.unit || '-'"></td>
+                                <td style="text-align: right; padding: 12px; color: #666; font-size: 12px;" x-text="formatSyncTime(data.synced_at)"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+            <!-- No Data State -->
+            <div x-show="!loading && Object.keys(metrics).length === 0"
+                 style="text-align: center; padding: 40px; color: #666; border: 1px solid var(--border-color); border-radius: 4px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                <p>No Fitbit data available for <span x-text="formatDateDisplay(selectedDate)"></span></p>
+                <p style="font-size: 14px; margin-top: 8px;">Try selecting a different date or sync your Fitbit data.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.metric-card-large {
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    text-align: center;
+    background: var(--background-color);
+}
+
+.metric-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.metric-value {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.metric-label {
+    font-size: 14px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tab-button {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    position: relative;
+    transition: color 0.2s;
+}
+
+.tab-active {
+    color: var(--primary-color);
+}
+
+.tab-active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color);
+}
+
+.tab-inactive {
+    color: #666;
+}
+
+.tab-inactive:hover {
+    color: #333;
+}
+</style>
+
+<script>
+function fitbitMetrics() {
+    return {
+        fitbitConnected: false,
+        selectedDate: new Date().toISOString().split('T')[0],
+        today: new Date().toISOString().split('T')[0],
+        metrics: {},
+        loading: false,
+
+        // Trends state
+        currentTab: 'daily',
+        trendRange: 7,
+        trendsLoading: false,
+        charts: {
+            steps: null,
+            sleep: null,
+            activeMinutes: null,
+            heartRate: null
+        },
+
+        async init() {
+            await this.checkFitbitConnection();
+            if (this.fitbitConnected) {
+                await this.loadMetricsForDate();
+            }
+        },
+
+        async checkFitbitConnection() {
+            try {
+                const response = await fetchWithProfile('/api/fitbit/connection');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.fitbitConnected = data.connected;
+                }
+            } catch (error) {
+                console.error('Error checking Fitbit connection:', error);
+            }
+        },
+
+        async loadMetricsForDate() {
+            this.loading = true;
+            try {
+                const response = await fetchWithProfile(`/api/fitbit/daily-summary?date=${this.selectedDate}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    this.metrics = data.metrics || {};
+                } else {
+                    this.metrics = {};
+                }
+            } catch (error) {
+                console.error('Error loading metrics:', error);
+                this.metrics = {};
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        previousDay() {
+            const date = new Date(this.selectedDate);
+            date.setDate(date.getDate() - 1);
+            this.selectedDate = date.toISOString().split('T')[0];
+            this.loadMetricsForDate();
+        },
+
+        nextDay() {
+            const date = new Date(this.selectedDate);
+            date.setDate(date.getDate() + 1);
+            // Don't go beyond today
+            if (date <= new Date(this.today)) {
+                this.selectedDate = date.toISOString().split('T')[0];
+                this.loadMetricsForDate();
+            }
+        },
+
+        goToToday() {
+            this.selectedDate = this.today;
+            this.loadMetricsForDate();
+        },
+
+        async loadTrendData() {
+            this.trendsLoading = true;
+            try {
+                // Calculate date range
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - this.trendRange + 1);
+
+                const startStr = startDate.toISOString().split('T')[0];
+                const endStr = endDate.toISOString().split('T')[0];
+
+                // Fetch historical data
+                const response = await fetchWithProfile(
+                    `/api/fitbit/metrics/history?start_date=${startStr}&end_date=${endStr}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Wait for DOM to be ready
+                    await this.$nextTick();
+
+                    // Create charts
+                    this.createCharts(data.metrics);
+                } else {
+                    console.error('Failed to load trend data');
+                }
+            } catch (error) {
+                console.error('Error loading trend data:', error);
+            } finally {
+                this.trendsLoading = false;
+            }
+        },
+
+        createCharts(metricsData) {
+            // Destroy existing charts
+            Object.values(this.charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+
+            const chartConfig = {
+                steps: {
+                    containerId: 'stepsChart',
+                    data: metricsData.steps || [],
+                    label: 'Steps',
+                    color: '#3b82f6',
+                    yAxisLabel: 'Steps',
+                    formatter: (val) => Math.round(val).toLocaleString()
+                },
+                sleep: {
+                    containerId: 'sleepChart',
+                    data: metricsData.sleep_minutes || [],
+                    label: 'Sleep',
+                    color: '#8b5cf6',
+                    yAxisLabel: 'Hours',
+                    transform: (v) => v / 60,
+                    formatter: (val) => {
+                        const hours = Math.floor(val);
+                        const mins = Math.round((val - hours) * 60);
+                        return `${hours}h ${mins}m`;
+                    }
+                },
+                activeMinutes: {
+                    containerId: 'activeMinutesChart',
+                    data: metricsData.active_minutes || [],
+                    label: 'Active Minutes',
+                    color: '#ef4444',
+                    yAxisLabel: 'Minutes',
+                    formatter: (val) => Math.round(val) + ' min'
+                },
+                heartRate: {
+                    containerId: 'heartRateChart',
+                    data: metricsData.resting_heart_rate || [],
+                    label: 'Resting HR',
+                    color: '#ec4899',
+                    yAxisLabel: 'BPM',
+                    formatter: (val) => Math.round(val) + ' bpm'
+                }
+            };
+
+            Object.keys(chartConfig).forEach(key => {
+                const config = chartConfig[key];
+                const container = document.getElementById(config.containerId);
+
+                if (!container) return;
+
+                const categories = config.data.map(d => {
+                    const date = new Date(d.date + 'T00:00:00');
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                });
+
+                const values = config.data.map(d => {
+                    const val = config.transform ? config.transform(d.value) : d.value;
+                    return Math.round(val * 100) / 100; // Round to 2 decimals
+                });
+
+                const options = {
+                    series: [{
+                        name: config.label,
+                        data: values
+                    }],
+                    chart: {
+                        type: 'area',
+                        height: 300,
+                        toolbar: {
+                            show: false
+                        },
+                        zoom: {
+                            enabled: false
+                        },
+                        animations: {
+                            enabled: true,
+                            easing: 'easeinout',
+                            speed: 800
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        width: 3
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.6,
+                            opacityTo: 0.1,
+                            stops: [0, 90, 100]
+                        }
+                    },
+                    colors: [config.color],
+                    xaxis: {
+                        categories: categories,
+                        labels: {
+                            style: {
+                                fontSize: '12px'
+                            }
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: config.yAxisLabel,
+                            style: {
+                                fontSize: '12px',
+                                fontWeight: 500
+                            }
+                        },
+                        labels: {
+                            formatter: config.formatter || ((val) => Math.round(val).toLocaleString())
+                        }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: config.formatter || ((val) => Math.round(val).toLocaleString())
+                        }
+                    },
+                    grid: {
+                        borderColor: '#e5e7eb',
+                        strokeDashArray: 3
+                    }
+                };
+
+                this.charts[key] = new ApexCharts(container, options);
+                this.charts[key].render();
+            });
+        },
+
+        formatNumber(value) {
+            if (value == null) return '-';
+            return Math.round(value).toLocaleString('en-US');
+        },
+
+        formatDecimal(value) {
+            if (value == null) return '-';
+            return value.toFixed(2);
+        },
+
+        formatSleepHours(minutes) {
+            if (!minutes) return '-';
+            const hours = Math.floor(minutes / 60);
+            const mins = Math.round(minutes % 60);
+            return `${hours}h ${mins}m`;
+        },
+
+        formatValue(value, metricType) {
+            if (value == null) return '-';
+
+            if (metricType === 'sleep_minutes') {
+                return this.formatSleepHours(value);
+            }
+
+            if (metricType === 'distance') {
+                return this.formatDecimal(value);
+            }
+
+            return this.formatNumber(value);
+        },
+
+        formatMetricName(key) {
+            const names = {
+                'steps': 'Steps',
+                'sleep_minutes': 'Sleep Duration',
+                'sleep_score': 'Sleep Score',
+                'active_minutes': 'Active Minutes',
+                'calories_burned': 'Calories Burned',
+                'distance': 'Distance',
+                'floors': 'Floors Climbed',
+                'resting_heart_rate': 'Resting Heart Rate'
+            };
+            return names[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        },
+
+        formatDateDisplay(dateStr) {
+            const date = new Date(dateStr + 'T00:00:00');
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        },
+
+        formatSyncTime(timestamp) {
+            if (!timestamp) return '-';
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+    }
+}
+</script>
+{% endblock %}
