@@ -23,7 +23,7 @@ httpx==0.26.0
 freezegun==1.5.5
 
 # Utilities
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 
 # Fitbit Integration
 APScheduler==3.10.4
