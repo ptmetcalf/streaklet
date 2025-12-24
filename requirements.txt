@@ -5,12 +5,12 @@ python-multipart==0.0.21
 
 # Database
 sqlalchemy==2.0.45
-alembic==1.13.1
+alembic==1.17.2
 aiosqlite==0.22.0
 
 # Pydantic
-pydantic==2.5.3
-pydantic-settings==2.1.0
+pydantic==2.12.5
+pydantic-settings==2.12.0
 
 # Templating (if using server-rendered option)
 jinja2==3.1.6
@@ -20,11 +20,11 @@ pytest==9.0.2
 pytest-asyncio==1.3.0
 pytest-cov==4.1.0
 httpx==0.26.0
-freezegun==1.4.0
+freezegun==1.5.5
 
 # Utilities
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 
 # Fitbit Integration
 APScheduler==3.10.4
-cryptography==41.0.7
+cryptography==44.0.1
