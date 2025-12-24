@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from datetime import date
 from typing import Optional, List
 import secrets
+import re
 from urllib.parse import quote
 
 from app.core.db import get_db
@@ -45,7 +46,7 @@ def _safe_settings_redirect(fitbit_status: str, message: str = "") -> RedirectRe
 
     Args:
         fitbit_status: Status to pass (e.g., "connected", "error")
-        message: Optional message to include (will be URL-encoded)
+        message: Optional message to include (will be sanitized and URL-encoded)
 
     Returns:
         RedirectResponse to /settings with safe query parameters
@@ -53,12 +54,16 @@ def _safe_settings_redirect(fitbit_status: str, message: str = "") -> RedirectRe
     # Always redirect to /settings (hardcoded safe path)
     base_url = "/settings"
 
-    # URL-encode the status and message to prevent injection
+    # URL-encode the status to prevent injection
     safe_status = quote(fitbit_status, safe="")
 
     if message:
-        # Sanitize message: limit length and URL-encode
-        safe_message = quote(str(message)[:200], safe="")
+        # Sanitize message: restrict to safe character set, limit length and URL-encode
+        raw_message = str(message)
+        # Allow only alphanumerics and a small set of safe punctuation/whitespace
+        normalized_message = re.sub(r"[^a-zA-Z0-9 _\-.]", "", raw_message)
+        trimmed_message = normalized_message[:200]
+        safe_message = quote(trimmed_message, safe="")
         return RedirectResponse(url=f"{base_url}?fitbit={safe_status}&message={safe_message}")
 
     return RedirectResponse(url=f"{base_url}?fitbit={safe_status}")
@@ -101,7 +106,18 @@ async def oauth_callback(
     """
     # Check for OAuth errors
     if error:
-        return _safe_settings_redirect("error", error)
+        # Map raw error to a limited set of known-safe OAuth error codes
+        known_errors = {
+            "access_denied",
+            "invalid_request",
+            "invalid_client",
+            "invalid_grant",
+            "unauthorized_client",
+            "unsupported_grant_type",
+            "server_error",
+        }
+        safe_error = error if error in known_errors else "oauth_error"
+        return _safe_settings_redirect("error", safe_error)
 
     # Validate required parameters
     if not code or not state:
