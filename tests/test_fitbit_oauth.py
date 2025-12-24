@@ -125,7 +125,10 @@ async def test_refresh_access_token(test_db: Session, sample_profiles):
         refreshed = await fitbit_oauth.refresh_access_token(test_db, connection)
 
     # Verify token was refreshed
-    assert refreshed.token_expires_at > get_now()
+    # Note: SQLite doesn't preserve timezone info, so we compare naive datetimes
+    from datetime import datetime
+    now_naive = get_now().replace(tzinfo=None)
+    assert refreshed.token_expires_at > now_naive
     # Tokens should be different (encrypted)
     from app.core.encryption import decrypt_token
     assert decrypt_token(refreshed.access_token) == "new_access_token"
@@ -202,7 +205,9 @@ async def test_ensure_valid_token_refreshes_if_expired(test_db: Session, sample_
 
         result = await fitbit_oauth.ensure_valid_token(test_db, connection)
 
-    assert result.token_expires_at > get_now()
+    # Note: SQLite doesn't preserve timezone info, so we compare naive datetimes
+    now_naive = get_now().replace(tzinfo=None)
+    assert result.token_expires_at > now_naive
 
 
 @pytest.mark.asyncio

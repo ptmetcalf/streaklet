@@ -221,9 +221,12 @@ def test_get_fitbit_daily_summary(client: TestClient, test_db, sample_profiles):
     data = response.json()
     assert data["date"] == "2025-01-15"
     assert "metrics" in data
-    assert data["metrics"]["steps"] == 10543
-    assert data["metrics"]["sleep_minutes"] == 450
-    assert data["metrics"]["active_minutes"] == 35
+    assert data["metrics"]["steps"]["value"] == 10543
+    assert data["metrics"]["steps"]["unit"] == "steps"
+    assert data["metrics"]["sleep_minutes"]["value"] == 450
+    assert data["metrics"]["sleep_minutes"]["unit"] == "minutes"
+    assert data["metrics"]["active_minutes"]["value"] == 35
+    assert data["metrics"]["active_minutes"]["unit"] == "minutes"
 
 
 def test_get_fitbit_daily_summary_no_data(client: TestClient, test_db, sample_profiles):
@@ -273,7 +276,7 @@ def test_post_fitbit_sync_triggers_sync(client: TestClient, test_db, sample_prof
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
-        assert "synced" in data["message"].lower()
+        assert "sync completed" in data["message"].lower()
 
 
 def test_post_fitbit_sync_not_connected(client: TestClient, sample_profiles):

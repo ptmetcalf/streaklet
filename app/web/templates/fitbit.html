@@ -25,15 +25,15 @@
     <div x-show="fitbitConnected">
         <!-- Tabs -->
         <div style="display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color);">
-            <button @click="currentTab = 'trends'; loadTrendData()"
-                    :class="currentTab === 'trends' ? 'tab-active' : 'tab-inactive'"
-                    class="tab-button">
-                Trends
-            </button>
             <button @click="currentTab = 'daily'; loadMetricsForDate()"
                     :class="currentTab === 'daily' ? 'tab-active' : 'tab-inactive'"
                     class="tab-button">
                 Daily View
+            </button>
+            <button @click="currentTab = 'trends'; loadTrendData()"
+                    :class="currentTab === 'trends' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Trends
             </button>
         </div>
 
@@ -61,25 +61,25 @@
                 <!-- Steps Chart -->
                 <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Steps</h3>
-                    <canvas id="stepsChart"></canvas>
+                    <div id="stepsChart"></div>
                 </div>
 
                 <!-- Sleep Chart -->
                 <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Sleep</h3>
-                    <canvas id="sleepChart"></canvas>
+                    <div id="sleepChart"></div>
                 </div>
 
                 <!-- Active Minutes Chart -->
                 <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Active Minutes</h3>
-                    <canvas id="activeMinutesChart"></canvas>
+                    <div id="activeMinutesChart"></div>
                 </div>
 
                 <!-- Heart Rate Chart -->
                 <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Resting Heart Rate</h3>
-                    <canvas id="heartRateChart"></canvas>
+                    <div id="heartRateChart"></div>
                 </div>
             </div>
         </div>
@@ -276,7 +276,7 @@ function fitbitMetrics() {
         loading: false,
 
         // Trends state
-        currentTab: 'trends',
+        currentTab: 'daily',
         trendRange: 7,
         trendsLoading: false,
         charts: {
@@ -289,7 +289,7 @@ function fitbitMetrics() {
         async init() {
             await this.checkFitbitConnection();
             if (this.fitbitConnected) {
-                await this.loadTrendData();
+                await this.loadMetricsForDate();
             }
         },
 
