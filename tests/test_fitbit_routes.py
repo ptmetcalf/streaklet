@@ -573,3 +573,39 @@ def test_get_metrics_history_not_connected(client: TestClient, sample_profiles):
 
     assert response.status_code == 404
     assert "not connected" in response.json()["detail"].lower()
+
+
+def test_safe_settings_redirect_sanitizes_user_input(client: TestClient, sample_profiles):
+    """Test that OAuth callback prevents open redirect by always redirecting to /settings."""
+    # Try to inject a malicious URL in the error parameter
+    malicious_error = "https://evil.com/phishing"
+    response = client.get(f"/api/fitbit/callback?error={malicious_error}&state=invalid", follow_redirects=False)
+
+    assert response.status_code == 307
+    location = response.headers["location"]
+
+    # CRITICAL: Should always redirect to /settings (never to external URL)
+    # This prevents open redirect vulnerability
+    assert location.startswith("/settings")
+    assert not location.startswith("https://")
+    assert not location.startswith("http://")
+
+    # Error message is URL-encoded in query param (safe - not the redirect target)
+    assert "message=" in location
+
+
+def test_safe_settings_redirect_limits_message_length(client: TestClient, sample_profiles):
+    """Test that error messages are truncated to prevent abuse."""
+    # Create a very long error message
+    long_error = "A" * 500  # 500 characters
+    response = client.get(f"/api/fitbit/callback?error={long_error}&state=invalid", follow_redirects=False)
+
+    assert response.status_code == 307
+    location = response.headers["location"]
+
+    # Should always redirect to /settings
+    assert location.startswith("/settings")
+
+    # Message should be truncated (max 200 chars after encoding)
+    # The actual location will be longer due to URL encoding, but original message was truncated
+    assert len(location) < 300  # Reasonable limit

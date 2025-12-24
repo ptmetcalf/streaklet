@@ -36,6 +36,34 @@ _NOT_CONNECTED_DETAIL = "Not connected to Fitbit"
 _oauth_states = {}
 
 
+def _safe_settings_redirect(fitbit_status: str, message: str = "") -> RedirectResponse:
+    """
+    Create a safe redirect to settings page with Fitbit status.
+
+    Prevents open redirect vulnerabilities by always redirecting to /settings
+    and sanitizing query parameters.
+
+    Args:
+        fitbit_status: Status to pass (e.g., "connected", "error")
+        message: Optional message to include (will be URL-encoded)
+
+    Returns:
+        RedirectResponse to /settings with safe query parameters
+    """
+    # Always redirect to /settings (hardcoded safe path)
+    base_url = "/settings"
+
+    # URL-encode the status and message to prevent injection
+    safe_status = quote(fitbit_status, safe="")
+
+    if message:
+        # Sanitize message: limit length and URL-encode
+        safe_message = quote(str(message)[:200], safe="")
+        return RedirectResponse(url=f"{base_url}?fitbit={safe_status}&message={safe_message}")
+
+    return RedirectResponse(url=f"{base_url}?fitbit={safe_status}")
+
+
 @router.get("/connect", response_model=FitbitConnectResponse)
 async def initiate_connection(
     request: Request,
@@ -73,25 +101,23 @@ async def oauth_callback(
     """
     # Check for OAuth errors
     if error:
-        safe_error = quote(error, safe="")
-        return RedirectResponse(url=f"/settings?fitbit=error&message={safe_error}")
+        return _safe_settings_redirect("error", error)
 
     # Validate required parameters
     if not code or not state:
-        return RedirectResponse(url="/settings?fitbit=error&message=missing_parameters")
+        return _safe_settings_redirect("error", "missing_parameters")
 
     # Validate state token (CSRF protection)
     profile_id = _oauth_states.pop(state, None)
     if profile_id is None:
-        return RedirectResponse(url="/settings?fitbit=error&message=invalid_state")
+        return _safe_settings_redirect("error", "invalid_state")
 
     # Exchange code for tokens
     try:
         await fitbit_oauth.exchange_code_for_tokens(db, code, profile_id)
-        return RedirectResponse(url="/settings?fitbit=connected")
+        return _safe_settings_redirect("connected")
     except Exception as e:
-        safe_message = quote(str(e), safe="")
-        return RedirectResponse(url=f"/settings?fitbit=error&message={safe_message}")
+        return _safe_settings_redirect("error", str(e))
 
 
 @router.get("/connection", response_model=FitbitConnectionResponse)
