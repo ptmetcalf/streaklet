@@ -226,6 +226,38 @@ def test_history_web_route_with_params(client: TestClient):
     assert response.headers["content-type"].startswith("text/html")
 
 
+def test_history_web_route_invalid_year(client: TestClient):
+    """Test /history route with invalid year parameter falls back to current year."""
+    response = client.get("/history?year=invalid")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+
+
+def test_history_web_route_invalid_month(client: TestClient):
+    """Test /history route with invalid month parameter falls back to current month."""
+    response = client.get("/history?month=invalid")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+
+
+def test_history_web_route_out_of_range_month(client: TestClient):
+    """Test /history route with out of range month falls back to current month."""
+    response = client.get("/history?month=13")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+
+
+def test_history_web_route_out_of_range_year(client: TestClient):
+    """Test /history route with out of range year falls back to current year."""
+    response = client.get("/history?year=1999")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+
+
 def test_calendar_data_all_days_present(test_db: Session, sample_profiles):
     """Test that calendar data includes all days of the month."""
     # Test various months to ensure all days are present
