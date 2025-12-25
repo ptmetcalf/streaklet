@@ -97,7 +97,8 @@ jobs:
       - name: Run tests in Docker
         run: |
           docker build -t streaklet:test .
-          docker run --rm --entrypoint "" streaklet:test sh -c "PYTHONPATH=. python -m pytest tests/ -v --tb=short"
+          # Run tests as appuser (matches production environment)
+          docker run --rm --entrypoint "" --user appuser streaklet:test sh -c "PYTHONPATH=. python -m pytest tests/ -v --tb=short"
 
   integration:
     name: Integration Tests
@@ -111,6 +112,9 @@ jobs:
       - name: Build and start services
         run: |
           cp .env.example .env
+          # Create data directory with proper permissions for non-root container
+          mkdir -p data
+          sudo chown -R 1000:1000 data
           docker compose up -d --build
 
       - name: Wait for service to be healthy
