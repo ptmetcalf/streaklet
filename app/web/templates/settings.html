@@ -636,7 +636,13 @@ function settings() {
 
         async loadTodayMetrics() {
             try {
-                const today = new Date().toISOString().split('T')[0];
+                // Get today's date from backend (timezone-aware)
+                const todayResponse = await fetchWithProfile('/api/days/today');
+                if (!todayResponse.ok) return;
+
+                const todayData = await todayResponse.json();
+                const today = todayData.date;
+
                 const response = await fetchWithProfile(`/api/fitbit/daily-summary?date=${today}`);
                 if (response.ok) {
                     const data = await response.json();
