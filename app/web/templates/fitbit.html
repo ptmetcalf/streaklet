@@ -270,8 +270,8 @@
 function fitbitMetrics() {
     return {
         fitbitConnected: false,
-        selectedDate: new Date().toISOString().split('T')[0],
-        today: new Date().toISOString().split('T')[0],
+        selectedDate: null,
+        today: null,
         metrics: {},
         loading: false,
 
@@ -287,9 +287,28 @@ function fitbitMetrics() {
         },
 
         async init() {
+            // Fetch today's date from backend (timezone-aware)
+            await this.loadTodayDate();
             await this.checkFitbitConnection();
             if (this.fitbitConnected) {
                 await this.loadMetricsForDate();
+            }
+        },
+
+        async loadTodayDate() {
+            try {
+                const response = await fetchWithProfile('/api/days/today');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.today = data.date;
+                    this.selectedDate = data.date;
+                }
+            } catch (error) {
+                console.error('Error loading today date:', error);
+                // Fallback to local date (but this will have the timezone issue)
+                const fallback = new Date().toISOString().split('T')[0];
+                this.today = fallback;
+                this.selectedDate = fallback;
             }
         },
 
@@ -323,19 +342,28 @@ function fitbitMetrics() {
             }
         },
 
+        // Helper to format date as YYYY-MM-DD without UTC conversion
+        formatDateLocal(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
+
         previousDay() {
-            const date = new Date(this.selectedDate);
+            const date = parseDateOnly(this.selectedDate);
             date.setDate(date.getDate() - 1);
-            this.selectedDate = date.toISOString().split('T')[0];
+            this.selectedDate = this.formatDateLocal(date);
             this.loadMetricsForDate();
         },
 
         nextDay() {
-            const date = new Date(this.selectedDate);
+            const date = parseDateOnly(this.selectedDate);
             date.setDate(date.getDate() + 1);
+            const todayDate = parseDateOnly(this.today);
             // Don't go beyond today
-            if (date <= new Date(this.today)) {
-                this.selectedDate = date.toISOString().split('T')[0];
+            if (date <= todayDate) {
+                this.selectedDate = this.formatDateLocal(date);
                 this.loadMetricsForDate();
             }
         },
@@ -348,13 +376,13 @@ function fitbitMetrics() {
         async loadTrendData() {
             this.trendsLoading = true;
             try {
-                // Calculate date range
-                const endDate = new Date();
-                const startDate = new Date();
+                // Calculate date range using timezone-aware today
+                const endDate = parseDateOnly(this.today);
+                const startDate = parseDateOnly(this.today);
                 startDate.setDate(startDate.getDate() - this.trendRange + 1);
 
-                const startStr = startDate.toISOString().split('T')[0];
-                const endStr = endDate.toISOString().split('T')[0];
+                const startStr = this.formatDateLocal(startDate);
+                const endStr = this.formatDateLocal(endDate);
 
                 // Fetch historical data
                 const response = await fetchWithProfile(
