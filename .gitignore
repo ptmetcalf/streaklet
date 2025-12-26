@@ -37,3 +37,4 @@ data/
 
 # Alembic
 versions/__pycache__/
+site/

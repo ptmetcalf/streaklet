@@ -19,12 +19,69 @@ The repository has automated CI/CD workflows:
 - **Integration**: Spins up full stack and tests API endpoints
 - **Test Summary**: Aggregates all test results
 
-**`docker-publish.yml`** - Docker image publishing (runs on main branch/tags):
+**`docker-publish.yml`** - Docker image publishing (runs on develop branch):
 - Runs tests first
 - Builds multi-platform Docker image (amd64, arm64)
 - Publishes to GitHub Container Registry (ghcr.io)
 
+**`release-please.yml`** - Automated release management (runs on main branch):
+- Analyzes commits using conventional commit format
+- Creates Release PRs with auto-generated changelogs
+- Bumps version numbers automatically (semver)
+- Creates GitHub Releases when Release PR is merged
+- Builds and publishes Docker images with version tags
+
 All workflows must pass before merging PRs.
+
+### Automated Releases with release-please
+
+This project uses [release-please](https://github.com/googleapis/release-please) for automated releases. **IMPORTANT**: All commits to main must follow the conventional commit format.
+
+#### Conventional Commit Format
+
+Commits must use this format:
+```
+<type>(<scope>): <description>
+
+[optional body]
+[optional footer]
+```
+
+**Commit Types** (determines version bump):
+- `feat:` - New feature → Minor version bump (1.0.0 → 1.1.0)
+- `fix:` - Bug fix → Patch version bump (1.0.0 → 1.0.1)
+- `feat!:` or `BREAKING CHANGE:` - Breaking change → Major version bump (1.0.0 → 2.0.0)
+- `docs:` - Documentation only (no release)
+- `chore:` - Maintenance tasks (no release)
+- `refactor:` - Code restructuring (no release)
+- `perf:` - Performance improvement → Patch bump
+- `test:` - Adding tests (no release)
+- `ci:` - CI/CD changes (no release)
+
+**Examples:**
+```bash
+feat: add dark mode toggle to settings
+fix: resolve timezone display issue in Fitbit page
+feat!: redesign API authentication
+
+BREAKING CHANGE: API now requires JWT tokens
+docs: update installation instructions
+chore: update dependencies
+```
+
+#### Release Workflow
+
+1. Merge PR to main with conventional commit(s)
+2. release-please automatically creates a "Release PR" (titled: `chore(main): release X.Y.Z`)
+3. Release PR includes:
+   - Auto-calculated version bump
+   - Generated CHANGELOG.md
+   - Updated version files
+4. Review and merge Release PR
+5. GitHub Release created automatically
+6. Docker images built and published with version tags
+
+**Important for AI assistants**: When making commits, always use conventional commit format. When creating PRs, use conventional commit format in the PR title if using squash merge.
 
 ### Coverage Reports
 

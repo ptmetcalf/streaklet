@@ -1,0 +1,85 @@
+site_name: Streaklet
+site_description: A self-hosted daily habit streak tracker with multi-user support
+site_author: ptmetcalf
+site_url: https://ptmetcalf.github.io/streaklet
+
+repo_name: ptmetcalf/streaklet
+repo_url: https://github.com/ptmetcalf/streaklet
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - tables
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - Configuration: getting-started/configuration.md
+  - Features:
+    - Multi-User Profiles: features/profiles.md
+    - Fitbit Integration: features/fitbit.md
+    - Progressive Web App: features/pwa.md
+    - Backup & Restore: features/backup.md
+  - API Reference:
+    - Overview: api/overview.md
+    - Endpoints: api/endpoints.md
+  - Deployment:
+    - Docker Compose: deployment/docker-compose.md
+    - Homelab Setup: deployment/homelab.md
+  - Development:
+    - Local Setup: development/local-setup.md
+    - Contributing: development/contributing.md
+    - Releases: development/releases.md
+    - Architecture: development/architecture.md
+
+plugins:
+  - search
+  - tags
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ptmetcalf/streaklet
+  version:
+    provider: mike
