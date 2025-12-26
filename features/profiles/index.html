@@ -12,13 +12,13 @@
         <meta name="author" content="ptmetcalf">
       
       
-        <link rel="canonical" href="https://ptmetcalf.github.io/streaklet/development/releases/">
+        <link rel="canonical" href="https://ptmetcalf.github.io/streaklet/features/profiles/">
       
       
-        <link rel="prev" href="../contributing/">
+        <link rel="prev" href="../../getting-started/configuration/">
       
       
-        <link rel="next" href="../architecture/">
+        <link rel="next" href="../fitbit/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Releases - Streaklet</title>
+        <title>Multi-User Profiles - Streaklet</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#release-process" class="md-skip">
+        <a href="#user-profiles" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Releases
+              Multi-User Profiles
             
           </span>
         </div>
@@ -268,11 +268,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../features/profiles/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
           
   
   
@@ -328,13 +330,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../local-setup/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../development/local-setup/" class="md-tabs__link">
           
   
   
@@ -567,28 +567,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -606,7 +609,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -621,10 +624,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../features/profiles/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-User Profiles
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -640,6 +670,181 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Profiles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating Profiles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#via-web-interface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via Web Interface
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#via-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Via API
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#default-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Default Profile
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#switching-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Switching Profiles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-isolation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Isolation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#profile-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Profile Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Profile Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#editing-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing Profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting Profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-before-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup Before Deletion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-device-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Device Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -652,7 +857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fitbit/" class="md-nav__link">
+      <a href="../fitbit/" class="md-nav__link">
         
   
   
@@ -680,7 +885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/pwa/" class="md-nav__link">
+      <a href="../pwa/" class="md-nav__link">
         
   
   
@@ -708,7 +913,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/backup/" class="md-nav__link">
+      <a href="../backup/" class="md-nav__link">
         
   
   
@@ -974,31 +1179,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -1016,7 +1218,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1034,7 +1236,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../local-setup/" class="md-nav__link">
+      <a href="../../development/local-setup/" class="md-nav__link">
         
   
   
@@ -1062,7 +1264,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../development/contributing/" class="md-nav__link">
         
   
   
@@ -1087,37 +1289,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Releases
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../development/releases/" class="md-nav__link">
         
   
   
@@ -1133,164 +1308,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#version-bumping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Version Bumping
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Typical Workflow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-make-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Make Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Create PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-wait-for-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Wait for Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-merge-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Merge Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-docker-images-published" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Docker Images Published
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#checking-release-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checking Release Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#emergency-manual-release" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Emergency Manual Release
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#for-detailed-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Detailed Information
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1303,7 +1320,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../development/architecture/" class="md-nav__link">
         
   
   
@@ -1358,10 +1375,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        Overview
       
     </span>
   </a>
@@ -1369,33 +1386,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#version-bumping" class="md-nav__link">
+  <a href="#creating-profiles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version Bumping
+        Creating Profiles
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Typical Workflow">
+    <nav class="md-nav" aria-label="Creating Profiles">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-make-changes" class="md-nav__link">
+  <a href="#via-web-interface" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Make Changes
+        Via Web Interface
       
     </span>
   </a>
@@ -1403,43 +1409,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-create-pr" class="md-nav__link">
+  <a href="#via-api" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Create PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-wait-for-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Wait for Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-merge-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Merge Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-docker-images-published" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Docker Images Published
+        Via API
       
     </span>
   </a>
@@ -1452,10 +1425,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#checking-release-status" class="md-nav__link">
+  <a href="#default-profile" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Checking Release Status
+        Default Profile
       
     </span>
   </a>
@@ -1463,10 +1436,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#emergency-manual-release" class="md-nav__link">
+  <a href="#switching-profiles" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Emergency Manual Release
+        Switching Profiles
       
     </span>
   </a>
@@ -1474,10 +1447,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
+  <a href="#data-isolation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration Files
+        Data Isolation
       
     </span>
   </a>
@@ -1485,10 +1458,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#for-detailed-information" class="md-nav__link">
+  <a href="#profile-management" class="md-nav__link">
     <span class="md-ellipsis">
       
-        For Detailed Information
+        Profile Management
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Profile Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#editing-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editing Profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deleting-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting Profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backup-before-deletion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backup Before Deletion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#multi-device-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Device Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
       
     </span>
   </a>
@@ -1515,108 +1549,94 @@
   
 
 
-<h1 id="release-process">Release Process</h1>
-<p>Streaklet uses automated releases via <a href="https://github.com/googleapis/release-please">release-please</a>.</p>
-<h2 id="how-it-works">How It Works</h2>
+<h1 id="user-profiles">User Profiles</h1>
+<p>Streaklet supports multiple user profiles, allowing families or households to track habits independently while sharing the same installation.</p>
+<h2 id="overview">Overview</h2>
+<p>Each profile has:</p>
+<ul>
+<li><strong>Completely isolated data</strong> - tasks, completions, streaks, and history</li>
+<li><strong>Custom color</strong> - for visual identification in the UI</li>
+<li><strong>Unique name</strong> - to distinguish between users</li>
+</ul>
+<h2 id="creating-profiles">Creating Profiles</h2>
+<h3 id="via-web-interface">Via Web Interface</h3>
 <ol>
-<li><strong>Commit with conventional format</strong> to <code>main</code> branch</li>
-<li><strong>release-please creates a Release PR</strong> with:</li>
-<li>Auto-calculated version bump</li>
-<li>Generated CHANGELOG.md</li>
-<li><strong>Merge the Release PR</strong></li>
-<li><strong>GitHub Release created automatically</strong></li>
-<li><strong>Docker images built and published</strong></li>
+<li>Navigate to the <strong>Profiles</strong> page</li>
+<li>Click <strong>"Add Profile"</strong></li>
+<li>Enter a name (e.g., "Mom", "Dad", "Alex")</li>
+<li>Choose a color for visual identification</li>
+<li>Click <strong>Save</strong></li>
 </ol>
-<h2 id="version-bumping">Version Bumping</h2>
-<table>
-<thead>
-<tr>
-<th>Commit Type</th>
-<th>Version Change</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>feat:</code></td>
-<td>1.0.0 → <strong>1.1.0</strong> (minor)</td>
-</tr>
-<tr>
-<td><code>fix:</code></td>
-<td>1.0.0 → <strong>1.0.1</strong> (patch)</td>
-</tr>
-<tr>
-<td><code>feat!:</code> or <code>BREAKING CHANGE:</code></td>
-<td>1.0.0 → <strong>2.0.0</strong> (major)</td>
-</tr>
-<tr>
-<td><code>docs:</code>, <code>chore:</code>, etc.</td>
-<td>No release</td>
-</tr>
-</tbody>
-</table>
-<h2 id="typical-workflow">Typical Workflow</h2>
-<h3 id="1-make-changes">1. Make Changes</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feat/new-feature
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Make changes</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add export functionality&quot;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>git<span class="w"> </span>push
+<h3 id="via-api">Via API</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8080/api/profiles<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="s1">    &quot;name&quot;: &quot;Alex&quot;,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="s1">    &quot;color&quot;: &quot;#3b82f6&quot;</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s1">  }&#39;</span>
 </code></pre></div>
-<h3 id="2-create-pr">2. Create PR</h3>
-<ul>
-<li>Use conventional commit format in PR title</li>
-<li>Get review and approval</li>
-<li>Merge to <code>main</code></li>
-</ul>
-<h3 id="3-wait-for-release-pr">3. Wait for Release PR</h3>
-<p>After merge, release-please creates a PR like:</p>
-<p><strong>Title:</strong> <code>chore(main): release 1.1.0</code></p>
-<p><strong>Contents:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gu">## 1.1.0 (2025-01-15)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gu">### Features</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">*</span><span class="w"> </span>add export functionality ([abc1234](link))
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">*</span><span class="w"> </span>implement user profiles ([def5678](link))
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="gu">### Bug Fixes</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">*</span><span class="w"> </span>resolve timezone issue ([ghi9012](link))
+<p><strong>Response:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Alex&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">&quot;color&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;#3b82f6&quot;</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="p">}</span>
 </code></pre></div></p>
-<h3 id="4-merge-release-pr">4. Merge Release PR</h3>
+<h2 id="default-profile">Default Profile</h2>
+<p>On first run, Streaklet automatically creates a default profile (ID: 1) named "Default Profile".</p>
+<p>New profiles are automatically seeded with 5 default tasks:
+- Follow a diet
+- 30 min workout
+- Read 10 pages
+- 20 min hobby time
+- Drink 8 glasses water</p>
+<p>You can edit or delete these tasks as needed.</p>
+<h2 id="switching-profiles">Switching Profiles</h2>
+<p>The active profile is stored in browser localStorage and persists across sessions.</p>
+<p><strong>To switch profiles:</strong>
+1. Click the profile selector (typically in the header)
+2. Select the desired profile
+3. The page reloads with that profile's data</p>
+<h2 id="data-isolation">Data Isolation</h2>
+<p>Profile isolation is enforced at multiple levels:</p>
 <ul>
-<li>Review the version number and changelog</li>
-<li>Merge the Release PR</li>
-<li>Release happens automatically!</li>
+<li><strong>Database level</strong> - All tables include a <code>user_id</code> foreign key</li>
+<li><strong>API level</strong> - All requests include an <code>X-Profile-Id</code> header</li>
+<li><strong>Service level</strong> - All queries filter by profile ID</li>
 </ul>
-<h3 id="5-docker-images-published">5. Docker Images Published</h3>
-<p>Images are tagged and published:
-- <code>ghcr.io/ptmetcalf/streaklet:1.1.0</code>
-- <code>ghcr.io/ptmetcalf/streaklet:1.1</code>
-- <code>ghcr.io/ptmetcalf/streaklet:1</code>
-- <code>ghcr.io/ptmetcalf/streaklet:latest</code></p>
-<h2 id="checking-release-status">Checking Release Status</h2>
-<ul>
-<li><strong>Open PRs:</strong> Look for <code>chore(main): release X.Y.Z</code></li>
-<li><strong>Releases:</strong> <a href="https://github.com/ptmetcalf/streaklet/releases">GitHub Releases</a></li>
-<li><strong>Docker Images:</strong> <a href="https://github.com/ptmetcalf/streaklet/pkgs/container/streaklet">Container Registry</a></li>
-<li><strong>Workflows:</strong> <a href="https://github.com/ptmetcalf/streaklet/actions">GitHub Actions</a></li>
-</ul>
-<h2 id="emergency-manual-release">Emergency Manual Release</h2>
-<p>If automated releases fail:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Create tag manually</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.2.3<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Emergency release&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.2.3
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Manually create GitHub Release in UI</span>
+<p>This ensures complete data separation between profiles.</p>
+<h2 id="profile-management">Profile Management</h2>
+<h3 id="editing-profiles">Editing Profiles</h3>
+<p>Update a profile's name or color:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>http://localhost:8080/api/profiles/2<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s1">    &quot;name&quot;: &quot;Alexander&quot;,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s1">    &quot;color&quot;: &quot;#8b5cf6&quot;</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s1">  }&#39;</span>
 </code></pre></div>
-<h2 id="configuration-files">Configuration Files</h2>
+<h3 id="deleting-profiles">Deleting Profiles</h3>
+<p><strong>Warning:</strong> Deleting a profile permanently removes:
+- All tasks
+- All completion history
+- All daily status records
+- Fitbit connection (if any)</p>
+<p>You cannot delete the last remaining profile.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8080/api/profiles/2
+</code></pre></div>
+<h3 id="backup-before-deletion">Backup Before Deletion</h3>
+<p>Always <a href="../backup/">backup profile data</a> before deletion:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>curl<span class="w"> </span>http://localhost:8080/api/backup/profile/2<span class="w"> </span>&gt;<span class="w"> </span>profile-backup.json
+</code></pre></div>
+<h2 id="multi-device-usage">Multi-Device Usage</h2>
+<p>Since profile selection is stored in browser localStorage:</p>
 <ul>
-<li><code>.release-please-manifest.json</code> - Current version</li>
-<li><code>release-please-config.json</code> - Settings</li>
-<li><code>.github/workflows/release-please.yml</code> - Workflow</li>
+<li>Each device/browser can be set to a different profile</li>
+<li>Perfect for shared family computers (each browser = different user)</li>
+<li>Mobile and desktop can track different profiles</li>
 </ul>
-<h2 id="for-detailed-information">For Detailed Information</h2>
-<p>See <a href="https://github.com/ptmetcalf/streaklet/blob/main/RELEASING.md">RELEASING.md</a> for comprehensive release documentation.</p>
+<h2 id="api-reference">API Reference</h2>
+<p>See the <a href="../../api/endpoints/#profile-management">Profile Management API documentation</a> for complete endpoint details.</p>
 
 
 

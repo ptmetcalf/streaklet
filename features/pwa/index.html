@@ -12,13 +12,13 @@
         <meta name="author" content="ptmetcalf">
       
       
-        <link rel="canonical" href="https://ptmetcalf.github.io/streaklet/development/releases/">
+        <link rel="canonical" href="https://ptmetcalf.github.io/streaklet/features/pwa/">
       
       
-        <link rel="prev" href="../contributing/">
+        <link rel="prev" href="../fitbit/">
       
       
-        <link rel="next" href="../architecture/">
+        <link rel="next" href="../backup/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Releases - Streaklet</title>
+        <title>Progressive Web App - Streaklet</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#release-process" class="md-skip">
+        <a href="#progressive-web-app-pwa" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Releases
+              Progressive Web App
             
           </span>
         </div>
@@ -268,11 +268,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../features/profiles/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../profiles/" class="md-tabs__link">
           
   
   
@@ -328,13 +330,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../local-setup/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../development/local-setup/" class="md-tabs__link">
           
   
   
@@ -567,28 +567,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -606,7 +609,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -624,7 +627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/profiles/" class="md-nav__link">
+      <a href="../profiles/" class="md-nav__link">
         
   
   
@@ -652,7 +655,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/fitbit/" class="md-nav__link">
+      <a href="../fitbit/" class="md-nav__link">
         
   
   
@@ -677,10 +680,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../features/pwa/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Progressive Web App
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -696,6 +726,360 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Features
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-on-mobile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing on Mobile
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installing on Mobile">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ios-iphoneipad" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        iOS (iPhone/iPad)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#android" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Android
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-on-desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing on Desktop
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installing on Desktop">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chrome-edge-or-brave" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chrome, Edge, or Brave
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firefox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firefox
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#offline-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offline Support
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Offline Support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-works-offline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Works Offline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-requires-internet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Requires Internet
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service Worker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Service Worker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clearing-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clearing Cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App Manifest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="App Manifest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#customizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customizing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits-of-pwa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benefits of PWA
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benefits of PWA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mobile-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile Experience
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop Experience
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser Support
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#uninstalling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uninstalling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uninstalling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mobile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation-button-not-showing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation button not showing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offline-mode-not-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offline mode not working
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#app-not-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App not updating
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learn-more" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Learn More
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -708,7 +1092,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/backup/" class="md-nav__link">
+      <a href="../backup/" class="md-nav__link">
         
   
   
@@ -974,31 +1358,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -1016,7 +1397,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1034,7 +1415,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../local-setup/" class="md-nav__link">
+      <a href="../../development/local-setup/" class="md-nav__link">
         
   
   
@@ -1062,7 +1443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../development/contributing/" class="md-nav__link">
         
   
   
@@ -1087,37 +1468,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Releases
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../development/releases/" class="md-nav__link">
         
   
   
@@ -1133,164 +1487,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#version-bumping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Version Bumping
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Typical Workflow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-make-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Make Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Create PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-wait-for-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Wait for Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-merge-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Merge Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-docker-images-published" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Docker Images Published
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#checking-release-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checking Release Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#emergency-manual-release" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Emergency Manual Release
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#for-detailed-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Detailed Information
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1303,7 +1499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../development/architecture/" class="md-nav__link">
         
   
   
@@ -1358,10 +1554,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#features" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        Features
       
     </span>
   </a>
@@ -1369,33 +1565,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#version-bumping" class="md-nav__link">
+  <a href="#installing-on-mobile" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version Bumping
+        Installing on Mobile
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Typical Workflow">
+    <nav class="md-nav" aria-label="Installing on Mobile">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-make-changes" class="md-nav__link">
+  <a href="#ios-iphoneipad" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Make Changes
+        iOS (iPhone/iPad)
       
     </span>
   </a>
@@ -1403,43 +1588,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-create-pr" class="md-nav__link">
+  <a href="#android" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Create PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-wait-for-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Wait for Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-merge-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Merge Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-docker-images-published" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Docker Images Published
+        Android
       
     </span>
   </a>
@@ -1452,10 +1604,183 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#checking-release-status" class="md-nav__link">
+  <a href="#installing-on-desktop" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Checking Release Status
+        Installing on Desktop
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installing on Desktop">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#chrome-edge-or-brave" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chrome, Edge, or Brave
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firefox" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firefox
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#offline-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offline Support
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Offline Support">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-works-offline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Works Offline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-requires-internet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Requires Internet
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#service-worker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Service Worker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Service Worker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#clearing-cache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clearing Cache
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#app-manifest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App Manifest
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="App Manifest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#customizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Customizing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#benefits-of-pwa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benefits of PWA
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Benefits of PWA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mobile-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile Experience
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#desktop-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Desktop Experience
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#browser-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Browser Support
       
     </span>
   </a>
@@ -1463,32 +1788,99 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#emergency-manual-release" class="md-nav__link">
+  <a href="#uninstalling" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Emergency Manual Release
+        Uninstalling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Uninstalling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mobile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mobile
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#desktop" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration Files
+        Desktop
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#for-detailed-information" class="md-nav__link">
+  <a href="#troubleshooting" class="md-nav__link">
     <span class="md-ellipsis">
       
-        For Detailed Information
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation-button-not-showing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation button not showing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#offline-mode-not-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Offline mode not working
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#app-not-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        App not updating
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#learn-more" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Learn More
       
     </span>
   </a>
@@ -1515,108 +1907,180 @@
   
 
 
-<h1 id="release-process">Release Process</h1>
-<p>Streaklet uses automated releases via <a href="https://github.com/googleapis/release-please">release-please</a>.</p>
-<h2 id="how-it-works">How It Works</h2>
+<h1 id="progressive-web-app-pwa">Progressive Web App (PWA)</h1>
+<p>Streaklet is a Progressive Web App, meaning you can install it on your device and use it like a native application.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Installable</strong> - Add to home screen on mobile or desktop</li>
+<li><strong>Offline Support</strong> - Service worker caching for offline access</li>
+<li><strong>App-like Experience</strong> - Runs in standalone mode without browser chrome</li>
+<li><strong>Fast Loading</strong> - Cached assets load instantly</li>
+</ul>
+<h2 id="installing-on-mobile">Installing on Mobile</h2>
+<h3 id="ios-iphoneipad">iOS (iPhone/iPad)</h3>
 <ol>
-<li><strong>Commit with conventional format</strong> to <code>main</code> branch</li>
-<li><strong>release-please creates a Release PR</strong> with:</li>
-<li>Auto-calculated version bump</li>
-<li>Generated CHANGELOG.md</li>
-<li><strong>Merge the Release PR</strong></li>
-<li><strong>GitHub Release created automatically</strong></li>
-<li><strong>Docker images built and published</strong></li>
+<li>Open Streaklet in <strong>Safari</strong></li>
+<li>Tap the <strong>Share</strong> button (square with arrow)</li>
+<li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+<li>Name it "Streaklet" (or your preference)</li>
+<li>Tap <strong>Add</strong></li>
 </ol>
-<h2 id="version-bumping">Version Bumping</h2>
+<p>The app icon will appear on your home screen.</p>
+<h3 id="android">Android</h3>
+<ol>
+<li>Open Streaklet in <strong>Chrome</strong></li>
+<li>Tap the <strong>menu</strong> (three dots) in the top-right</li>
+<li>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></li>
+<li>Name it "Streaklet" (or your preference)</li>
+<li>Tap <strong>Add</strong></li>
+</ol>
+<p>The app icon will appear on your home screen or app drawer.</p>
+<h2 id="installing-on-desktop">Installing on Desktop</h2>
+<h3 id="chrome-edge-or-brave">Chrome, Edge, or Brave</h3>
+<ol>
+<li>Open Streaklet in the browser</li>
+<li>Look for the <strong>install icon</strong> (⊕ or monitor icon) in the address bar</li>
+<li>Click it and select <strong>Install</strong></li>
+<li>The app will open in a standalone window</li>
+</ol>
+<p>Alternatively:
+- Chrome: Menu → <strong>More Tools</strong> → <strong>Create Shortcut</strong> → Check "Open as window"
+- Edge: Menu → <strong>Apps</strong> → <strong>Install this site as an app</strong></p>
+<h3 id="firefox">Firefox</h3>
+<p>Firefox doesn't support PWA installation directly, but you can create a desktop shortcut:
+1. Visit Streaklet
+2. Click the <strong>menu</strong> (three bars)
+3. Select <strong>"Pin to Taskbar"</strong> or <strong>"Pin to Start"</strong></p>
+<h2 id="offline-support">Offline Support</h2>
+<p>Streaklet caches key assets for offline use:</p>
+<ul>
+<li><strong>Static files</strong> - HTML, CSS, JavaScript</li>
+<li><strong>Images</strong> - Icons, logos</li>
+<li><strong>Fonts</strong> - Typography assets</li>
+</ul>
+<h3 id="what-works-offline">What Works Offline</h3>
+<ul>
+<li>Viewing the interface</li>
+<li>Navigating between pages</li>
+<li>Viewing cached data</li>
+</ul>
+<h3 id="what-requires-internet">What Requires Internet</h3>
+<ul>
+<li>Loading new data from the server</li>
+<li>Syncing Fitbit data</li>
+<li>Creating/updating tasks</li>
+<li>Checking off tasks (unless cached)</li>
+</ul>
+<h2 id="service-worker">Service Worker</h2>
+<p>The service worker provides offline functionality and caching:</p>
+<ul>
+<li><strong>Cache-first strategy</strong> - Static assets load from cache</li>
+<li><strong>Network-first for API</strong> - API calls attempt network first, fall back to cache</li>
+<li><strong>Automatic updates</strong> - Service worker updates automatically when new versions are deployed</li>
+</ul>
+<h3 id="clearing-cache">Clearing Cache</h3>
+<p>If you experience issues, clear the cache:</p>
+<ol>
+<li>Open browser DevTools (F12)</li>
+<li>Go to <strong>Application</strong> → <strong>Storage</strong></li>
+<li>Click <strong>"Clear site data"</strong></li>
+<li>Reload the page</li>
+</ol>
+<h2 id="app-manifest">App Manifest</h2>
+<p>Streaklet includes a web app manifest (<code>manifest.json</code>) that defines:</p>
+<ul>
+<li>App name and icons</li>
+<li>Display mode (standalone)</li>
+<li>Theme colors</li>
+<li>Start URL</li>
+</ul>
+<h3 id="customizing">Customizing</h3>
+<p>You can customize the manifest by editing <code>app/static/manifest.json</code> in your deployment.</p>
+<h2 id="benefits-of-pwa">Benefits of PWA</h2>
+<h3 id="mobile-experience">Mobile Experience</h3>
+<ul>
+<li><strong>No App Store</strong> - Install directly from browser</li>
+<li><strong>Instant Updates</strong> - Always get latest version</li>
+<li><strong>Less Storage</strong> - Smaller than native apps</li>
+<li><strong>Cross-Platform</strong> - Same app on iOS and Android</li>
+</ul>
+<h3 id="desktop-experience">Desktop Experience</h3>
+<ul>
+<li><strong>Quick Access</strong> - Launch from desktop or taskbar</li>
+<li><strong>Distraction-Free</strong> - No browser tabs or address bar</li>
+<li><strong>Native Feel</strong> - Looks and behaves like a desktop app</li>
+</ul>
+<h2 id="browser-support">Browser Support</h2>
 <table>
 <thead>
 <tr>
-<th>Commit Type</th>
-<th>Version Change</th>
+<th>Feature</th>
+<th>Chrome</th>
+<th>Firefox</th>
+<th>Safari</th>
+<th>Edge</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>feat:</code></td>
-<td>1.0.0 → <strong>1.1.0</strong> (minor)</td>
+<td>Install</td>
+<td>✅</td>
+<td>⚠️ Limited</td>
+<td>✅</td>
+<td>✅</td>
 </tr>
 <tr>
-<td><code>fix:</code></td>
-<td>1.0.0 → <strong>1.0.1</strong> (patch)</td>
+<td>Offline</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
 </tr>
 <tr>
-<td><code>feat!:</code> or <code>BREAKING CHANGE:</code></td>
-<td>1.0.0 → <strong>2.0.0</strong> (major)</td>
-</tr>
-<tr>
-<td><code>docs:</code>, <code>chore:</code>, etc.</td>
-<td>No release</td>
+<td>Push Notifications</td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
 </tr>
 </tbody>
 </table>
-<h2 id="typical-workflow">Typical Workflow</h2>
-<h3 id="1-make-changes">1. Make Changes</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feat/new-feature
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Make changes</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add export functionality&quot;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>git<span class="w"> </span>push
-</code></pre></div>
-<h3 id="2-create-pr">2. Create PR</h3>
+<p>Note: Streaklet doesn't currently use push notifications.</p>
+<h2 id="uninstalling">Uninstalling</h2>
+<h3 id="mobile">Mobile</h3>
+<p>Uninstall like any other app:
+- <strong>iOS</strong>: Long-press the icon → <strong>Remove App</strong>
+- <strong>Android</strong>: Long-press the icon → <strong>Uninstall</strong> or drag to <strong>Uninstall</strong></p>
+<h3 id="desktop">Desktop</h3>
 <ul>
-<li>Use conventional commit format in PR title</li>
-<li>Get review and approval</li>
-<li>Merge to <code>main</code></li>
+<li><strong>Chrome/Edge</strong>: Click the app icon in the address bar → <strong>Uninstall</strong></li>
+<li><strong>Or</strong>: OS app settings → Find "Streaklet" → Uninstall</li>
 </ul>
-<h3 id="3-wait-for-release-pr">3. Wait for Release PR</h3>
-<p>After merge, release-please creates a PR like:</p>
-<p><strong>Title:</strong> <code>chore(main): release 1.1.0</code></p>
-<p><strong>Contents:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gu">## 1.1.0 (2025-01-15)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gu">### Features</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">*</span><span class="w"> </span>add export functionality ([abc1234](link))
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">*</span><span class="w"> </span>implement user profiles ([def5678](link))
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="gu">### Bug Fixes</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">*</span><span class="w"> </span>resolve timezone issue ([ghi9012](link))
-</code></pre></div></p>
-<h3 id="4-merge-release-pr">4. Merge Release PR</h3>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="installation-button-not-showing">Installation button not showing</h3>
 <ul>
-<li>Review the version number and changelog</li>
-<li>Merge the Release PR</li>
-<li>Release happens automatically!</li>
+<li>Ensure you're using HTTPS (or localhost)</li>
+<li>Clear browser cache and reload</li>
+<li>Check if already installed (may hide the button)</li>
 </ul>
-<h3 id="5-docker-images-published">5. Docker Images Published</h3>
-<p>Images are tagged and published:
-- <code>ghcr.io/ptmetcalf/streaklet:1.1.0</code>
-- <code>ghcr.io/ptmetcalf/streaklet:1.1</code>
-- <code>ghcr.io/ptmetcalf/streaklet:1</code>
-- <code>ghcr.io/ptmetcalf/streaklet:latest</code></p>
-<h2 id="checking-release-status">Checking Release Status</h2>
+<h3 id="offline-mode-not-working">Offline mode not working</h3>
 <ul>
-<li><strong>Open PRs:</strong> Look for <code>chore(main): release X.Y.Z</code></li>
-<li><strong>Releases:</strong> <a href="https://github.com/ptmetcalf/streaklet/releases">GitHub Releases</a></li>
-<li><strong>Docker Images:</strong> <a href="https://github.com/ptmetcalf/streaklet/pkgs/container/streaklet">Container Registry</a></li>
-<li><strong>Workflows:</strong> <a href="https://github.com/ptmetcalf/streaklet/actions">GitHub Actions</a></li>
+<li>Check if service worker is registered: DevTools → Application → Service Workers</li>
+<li>Verify cache storage: DevTools → Application → Cache Storage</li>
+<li>Clear cache and reload to re-register service worker</li>
 </ul>
-<h2 id="emergency-manual-release">Emergency Manual Release</h2>
-<p>If automated releases fail:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Create tag manually</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.2.3<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Emergency release&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.2.3
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Manually create GitHub Release in UI</span>
-</code></pre></div>
-<h2 id="configuration-files">Configuration Files</h2>
+<h3 id="app-not-updating">App not updating</h3>
 <ul>
-<li><code>.release-please-manifest.json</code> - Current version</li>
-<li><code>release-please-config.json</code> - Settings</li>
-<li><code>.github/workflows/release-please.yml</code> - Workflow</li>
+<li>Close all instances of the app</li>
+<li>Clear cache and reload</li>
+<li>Uninstall and reinstall the PWA</li>
 </ul>
-<h2 id="for-detailed-information">For Detailed Information</h2>
-<p>See <a href="https://github.com/ptmetcalf/streaklet/blob/main/RELEASING.md">RELEASING.md</a> for comprehensive release documentation.</p>
+<h2 id="learn-more">Learn More</h2>
+<ul>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps">Progressive Web Apps (MDN)</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API">Service Workers (MDN)</a></li>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/Manifest">Web App Manifest (MDN)</a></li>
+</ul>
 
 
 

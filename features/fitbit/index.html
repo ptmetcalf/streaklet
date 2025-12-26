@@ -12,13 +12,13 @@
         <meta name="author" content="ptmetcalf">
       
       
-        <link rel="canonical" href="https://ptmetcalf.github.io/streaklet/development/releases/">
+        <link rel="canonical" href="https://ptmetcalf.github.io/streaklet/features/fitbit/">
       
       
-        <link rel="prev" href="../contributing/">
+        <link rel="prev" href="../profiles/">
       
       
-        <link rel="next" href="../architecture/">
+        <link rel="next" href="../pwa/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Releases - Streaklet</title>
+        <title>Fitbit Integration - Streaklet</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#release-process" class="md-skip">
+        <a href="#fitbit-integration" class="md-skip">
           Skip to content
         </a>
       
@@ -118,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Releases
+              Fitbit Integration
             
           </span>
         </div>
@@ -268,11 +268,13 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../features/profiles/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../profiles/" class="md-tabs__link">
           
   
   
@@ -328,13 +330,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../local-setup/" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../../development/local-setup/" class="md-tabs__link">
           
   
   
@@ -567,28 +567,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
             
   
   
@@ -606,7 +609,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             
@@ -624,7 +627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/profiles/" class="md-nav__link">
+      <a href="../profiles/" class="md-nav__link">
         
   
   
@@ -649,10 +652,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../features/fitbit/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fitbit Integration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -668,6 +698,281 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-register-a-fitbit-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Register a Fitbit Application
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-configure-streaklet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Configure Streaklet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-connect-your-fitbit-account" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Connect Your Fitbit Account
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auto-completing-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auto-Completing Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Completing Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-auto-check-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Auto-Check Tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-auto-check-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Auto-Check Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#viewing-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Viewing Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#daily-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daily Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historical-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sync-schedule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sync Schedule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#disconnecting-fitbit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Disconnecting Fitbit
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#privacy-security" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy &amp; Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fitbit-connection-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Fitbit connection not found"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tasks-not-auto-completing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tasks not auto-completing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sync errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -680,7 +985,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/pwa/" class="md-nav__link">
+      <a href="../pwa/" class="md-nav__link">
         
   
   
@@ -708,7 +1013,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../features/backup/" class="md-nav__link">
+      <a href="../backup/" class="md-nav__link">
         
   
   
@@ -974,31 +1279,28 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -1016,7 +1318,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1034,7 +1336,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../local-setup/" class="md-nav__link">
+      <a href="../../development/local-setup/" class="md-nav__link">
         
   
   
@@ -1062,7 +1364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../contributing/" class="md-nav__link">
+      <a href="../../development/contributing/" class="md-nav__link">
         
   
   
@@ -1087,37 +1389,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Releases
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../development/releases/" class="md-nav__link">
         
   
   
@@ -1133,164 +1408,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        How It Works
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#version-bumping" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Version Bumping
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Typical Workflow">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-make-changes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Make Changes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-create-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Create PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#3-wait-for-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Wait for Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-merge-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Merge Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-docker-images-published" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Docker Images Published
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#checking-release-status" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Checking Release Status
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#emergency-manual-release" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Emergency Manual Release
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configuration Files
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#for-detailed-information" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        For Detailed Information
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1303,7 +1420,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../architecture/" class="md-nav__link">
+      <a href="../../development/architecture/" class="md-nav__link">
         
   
   
@@ -1358,10 +1475,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-it-works" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        How It Works
+        Overview
       
     </span>
   </a>
@@ -1369,33 +1486,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#version-bumping" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Version Bumping
+        Setup
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#typical-workflow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Typical Workflow
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Typical Workflow">
+    <nav class="md-nav" aria-label="Setup">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-make-changes" class="md-nav__link">
+  <a href="#1-register-a-fitbit-application" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Make Changes
+        1. Register a Fitbit Application
       
     </span>
   </a>
@@ -1403,10 +1509,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-create-pr" class="md-nav__link">
+  <a href="#2-configure-streaklet" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Create PR
+        2. Configure Streaklet
       
     </span>
   </a>
@@ -1414,32 +1520,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-wait-for-release-pr" class="md-nav__link">
+  <a href="#3-connect-your-fitbit-account" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Wait for Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#4-merge-release-pr" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Merge Release PR
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#5-docker-images-published" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Docker Images Published
+        3. Connect Your Fitbit Account
       
     </span>
   </a>
@@ -1452,10 +1536,60 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#checking-release-status" class="md-nav__link">
+  <a href="#auto-completing-tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Checking Release Status
+        Auto-Completing Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Auto-Completing Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#creating-auto-check-tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Auto-Check Tasks
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-auto-check-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Auto-Check Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manual Sync
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Metrics
       
     </span>
   </a>
@@ -1463,10 +1597,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#emergency-manual-release" class="md-nav__link">
+  <a href="#viewing-metrics" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Emergency Manual Release
+        Viewing Metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Viewing Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#daily-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Daily Summary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historical-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sync-schedule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sync Schedule
       
     </span>
   </a>
@@ -1474,10 +1647,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configuration-files" class="md-nav__link">
+  <a href="#disconnecting-fitbit" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Configuration Files
+        Disconnecting Fitbit
       
     </span>
   </a>
@@ -1485,10 +1658,71 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#for-detailed-information" class="md-nav__link">
+  <a href="#privacy-security" class="md-nav__link">
     <span class="md-ellipsis">
       
-        For Detailed Information
+        Privacy &amp; Security
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fitbit-connection-not-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        "Fitbit connection not found"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tasks-not-auto-completing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tasks not auto-completing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sync-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sync errors
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
       
     </span>
   </a>
@@ -1515,108 +1749,199 @@
   
 
 
-<h1 id="release-process">Release Process</h1>
-<p>Streaklet uses automated releases via <a href="https://github.com/googleapis/release-please">release-please</a>.</p>
-<h2 id="how-it-works">How It Works</h2>
+<h1 id="fitbit-integration">Fitbit Integration</h1>
+<p>Streaklet integrates with Fitbit to automatically complete tasks based on your fitness metrics.</p>
+<h2 id="overview">Overview</h2>
+<p>The Fitbit integration allows you to:</p>
+<ul>
+<li><strong>Auto-complete tasks</strong> based on daily metrics (steps, sleep, heart rate, etc.)</li>
+<li><strong>View metrics</strong> directly in Streaklet</li>
+<li><strong>Track progress</strong> toward fitness goals</li>
+<li><strong>Historical sync</strong> - backfill up to 30 days of data</li>
+</ul>
+<h2 id="setup">Setup</h2>
+<h3 id="1-register-a-fitbit-application">1. Register a Fitbit Application</h3>
+<p>Before connecting Fitbit, you need to register an application with Fitbit:</p>
 <ol>
-<li><strong>Commit with conventional format</strong> to <code>main</code> branch</li>
-<li><strong>release-please creates a Release PR</strong> with:</li>
-<li>Auto-calculated version bump</li>
-<li>Generated CHANGELOG.md</li>
-<li><strong>Merge the Release PR</strong></li>
-<li><strong>GitHub Release created automatically</strong></li>
-<li><strong>Docker images built and published</strong></li>
+<li>Go to <a href="https://dev.fitbit.com/apps">dev.fitbit.com</a></li>
+<li>Click <strong>"Register An App"</strong></li>
+<li>Fill in the application details:</li>
+<li><strong>Application Name</strong>: Streaklet (or your preferred name)</li>
+<li><strong>Description</strong>: Personal habit tracker</li>
+<li><strong>Application Website</strong>: <code>http://localhost:8080</code> (or your domain)</li>
+<li><strong>Organization</strong>: Your name</li>
+<li><strong>Organization Website</strong>: <code>http://localhost:8080</code> (or your domain)</li>
+<li><strong>OAuth 2.0 Application Type</strong>: <strong>Personal</strong></li>
+<li><strong>Callback URL</strong>: <code>http://localhost:8080/api/fitbit/callback</code> (important!)</li>
+<li><strong>Default Access Type</strong>: <strong>Read Only</strong></li>
+<li>Agree to terms and click <strong>Register</strong></li>
+<li>Note your <strong>Client ID</strong> and <strong>Client Secret</strong></li>
 </ol>
-<h2 id="version-bumping">Version Bumping</h2>
+<h3 id="2-configure-streaklet">2. Configure Streaklet</h3>
+<p>Add your Fitbit credentials to your environment:</p>
+<p><strong>Docker Compose:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">environment</span><span class="p">:</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FITBIT_CLIENT_ID=your_client_id_here</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">FITBIT_CLIENT_SECRET=your_client_secret_here</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">APP_SECRET_KEY=your_random_32_character_secret</span>
+</code></pre></div></p>
+<p><strong>Direct Docker:</strong>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>-v<span class="w"> </span>./data:/data<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">FITBIT_CLIENT_ID</span><span class="o">=</span>your_client_id_here<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">FITBIT_CLIENT_SECRET</span><span class="o">=</span>your_client_secret_here<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">APP_SECRET_KEY</span><span class="o">=</span>your_random_32_character_secret<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span>ghcr.io/ptmetcalf/streaklet:latest
+</code></pre></div></p>
+<p><strong>Important:</strong> <code>APP_SECRET_KEY</code> is used to encrypt Fitbit tokens. Use a secure random 32+ character string.</p>
+<h3 id="3-connect-your-fitbit-account">3. Connect Your Fitbit Account</h3>
+<ol>
+<li>Navigate to <strong>Settings</strong> in Streaklet</li>
+<li>Click <strong>"Connect Fitbit"</strong> in the Fitbit section</li>
+<li>Log in to your Fitbit account and authorize Streaklet</li>
+<li>You'll be redirected back with a success message</li>
+</ol>
+<h2 id="auto-completing-tasks">Auto-Completing Tasks</h2>
+<p>Tasks can be configured to auto-complete when Fitbit metrics meet certain conditions.</p>
+<h3 id="creating-auto-check-tasks">Creating Auto-Check Tasks</h3>
+<p>When creating or editing a task, enable Fitbit auto-check:</p>
+<ol>
+<li>Check <strong>"Enable Fitbit Auto-Check"</strong></li>
+<li>Select a <strong>Metric Type</strong>:</li>
+<li><code>steps</code> - Daily step count</li>
+<li><code>distance</code> - Distance in miles</li>
+<li><code>floors</code> - Floors climbed</li>
+<li><code>calories</code> - Calories burned</li>
+<li><code>active_minutes</code> - Active minutes</li>
+<li><code>sleep_minutes</code> - Total sleep time</li>
+<li><code>resting_heart_rate</code> - Resting heart rate (BPM)</li>
+<li>Choose a <strong>Goal Operator</strong>:</li>
+<li><code>&gt;=</code> - Greater than or equal (most common)</li>
+<li><code>&lt;=</code> - Less than or equal</li>
+<li><code>==</code> - Exactly equal</li>
+<li>Set <strong>Goal Value</strong> (numeric)</li>
+</ol>
+<p><strong>Example:</strong> "Walk 10,000 steps"
+- Metric: <code>steps</code>
+- Operator: <code>&gt;=</code>
+- Goal: <code>10000</code></p>
+<h3 id="how-auto-check-works">How Auto-Check Works</h3>
+<ol>
+<li><strong>Automatic Sync</strong>: Streaklet syncs with Fitbit every hour (configurable)</li>
+<li><strong>Goal Evaluation</strong>: When metrics are synced, tasks are evaluated</li>
+<li><strong>Auto-Complete</strong>: If the goal is met, the task is automatically checked</li>
+<li><strong>Auto-Uncheck</strong>: If you fall below the goal, the task is unchecked</li>
+</ol>
+<h3 id="manual-sync">Manual Sync</h3>
+<p>Force a sync at any time:</p>
+<ul>
+<li>Click <strong>"Sync Now"</strong> on the Fitbit settings page</li>
+<li>Or use the API: <code>POST /api/fitbit/sync</code></li>
+</ul>
+<h2 id="available-metrics">Available Metrics</h2>
 <table>
 <thead>
 <tr>
-<th>Commit Type</th>
-<th>Version Change</th>
+<th>Metric</th>
+<th>Description</th>
+<th>Example Use Case</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>feat:</code></td>
-<td>1.0.0 → <strong>1.1.0</strong> (minor)</td>
+<td><code>steps</code></td>
+<td>Total steps for the day</td>
+<td>Walk 10,000 steps</td>
 </tr>
 <tr>
-<td><code>fix:</code></td>
-<td>1.0.0 → <strong>1.0.1</strong> (patch)</td>
+<td><code>distance</code></td>
+<td>Miles traveled</td>
+<td>Walk 5 miles</td>
 </tr>
 <tr>
-<td><code>feat!:</code> or <code>BREAKING CHANGE:</code></td>
-<td>1.0.0 → <strong>2.0.0</strong> (major)</td>
+<td><code>floors</code></td>
+<td>Floors climbed</td>
+<td>Climb 10 floors</td>
 </tr>
 <tr>
-<td><code>docs:</code>, <code>chore:</code>, etc.</td>
-<td>No release</td>
+<td><code>calories</code></td>
+<td>Calories burned</td>
+<td>Burn 2,500 calories</td>
+</tr>
+<tr>
+<td><code>active_minutes</code></td>
+<td>Very active + fairly active minutes</td>
+<td>30 active minutes</td>
+</tr>
+<tr>
+<td><code>sleep_minutes</code></td>
+<td>Total sleep time</td>
+<td>Sleep 7 hours (420 min)</td>
+</tr>
+<tr>
+<td><code>resting_heart_rate</code></td>
+<td>Resting heart rate</td>
+<td>Keep RHR under 60 BPM</td>
 </tr>
 </tbody>
 </table>
-<h2 id="typical-workflow">Typical Workflow</h2>
-<h3 id="1-make-changes">1. Make Changes</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>feat/new-feature
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># Make changes</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: add export functionality&quot;</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>git<span class="w"> </span>push
-</code></pre></div>
-<h3 id="2-create-pr">2. Create PR</h3>
+<h2 id="viewing-metrics">Viewing Metrics</h2>
+<h3 id="daily-summary">Daily Summary</h3>
+<p>On the Fitbit page, view today's metrics:</p>
 <ul>
-<li>Use conventional commit format in PR title</li>
-<li>Get review and approval</li>
-<li>Merge to <code>main</code></li>
+<li>Current values</li>
+<li>Progress toward goals</li>
+<li>Last sync time</li>
 </ul>
-<h3 id="3-wait-for-release-pr">3. Wait for Release PR</h3>
-<p>After merge, release-please creates a PR like:</p>
-<p><strong>Title:</strong> <code>chore(main): release 1.1.0</code></p>
-<p><strong>Contents:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="gu">## 1.1.0 (2025-01-15)</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="gu">### Features</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">*</span><span class="w"> </span>add export functionality ([abc1234](link))
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="k">*</span><span class="w"> </span>implement user profiles ([def5678](link))
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="gu">### Bug Fixes</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">*</span><span class="w"> </span>resolve timezone issue ([ghi9012](link))
+<h3 id="historical-data">Historical Data</h3>
+<p>Sync historical data (up to 30 days) to backfill metrics:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8080/api/fitbit/sync?days<span class="o">=</span><span class="m">30</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Profile-Id: 1&quot;</span>
+</code></pre></div>
+<h2 id="sync-schedule">Sync Schedule</h2>
+<p>By default, Fitbit data syncs automatically every hour for all connected profiles.</p>
+<p>This ensures your tasks auto-complete throughout the day as you reach goals.</p>
+<h2 id="disconnecting-fitbit">Disconnecting Fitbit</h2>
+<p>To disconnect your Fitbit account:</p>
+<ol>
+<li>Go to <strong>Settings</strong> → <strong>Fitbit Integration</strong></li>
+<li>Click <strong>"Disconnect Fitbit"</strong></li>
+<li>Confirm the action</li>
+</ol>
+<p><strong>Warning:</strong> Disconnecting will:
+- Revoke Streaklet's access to your Fitbit data
+- Disable auto-check for all tasks (they'll remain as regular tasks)
+- Preserve historical metric data (not deleted)</p>
+<h2 id="privacy-security">Privacy &amp; Security</h2>
+<ul>
+<li><strong>Token Encryption</strong>: Fitbit access tokens are encrypted at rest using AES-256</li>
+<li><strong>Read-Only Access</strong>: Streaklet only requests read permissions</li>
+<li><strong>Local Storage</strong>: All data is stored in your local SQLite database</li>
+<li><strong>No Sharing</strong>: Data is never sent to external servers (except Fitbit API)</li>
+</ul>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="fitbit-connection-not-found">"Fitbit connection not found"</h3>
+<p>Your Fitbit connection may have expired. Reconnect:
+1. Go to Settings
+2. Click "Connect Fitbit" again</p>
+<h3 id="tasks-not-auto-completing">Tasks not auto-completing</h3>
+<ol>
+<li>Verify Fitbit is connected: Check Settings page</li>
+<li>Force a manual sync: Click "Sync Now"</li>
+<li>Check task configuration: Ensure metric type and goal are correct</li>
+<li>Check Fitbit data: Verify metrics exist in your Fitbit app</li>
+</ol>
+<h3 id="sync-errors">Sync errors</h3>
+<p>Check Docker logs for detailed error messages:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>logs<span class="w"> </span>streaklet
 </code></pre></div></p>
-<h3 id="4-merge-release-pr">4. Merge Release PR</h3>
-<ul>
-<li>Review the version number and changelog</li>
-<li>Merge the Release PR</li>
-<li>Release happens automatically!</li>
-</ul>
-<h3 id="5-docker-images-published">5. Docker Images Published</h3>
-<p>Images are tagged and published:
-- <code>ghcr.io/ptmetcalf/streaklet:1.1.0</code>
-- <code>ghcr.io/ptmetcalf/streaklet:1.1</code>
-- <code>ghcr.io/ptmetcalf/streaklet:1</code>
-- <code>ghcr.io/ptmetcalf/streaklet:latest</code></p>
-<h2 id="checking-release-status">Checking Release Status</h2>
-<ul>
-<li><strong>Open PRs:</strong> Look for <code>chore(main): release X.Y.Z</code></li>
-<li><strong>Releases:</strong> <a href="https://github.com/ptmetcalf/streaklet/releases">GitHub Releases</a></li>
-<li><strong>Docker Images:</strong> <a href="https://github.com/ptmetcalf/streaklet/pkgs/container/streaklet">Container Registry</a></li>
-<li><strong>Workflows:</strong> <a href="https://github.com/ptmetcalf/streaklet/actions">GitHub Actions</a></li>
-</ul>
-<h2 id="emergency-manual-release">Emergency Manual Release</h2>
-<p>If automated releases fail:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Create tag manually</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>git<span class="w"> </span>tag<span class="w"> </span>-a<span class="w"> </span>v1.2.3<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Emergency release&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>v1.2.3
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Manually create GitHub Release in UI</span>
-</code></pre></div>
-<h2 id="configuration-files">Configuration Files</h2>
-<ul>
-<li><code>.release-please-manifest.json</code> - Current version</li>
-<li><code>release-please-config.json</code> - Settings</li>
-<li><code>.github/workflows/release-please.yml</code> - Workflow</li>
-</ul>
-<h2 id="for-detailed-information">For Detailed Information</h2>
-<p>See <a href="https://github.com/ptmetcalf/streaklet/blob/main/RELEASING.md">RELEASING.md</a> for comprehensive release documentation.</p>
+<p>Common issues:
+- Invalid credentials (check <code>FITBIT_CLIENT_ID</code> and <code>FITBIT_CLIENT_SECRET</code>)
+- Expired refresh token (reconnect Fitbit)
+- Rate limiting (Fitbit API has limits; sync will retry)</p>
+<h2 id="api-reference">API Reference</h2>
+<p>See the <a href="../../api/endpoints/#fitbit-integration">Fitbit API documentation</a> for complete endpoint details.</p>
 
 
 
