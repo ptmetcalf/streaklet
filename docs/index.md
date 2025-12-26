@@ -39,7 +39,17 @@ Streaklet is a habit tracking application designed for families and personal use
 
 ## Screenshots
 
-*Coming soon*
+### Profiles
+![Profiles Page](screenshots/profiles-page.png)
+
+### Daily Checklist
+![Checklist Page](screenshots/checklist-page.png)
+
+### History Calendar
+![History Page](screenshots/history-page.png)
+
+### Task Settings
+![Settings Page](screenshots/settings-page.png)
 
 ## License
 
