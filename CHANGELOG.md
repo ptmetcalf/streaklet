@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/ptmetcalf/streaklet/compare/v0.1.1...v0.2.0) (2025-12-27)
+
+
+### Features
+
+* add comprehensive desktop and tablet responsive layouts ([1971b36](https://github.com/ptmetcalf/streaklet/commit/1971b36eb8255d8137fd1f0a60028576d5cbd375))
+
 ## [0.1.1](https://github.com/ptmetcalf/streaklet/compare/v0.1.0...v0.1.1) (2025-12-27)
 
 
