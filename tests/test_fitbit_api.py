@@ -108,6 +108,7 @@ async def test_fetch_activity_summary_success(test_db: Session, mock_connection)
             "fairlyActiveMinutes": 20,
             "veryActiveMinutes": 35,
             "distances": [
+                {"activity": "tracker", "distance": 4.8},  # Tracker distance (preferred)
                 {"activity": "total", "distance": 5.2}
             ]
         }
@@ -120,8 +121,8 @@ async def test_fetch_activity_summary_success(test_db: Session, mock_connection)
         assert metrics["steps"] == 10543
         assert metrics["floors"] == 12
         assert metrics["calories_burned"] == 2500
-        assert metrics["active_minutes"] == 55  # 20 + 35
-        assert metrics["distance"] == 5.2
+        assert metrics["active_minutes_legacy"] == 55  # 20 + 35 (legacy fallback)
+        assert metrics["distance"] == 4.8  # Uses "tracker" not "total"
 
 
 @pytest.mark.asyncio

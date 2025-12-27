@@ -86,10 +86,13 @@ async def fetch_activity_summary(
 
     Returns metrics:
     - steps: Daily step count
-    - distance: Distance in miles
+    - distance: Distance in miles (prefers tracker-only, falls back to total)
     - floors: Floors climbed
     - calories_burned: Total calories burned
-    - active_minutes: Active zone minutes
+    - active_minutes_legacy: Legacy active minutes (fairly + very active) for fallback
+
+    Note: Active minutes are now fetched separately via fetch_active_zone_minutes()
+    which returns the modern AZM metric. This function provides a legacy fallback.
 
     Args:
         db: Database session
@@ -112,12 +115,26 @@ async def fetch_activity_summary(
         if "steps" in summary:
             metrics["steps"] = float(summary["steps"])
 
-        # Distance (convert to miles if needed)
+        # Distance - prefer "tracker" (device-only) over "total" (includes manual logs)
+        # This matches what the Fitbit app displays
         distances = summary.get("distances", [])
+        distance_value = None
+
+        # First try to find "tracker" distance
         for dist in distances:
-            if dist.get("activity") == "total":
-                metrics["distance"] = float(dist.get("distance", 0))
+            if dist.get("activity") == "tracker":
+                distance_value = dist.get("distance", 0)
                 break
+
+        # Fall back to "total" if tracker not found
+        if distance_value is None:
+            for dist in distances:
+                if dist.get("activity") == "total":
+                    distance_value = dist.get("distance", 0)
+                    break
+
+        if distance_value is not None:
+            metrics["distance"] = float(distance_value)
 
         # Floors
         if "floors" in summary:
@@ -127,10 +144,12 @@ async def fetch_activity_summary(
         if "caloriesOut" in summary:
             metrics["calories_burned"] = float(summary["caloriesOut"])
 
-        # Active minutes (use "fairly active" + "very active")
+        # Legacy active minutes (fairly + very active) - only for fallback
+        # Modern devices should use Active Zone Minutes (AZM) instead
         fairly_active = summary.get("fairlyActiveMinutes", 0)
         very_active = summary.get("veryActiveMinutes", 0)
-        metrics["active_minutes"] = float(fairly_active + very_active)
+        if fairly_active or very_active:
+            metrics["active_minutes_legacy"] = float(fairly_active + very_active)
 
         return metrics
 
@@ -148,7 +167,13 @@ async def fetch_sleep_summary(
 
     Returns metrics:
     - sleep_minutes: Total sleep duration in minutes
-    - sleep_score: Sleep score (0-100) if available
+    - sleep_score: Sleep efficiency (0-100) - percentage of time in bed spent asleep
+
+    IMPORTANT: The "sleep_score" metric is actually sleep EFFICIENCY, not the
+    composite Sleep Score shown in the Fitbit mobile app. The actual Sleep Score
+    is proprietary and NOT available via the Fitbit Web API. Sleep efficiency
+    measures what % of time in bed was spent asleep, while the app's Sleep Score
+    is a composite calculation based on duration, restoration, and sleep stages.
 
     Args:
         db: Database session
@@ -177,12 +202,13 @@ async def fetch_sleep_summary(
         if total_sleep_minutes > 0:
             metrics["sleep_minutes"] = float(total_sleep_minutes)
 
-        # Get sleep score (from the main sleep record if available)
+        # Get sleep efficiency (stored as "sleep_score" for backwards compatibility)
+        # Note: This is NOT the same as the Sleep Score in the Fitbit mobile app
         for record in sleep_records:
             if record.get("isMainSleep"):
                 efficiency = record.get("efficiency")
                 if efficiency is not None:
-                    # Use efficiency as sleep score (it's a 0-100 value)
+                    # Efficiency = % of time in bed spent asleep (0-100)
                     metrics["sleep_score"] = float(efficiency)
                 break
 
@@ -236,6 +262,54 @@ async def fetch_heart_rate_summary(
         return {}
 
 
+async def fetch_active_zone_minutes(
+    db: Session,
+    connection: FitbitConnection,
+    target_date: date
+) -> Dict[str, float]:
+    """
+    Fetch Active Zone Minutes for a specific date.
+
+    Returns metrics:
+    - active_minutes: Total active zone minutes (heart rate based)
+
+    Note: Active Zone Minutes (AZM) is the modern metric that replaced
+    the older "fairly active + very active" calculation. AZM is heart-rate
+    based and matches what the Fitbit mobile app displays.
+
+    Falls back to legacy calculation if AZM is not available (older devices).
+
+    Args:
+        db: Database session
+        connection: FitbitConnection
+        target_date: Date to fetch data for
+
+    Returns:
+        Dictionary of metric_type -> value
+    """
+    endpoint = f"/1/user/-/activities/active-zone-minutes/date/{target_date.isoformat()}/1d.json"
+
+    try:
+        data = await _make_fitbit_request(db, connection, endpoint)
+
+        metrics = {}
+
+        # Get AZM data from response
+        azm_data = data.get("activities-active-zone-minutes", [])
+        if azm_data and len(azm_data) > 0:
+            value_obj = azm_data[0].get("value", {})
+            active_zone_minutes = value_obj.get("activeZoneMinutes")
+            if active_zone_minutes is not None:
+                metrics["active_minutes"] = float(active_zone_minutes)
+
+        return metrics
+
+    except Exception as e:
+        # AZM not available (older devices or API error)
+        print(f"Failed to fetch Active Zone Minutes for {target_date}: {e}")
+        return {}
+
+
 async def fetch_all_metrics(
     db: Session,
     connection: FitbitConnection,
@@ -244,7 +318,7 @@ async def fetch_all_metrics(
     """
     Fetch all available metrics for a date.
 
-    Combines activity, sleep, and heart rate data.
+    Combines activity, sleep, heart rate, and active zone minutes data.
 
     Args:
         db: Database session
@@ -257,15 +331,19 @@ async def fetch_all_metrics(
     all_metrics = {}
 
     # Fetch activity metrics
+    activity_metrics_legacy = None
     try:
         activity_metrics = await fetch_activity_summary(db, connection, target_date)
+
+        # Save legacy active minutes for fallback
+        activity_metrics_legacy = activity_metrics.pop("active_minutes_legacy", None)
+
         for metric_type, value in activity_metrics.items():
             unit = {
                 "steps": "steps",
                 "distance": "miles",
                 "floors": "floors",
-                "calories_burned": "calories",
-                "active_minutes": "minutes"
+                "calories_burned": "calories"
             }.get(metric_type, "")
 
             all_metrics[metric_type] = {
@@ -275,6 +353,33 @@ async def fetch_all_metrics(
             }
     except FitbitAPIError as e:
         print(f"Activity fetch failed: {e}")
+
+    # Fetch Active Zone Minutes (modern metric)
+    try:
+        azm_metrics = await fetch_active_zone_minutes(db, connection, target_date)
+        if "active_minutes" in azm_metrics:
+            # Use modern AZM
+            all_metrics["active_minutes"] = {
+                "value": azm_metrics["active_minutes"],
+                "unit": "minutes",
+                "metadata": {"source": "active_zone_minutes"}
+            }
+        elif activity_metrics_legacy is not None:
+            # Fallback to legacy calculation for older devices
+            all_metrics["active_minutes"] = {
+                "value": activity_metrics_legacy,
+                "unit": "minutes",
+                "metadata": {"source": "legacy_fairly_very_active"}
+            }
+    except Exception as e:
+        # If AZM fails, use legacy
+        if activity_metrics_legacy is not None:
+            all_metrics["active_minutes"] = {
+                "value": activity_metrics_legacy,
+                "unit": "minutes",
+                "metadata": {"source": "legacy_fairly_very_active"}
+            }
+        print(f"Active minutes fetch failed: {e}")
 
     # Fetch sleep metrics
     try:
