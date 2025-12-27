@@ -441,6 +441,9 @@ button:active {
     background-color: var(--bg-color);
 }
 
+/* ============================================
+   MOBILE OPTIMIZATIONS (Small Screens)
+   ============================================ */
 @media (max-width: 480px) {
     .container {
         padding: 12px;
@@ -476,5 +479,259 @@ button:active {
         flex-direction: column;
         gap: 8px;
         align-items: center;
+    }
+}
+
+/* ============================================
+   TABLET OPTIMIZATIONS (768px+)
+   ============================================ */
+@media (min-width: 768px) {
+    body {
+        padding-bottom: 0;  /* Remove bottom padding on larger screens */
+    }
+
+    .container {
+        max-width: 800px;
+        padding: 32px;
+    }
+
+    h1 {
+        font-size: 32px;
+    }
+
+    header {
+        padding: 28px;
+    }
+
+    .task-item {
+        padding: 24px;
+        font-size: 18px;
+    }
+
+    .task-item:hover {
+        background-color: var(--bg-color);
+    }
+
+    .checkbox {
+        width: 32px;
+        height: 32px;
+    }
+
+    .streak-badge {
+        font-size: 18px;
+        padding: 10px 20px;
+    }
+
+    /* Move navigation to top on tablet/desktop */
+    .nav {
+        position: static;
+        border-top: none;
+        border-bottom: 1px solid var(--border-color);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 16px;
+    }
+
+    .nav a {
+        flex: 0 1 auto;
+        padding: 12px 24px;
+        border-radius: 8px;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .nav a:hover {
+        background-color: var(--bg-color);
+    }
+
+    .nav a.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    /* Improve calendar on tablet */
+    .calendar-grid {
+        gap: 10px;
+    }
+
+    .calendar-day {
+        border-radius: 10px;
+        font-size: 16px;
+    }
+
+    .calendar-container {
+        padding: 28px;
+    }
+
+    .streak-value {
+        font-size: 36px;
+    }
+
+    .streak-label {
+        font-size: 14px;
+    }
+
+    /* Settings sections side by side */
+    .settings-section {
+        padding: 24px;
+    }
+
+    .settings-section h2 {
+        font-size: 20px;
+    }
+
+    /* Forms more compact on tablet */
+    .form-group input[type="text"],
+    .form-group input[type="number"] {
+        font-size: 16px;
+        padding: 12px;
+    }
+
+    button {
+        padding: 10px 20px;
+        font-size: 15px;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+
+    /* Profile indicator less intrusive */
+    .profile-indicator {
+        padding: 0.75rem 2rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ============================================
+   DESKTOP OPTIMIZATIONS (1024px+)
+   ============================================ */
+@media (min-width: 1024px) {
+    .container {
+        max-width: 1200px;
+        padding: 40px;
+    }
+
+    h1 {
+        font-size: 36px;
+    }
+
+    /* Multi-column grid layouts for card-based content */
+    /* Used by Fitbit metrics page and similar */
+    div[style*="grid-template-columns: repeat(auto-fit"] {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+        gap: 20px !important;
+    }
+
+    /* Responsive grid for metric cards (Fitbit page) */
+    .container > div > div[style*="display: grid"] {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important;
+    }
+
+    /* Wider navigation with more spacing */
+    .nav {
+        gap: 16px;
+        padding: 12px 32px;
+    }
+
+    .nav a {
+        padding: 14px 32px;
+        font-size: 16px;
+    }
+
+    /* Calendar improvements */
+    .calendar-grid {
+        gap: 12px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .calendar-day {
+        font-size: 18px;
+        border-radius: 12px;
+    }
+
+    .calendar-container {
+        padding: 32px;
+    }
+
+    /* Better hover states for interactive elements */
+    .task-item {
+        transition: background-color 0.2s, transform 0.1s;
+    }
+
+    .task-item:hover {
+        transform: translateX(4px);
+    }
+
+    .nav-arrow:hover {
+        background-color: var(--primary-color);
+        color: white;
+        transform: scale(1.1);
+    }
+
+    button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Task management improvements */
+    .task-list-item {
+        padding: 16px 0;
+        transition: background-color 0.2s;
+    }
+
+    .task-list-item:hover {
+        background-color: var(--bg-color);
+        padding: 16px 12px;
+        margin: 0 -12px;
+        border-radius: 8px;
+    }
+
+    /* Settings page two-column layout for large forms */
+    .settings-section {
+        padding: 32px;
+    }
+}
+
+/* ============================================
+   LARGE DESKTOP OPTIMIZATIONS (1400px+)
+   ============================================ */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1400px;
+    }
+
+    /* Extra spacing for very large screens */
+    .task-item {
+        padding: 28px 32px;
+    }
+
+    header {
+        padding: 36px;
+    }
+
+    .calendar-grid {
+        max-width: 800px;
+        gap: 14px;
+    }
+
+    /* Larger cards for metric displays */
+    div[style*="grid-template-columns: repeat(auto-fit"] {
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+    }
+}
+
+/* ============================================
+   ULTRA-WIDE OPTIMIZATIONS (1920px+)
+   ============================================ */
+@media (min-width: 1920px) {
+    .container {
+        max-width: 1600px;
+    }
+
+    /* Prevent excessive line length for readability */
+    .task-title {
+        max-width: 80%;
     }
 }
