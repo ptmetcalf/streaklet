@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/ptmetcalf/streaklet/compare/v0.1.0...v0.1.1) (2025-12-27)
+
+
+### Bug Fixes
+
+* resolve Fitbit metric discrepancies with mobile app ([b608097](https://github.com/ptmetcalf/streaklet/commit/b608097b2364bd22e5ad9e82296f15533b6bdcde))
+
 ## 0.1.0 (2025-12-27)
 
 
