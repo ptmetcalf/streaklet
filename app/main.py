@@ -5,10 +5,18 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import os
+import logging
 
 from app.core.db import engine, get_db, Base
 from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit
 from app.services import tasks as task_service, history as history_service, profiles as profile_service
+
+
+# Configure application logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s:     %(name)s - %(message)s'
+)
 
 
 @asynccontextmanager

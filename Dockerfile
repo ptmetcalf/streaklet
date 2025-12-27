@@ -56,7 +56,7 @@ set -e\n\
 echo "Running database migrations..."\n\
 alembic upgrade head\n\
 echo "Starting application..."\n\
-exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}\n\
+exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080} --log-level info\n\
 ' > /app/entrypoint.sh && \
     chmod +x /app/entrypoint.sh && \
     chown appuser:appuser /app/entrypoint.sh

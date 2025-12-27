@@ -76,7 +76,8 @@ def start_scheduler():
         hours=settings.fitbit_sync_interval_hours,
         id='fitbit_sync',
         replace_existing=True,
-        max_instances=1  # Prevent overlapping runs
+        max_instances=1,  # Prevent overlapping runs
+        misfire_grace_time=3600  # Run missed jobs within 1 hour of scheduled time
     )
 
     scheduler.start()
