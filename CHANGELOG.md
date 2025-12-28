@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/ptmetcalf/streaklet/compare/v0.2.1...v0.3.0) (2025-12-28)
+
+
+### Features
+
+* replace native browser dialogs with custom modal ([5fa2b75](https://github.com/ptmetcalf/streaklet/commit/5fa2b75b8044e800f12dd30d93a51b547a33f42c))
+
+
+### Bug Fixes
+
+* add CASCADE delete to task_checks foreign key ([557806e](https://github.com/ptmetcalf/streaklet/commit/557806eb2b3e65ce0cf1879069b3a37ba0cb6727))
+* evaluate Fitbit auto-checks on page load and task changes ([ae2cb13](https://github.com/ptmetcalf/streaklet/commit/ae2cb136e6b54c6653668d2318e25390f31555fc))
+* validate selected profile exists on page load ([75d4047](https://github.com/ptmetcalf/streaklet/commit/75d4047f022f462b603ea3f28aee7eae910b85de))
+
 ## [0.2.1](https://github.com/ptmetcalf/streaklet/compare/v0.2.0...v0.2.1) (2025-12-28)
 
 
