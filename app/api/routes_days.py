@@ -15,7 +15,7 @@ router = APIRouter(prefix="/api/days", tags=["days"])
 
 
 @router.get("/today", response_model=DayResponse)
-def get_today_info(
+async def get_today_info(
     db: Session = Depends(get_db),
     profile_id: int = Depends(get_profile_id)
 ):
@@ -23,6 +23,10 @@ def get_today_info(
     today = get_today()
 
     check_service.ensure_checks_exist_for_date(db, today, profile_id)
+
+    # Evaluate Fitbit auto-checks for today
+    from app.services.fitbit_checks import evaluate_and_apply_auto_checks
+    await evaluate_and_apply_auto_checks(db, profile_id, today)
 
     active_tasks = task_service.get_active_tasks(db, profile_id)
     checks_map = {

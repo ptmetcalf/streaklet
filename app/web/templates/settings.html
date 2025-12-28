@@ -281,8 +281,8 @@
     <div x-show="deleteConfirm.show"
          x-cloak
          @click.self="cancelDelete()"
-         style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-        <div style="background: white; border-radius: 12px; padding: 28px; max-width: 400px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+         class="modal-overlay">
+        <div class="modal-content">
             <h3 style="margin: 0 0 16px; font-size: 20px; color: var(--text-color);">Delete Task?</h3>
             <p style="margin: 0 0 24px; color: #666; line-height: 1.5;">
                 Are you sure you want to delete <strong x-text="deleteConfirm.taskTitle"></strong>?
@@ -295,6 +295,31 @@
             </div>
         </div>
     </div>
+
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            margin: 0 16px;
+        }
+    </style>
 
     <!-- Alert Message -->
     <div x-show="alertMessage"

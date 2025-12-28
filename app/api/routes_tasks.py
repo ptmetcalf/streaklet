@@ -19,17 +19,31 @@ def list_tasks(
 
 
 @router.post("", response_model=TaskResponse, status_code=201)
-def create_task(
+async def create_task(
     task: TaskCreate,
     db: Session = Depends(get_db),
     profile_id: int = Depends(get_profile_id)
 ):
     """Create a new task for a profile."""
-    return task_service.create_task(db, task, profile_id)
+    new_task = task_service.create_task(db, task, profile_id)
+
+    # If this is a Fitbit task with auto-check enabled, evaluate it immediately for today
+    if new_task.fitbit_auto_check and new_task.fitbit_metric_type:
+        from app.core.time import get_today
+        from app.services.fitbit_checks import evaluate_and_apply_auto_checks
+        from app.services import checks as check_service
+
+        today = get_today()
+        # Ensure check record exists for the new task
+        check_service.ensure_checks_exist_for_date(db, today, profile_id)
+        # Evaluate auto-check
+        await evaluate_and_apply_auto_checks(db, profile_id, today)
+
+    return new_task
 
 
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task(
+async def update_task(
     task_id: int,
     task: TaskUpdate,
     db: Session = Depends(get_db),
@@ -39,6 +53,19 @@ def update_task(
     updated_task = task_service.update_task(db, task_id, task, profile_id)
     if not updated_task:
         raise HTTPException(status_code=404, detail="Task not found")
+
+    # If this is a Fitbit task with auto-check enabled, evaluate it immediately for today
+    if updated_task.fitbit_auto_check and updated_task.fitbit_metric_type:
+        from app.core.time import get_today
+        from app.services.fitbit_checks import evaluate_and_apply_auto_checks
+        from app.services import checks as check_service
+
+        today = get_today()
+        # Ensure check record exists for the task
+        check_service.ensure_checks_exist_for_date(db, today, profile_id)
+        # Evaluate auto-check
+        await evaluate_and_apply_auto_checks(db, profile_id, today)
+
     return updated_task
 
 
