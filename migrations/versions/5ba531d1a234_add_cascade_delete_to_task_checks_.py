@@ -20,6 +20,9 @@ def upgrade() -> None:
     # SQLite doesn't support modifying foreign key constraints directly
     # Need to recreate the table with CASCADE delete on task_id FK
 
+    # Drop temp table if it exists from failed migration
+    op.execute("DROP TABLE IF EXISTS task_checks_new")
+
     # Create new table with CASCADE
     op.execute("""
         CREATE TABLE task_checks_new (
