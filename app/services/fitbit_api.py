@@ -12,7 +12,7 @@ from typing import Dict, Optional
 from sqlalchemy.orm import Session
 
 from app.models.fitbit_connection import FitbitConnection
-from app.services.fitbit_oauth import ensure_valid_token, decrypt_token
+from app.services.fitbit_oauth import ensure_valid_token, refresh_access_token, decrypt_token
 
 
 # Fitbit API base URL
@@ -61,11 +61,18 @@ async def _make_fitbit_request(
         response = await client.get(url, headers=headers)
 
         if response.status_code == 401:
-            # Token invalid, try refreshing
-            connection = await ensure_valid_token(db, connection)
+            # Token invalid, force refresh and retry once
+            try:
+                connection = await refresh_access_token(db, connection)
+            except Exception as e:
+                raise FitbitAPIError(f"Token refresh failed: {e}")
+
             access_token = decrypt_token(connection.access_token)
             headers["Authorization"] = f"Bearer {access_token}"
             response = await client.get(url, headers=headers)
+
+            if response.status_code == 401:
+                raise FitbitAPIError("Unauthorized after token refresh; reconnect Fitbit")
 
         if response.status_code == 429:
             raise FitbitAPIError("Rate limit exceeded. Please try again later.")

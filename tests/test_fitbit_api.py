@@ -90,11 +90,12 @@ async def test_make_fitbit_request_401_retry(test_db: Session, mock_connection):
         mock_get = AsyncMock(side_effect=[mock_response_401, mock_response_200])
         mock_client.return_value.__aenter__.return_value.get = mock_get
 
-        with patch("app.services.fitbit_api.ensure_valid_token", return_value=mock_connection):
+        with patch("app.services.fitbit_api.refresh_access_token", return_value=mock_connection) as mock_refresh:
             result = await fitbit_api._make_fitbit_request(test_db, mock_connection, "/test/endpoint")
 
             assert result == {"data": "success"}
             assert mock_get.call_count == 2
+            mock_refresh.assert_called_once()
 
 
 @pytest.mark.asyncio
