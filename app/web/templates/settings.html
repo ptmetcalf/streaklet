@@ -25,9 +25,8 @@
                 </div>
                 <div class="task-actions">
                     <button class="btn-secondary" @click="editTask(task)">Edit</button>
-                    <button class="btn-danger" @click="deleteTask(task)">Delete</button>
-                </div>
-            </div>
+                    <button class="btn-danger" @click="showDeleteConfirm(task)">Delete</button>
+                </div>            </div>
         </template>
 
         <button class="btn-primary" @click="showAddForm = true" x-show="!showAddForm" style="margin-top: 16px; width: 100%;">
@@ -277,6 +276,38 @@
             </div>
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div x-show="deleteConfirm.show"
+         x-cloak
+         @click.self="cancelDelete()"
+         style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div style="background: white; border-radius: 12px; padding: 28px; max-width: 400px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+            <h3 style="margin: 0 0 16px; font-size: 20px; color: var(--text-color);">Delete Task?</h3>
+            <p style="margin: 0 0 24px; color: #666; line-height: 1.5;">
+                Are you sure you want to delete <strong x-text="deleteConfirm.taskTitle"></strong>?
+                <br><br>
+                This action cannot be undone.
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="btn-secondary" @click="cancelDelete()">Cancel</button>
+                <button class="btn-danger" @click="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Message -->
+    <div x-show="alertMessage"
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 transform translate-y-2"
+         x-transition:enter-end="opacity-100 transform translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         style="position: fixed; bottom: 24px; right: 24px; background: var(--card-bg); border-left: 4px solid var(--danger-color); padding: 16px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 400px; z-index: 10000;">
+        <p x-text="alertMessage" style="margin: 0; color: var(--text-color);"></p>
+    </div>
 </div>
 
 <style>
@@ -328,6 +359,10 @@ function settings() {
         fitbitSyncStatus: null,
         isSyncing: false,
         todayMetrics: {},
+
+        // UI state
+        deleteConfirm: { show: false, taskTitle: '', taskId: null },
+        alertMessage: '',
 
         async init() {
             await this.loadTasks();
@@ -545,14 +580,21 @@ function settings() {
             }
         },
 
-        async deleteTask(task) {
-            // Better confirmation message
-            if (!confirm(`Are you sure you want to delete "${task.title}"?\n\nThis action cannot be undone.`)) {
-                return;
-            }
+        showDeleteConfirm(task) {
+            // Show custom confirmation modal
+            this.deleteConfirm = {
+                show: true,
+                taskTitle: task.title,
+                taskId: task.id
+            };
+        },
+
+        async confirmDelete() {
+            const taskId = this.deleteConfirm.taskId;
+            this.deleteConfirm = { show: false, taskTitle: '', taskId: null };
 
             try {
-                const response = await fetchWithProfile(`/api/tasks/${task.id}`, {
+                const response = await fetchWithProfile(`/api/tasks/${taskId}`, {
                     method: 'DELETE'
                 });
 
@@ -560,17 +602,28 @@ function settings() {
                     // Success - reload tasks
                     await this.loadTasks();
                 } else if (response.status === 404) {
-                    alert('Task not found. It may have already been deleted.');
+                    this.showAlert('Task not found. It may have already been deleted.');
                     await this.loadTasks();
                 } else {
                     // Other error
                     const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-                    alert('Error deleting task: ' + (error.detail || 'Unknown error'));
+                    this.showAlert('Error deleting task: ' + (error.detail || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
-                alert('Failed to delete task. Please check your connection and try again.');
+                this.showAlert('Failed to delete task. Please check your connection and try again.');
             }
+        },
+
+        cancelDelete() {
+            this.deleteConfirm = { show: false, taskTitle: '', taskId: null };
+        },
+
+        showAlert(message) {
+            this.alertMessage = message;
+            setTimeout(() => {
+                this.alertMessage = '';
+            }, 5000);
         },
 
         // Fitbit methods
