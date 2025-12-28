@@ -63,13 +63,31 @@
             return new Date(year, month - 1, day);
         }
 
-        // Check if profile is selected on page load (except on /profiles page)
-        document.addEventListener('DOMContentLoaded', () => {
+        // Check if profile is selected AND exists on page load (except on /profiles page)
+        document.addEventListener('DOMContentLoaded', async () => {
             const currentPath = window.location.pathname;
             const profileId = localStorage.getItem('streaklet_profile_id');
 
+            // If no profile selected, redirect to profile selection
             if (currentPath !== '/profiles' && !profileId) {
                 window.location.href = '/profiles';
+                return;
+            }
+
+            // If profile is selected, validate it still exists in database
+            if (currentPath !== '/profiles' && profileId) {
+                try {
+                    const response = await fetch(`/api/profiles/${profileId}`);
+                    if (!response.ok) {
+                        // Profile doesn't exist anymore - clear and redirect
+                        console.warn(`Profile ${profileId} not found, redirecting to profile selection`);
+                        localStorage.removeItem('streaklet_profile_id');
+                        localStorage.removeItem('streaklet_profile_name');
+                        window.location.href = '/profiles';
+                    }
+                } catch (error) {
+                    console.error('Error validating profile:', error);
+                }
             }
         });
 
