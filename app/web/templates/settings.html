@@ -304,7 +304,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.5);
-            display: flex !important;
+            display: flex;
             align-items: center;
             justify-content: center;
             z-index: 9999;
@@ -636,7 +636,7 @@ function settings() {
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
-                this.showAlert('Failed to delete task. Please check your connection and try again.');
+                this.showAlert('Error deleting task: ' + (error.message || 'Please check your connection and try again.'));
             }
         },
 
