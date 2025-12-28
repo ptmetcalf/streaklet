@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/ptmetcalf/streaklet/compare/v0.3.0...v0.3.1) (2025-12-28)
+
+
+### Bug Fixes
+
+* add production-safe migration to repair broken CASCADE state ([8c50f87](https://github.com/ptmetcalf/streaklet/commit/8c50f8790350b56a3c17d3901240c8bedd2ffc14))
+* make CASCADE migration idempotent ([7c17e84](https://github.com/ptmetcalf/streaklet/commit/7c17e84a210a030cb2a043f712c7806e7442acf3))
+
 ## [0.3.0](https://github.com/ptmetcalf/streaklet/compare/v0.2.1...v0.3.0) (2025-12-28)
 
 
