@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2](https://github.com/ptmetcalf/streaklet/compare/v0.3.1...v0.3.2) (2025-12-28)
+
+
+### Bug Fixes
+
+* skip orphaned records in CASCADE migration ([8ed91cd](https://github.com/ptmetcalf/streaklet/commit/8ed91cde6edf10a0ed6fa32fdaeca602f3209c09))
+
 ## [0.3.1](https://github.com/ptmetcalf/streaklet/compare/v0.3.0...v0.3.1) (2025-12-28)
 
 
