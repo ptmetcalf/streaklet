@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/ptmetcalf/streaklet/compare/v0.3.4...v0.4.0) (2025-12-28)
+
+
+### Features
+
+* add smart fitbit backfill sync ([ab34f67](https://github.com/ptmetcalf/streaklet/commit/ab34f6702b590ee029e768bace8db9505492d209))
+
 ## [0.3.4](https://github.com/ptmetcalf/streaklet/compare/v0.3.3...v0.3.4) (2025-12-28)
 
 
