@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/ptmetcalf/streaklet/compare/v0.4.0...v0.4.1) (2025-12-28)
+
+
+### Bug Fixes
+
+* refresh fitbit tokens on 401 ([dd51915](https://github.com/ptmetcalf/streaklet/commit/dd51915801eadb9d58d1926b3aec3c898afbb2de))
+
 ## [0.4.0](https://github.com/ptmetcalf/streaklet/compare/v0.3.4...v0.4.0) (2025-12-28)
 
 
