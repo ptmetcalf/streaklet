@@ -6,7 +6,7 @@ class TaskCheck(Base):
     __tablename__ = "task_checks"
 
     date = Column(Date, nullable=False)
-    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
+    task_id = Column(Integer, ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("profiles.id"), nullable=False, index=True)
     checked = Column(Boolean, nullable=False, default=False)
     checked_at = Column(DateTime, nullable=True)
