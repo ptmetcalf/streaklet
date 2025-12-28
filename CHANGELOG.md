@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/ptmetcalf/streaklet/compare/v0.4.1...v0.4.2) (2025-12-28)
+
+
+### Bug Fixes
+
+* remove main branch from docker publish workflow triggers ([8ffa5ba](https://github.com/ptmetcalf/streaklet/commit/8ffa5ba995e82ee68f01a64be378a83eec171ae9))
+* update release workflow to trigger on CI completion instead of push to main ([edce951](https://github.com/ptmetcalf/streaklet/commit/edce951ae7ea9817d9870b1fa0c1d0e8e401db9c))
+
 ## [0.4.1](https://github.com/ptmetcalf/streaklet/compare/v0.4.0...v0.4.1) (2025-12-28)
 
 
