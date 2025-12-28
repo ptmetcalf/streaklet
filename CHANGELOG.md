@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4](https://github.com/ptmetcalf/streaklet/compare/v0.3.3...v0.3.4) (2025-12-28)
+
+
+### Bug Fixes
+
+* remove !important from modal overlay display ([64fca91](https://github.com/ptmetcalf/streaklet/commit/64fca919e4db307538da49e8aef6c76bc62831f4))
+
 ## [0.3.3](https://github.com/ptmetcalf/streaklet/compare/v0.3.2...v0.3.3) (2025-12-28)
 
 
