@@ -169,6 +169,7 @@ async def disconnect_fitbit(
 
 @router.post("/sync")
 async def manual_sync(
+    days: Optional[int] = Query(None, ge=1, le=30, description="Days of history to sync"),
     db: Session = Depends(get_db),
     profile_id: int = Depends(get_profile_id)
 ):
@@ -184,8 +185,11 @@ async def manual_sync(
         raise HTTPException(status_code=404, detail=_NOT_CONNECTED_DETAIL)
 
     try:
-        # Sync recent data
-        result = await fitbit_sync.sync_profile_recent(db, profile_id)
+        # Sync recent data or bounded historical range
+        if days:
+            result = await fitbit_sync.sync_profile_historical(db, profile_id, days=days)
+        else:
+            result = await fitbit_sync.sync_profile_smart(db, profile_id)
         return {
             "status": "success",
             "message": "Sync completed",

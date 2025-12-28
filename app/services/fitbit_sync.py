@@ -12,7 +12,8 @@ from sqlalchemy.dialects.sqlite import insert
 from datetime import date, timedelta
 from typing import Dict, List
 
-from app.core.time import get_today, get_now
+from app.core.time import get_today, get_now, to_timezone_aware
+from app.core.config import settings
 from app.models.fitbit_connection import FitbitConnection
 from app.models.fitbit_metric import FitbitMetric
 from app.services import fitbit_api, fitbit_connection
@@ -154,6 +155,41 @@ async def sync_profile_recent(db: Session, profile_id: int) -> Dict:
     return await sync_profile_date_range(db, profile_id, yesterday, today)
 
 
+async def sync_profile_smart(
+    db: Session,
+    profile_id: int,
+    backfill_days: int = settings.fitbit_backfill_days
+) -> Dict:
+    """
+    Sync Fitbit data with a bounded backfill window.
+
+    - If never synced, backfill up to backfill_days (default 7).
+    - If last sync is older than yesterday, backfill from last sync date
+      (bounded by backfill_days).
+    - Otherwise, only sync today + yesterday.
+    """
+    connection = fitbit_connection.get_connection(db, profile_id)
+    if not connection:
+        return {"success_days": 0, "error_days": 0, "total_metrics": 0, "error": "No connection"}
+
+    today = get_today()
+    yesterday = today - timedelta(days=1)
+    max_backfill_start = today - timedelta(days=backfill_days - 1)
+
+    start_date = None
+    if connection.last_sync_at is None:
+        start_date = max_backfill_start
+    else:
+        last_sync_date = to_timezone_aware(connection.last_sync_at).date()
+        if last_sync_date < yesterday:
+            start_date = max(last_sync_date, max_backfill_start)
+
+    if start_date:
+        return await sync_profile_date_range(db, profile_id, start_date, today)
+
+    return await sync_profile_date_range(db, profile_id, yesterday, today)
+
+
 async def sync_profile_historical(db: Session, profile_id: int, days: int = 30) -> Dict:
     """
     Sync historical data for a profile.
@@ -193,7 +229,11 @@ async def sync_all_connected_profiles(db: Session) -> Dict[int, Dict]:
 
     for connection in connections:
         try:
-            result = await sync_profile_recent(db, connection.user_id)
+            result = await sync_profile_smart(
+                db,
+                connection.user_id,
+                backfill_days=settings.fitbit_backfill_days
+            )
             results[connection.user_id] = result
         except Exception as e:
             print(f"Sync failed for profile {connection.user_id}: {e}")

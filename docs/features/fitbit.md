@@ -142,6 +142,9 @@ By default, Fitbit data syncs automatically every hour for all connected profile
 
 This ensures your tasks auto-complete throughout the day as you reach goals.
 
+If the server was offline, the next sync will backfill up to the last 7 days
+to avoid excessive historical requests.
+
 ## Disconnecting Fitbit
 
 To disconnect your Fitbit account:

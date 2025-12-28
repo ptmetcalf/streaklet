@@ -419,7 +419,7 @@ def test_manual_sync_failure(client: TestClient, test_db, sample_profiles):
     test_db.commit()
 
     # Mock sync to fail
-    with patch("app.services.fitbit_sync.sync_profile_recent") as mock_sync:
+    with patch("app.services.fitbit_sync.sync_profile_smart") as mock_sync:
         mock_sync.side_effect = Exception("Sync service failed")
 
         response = client.post("/api/fitbit/sync")

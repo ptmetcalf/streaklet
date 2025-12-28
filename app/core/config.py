@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     # Sync settings
     fitbit_sync_interval_hours: int = 1
+    fitbit_backfill_days: int = 7
 
 
 settings = Settings()

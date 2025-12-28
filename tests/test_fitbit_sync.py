@@ -257,7 +257,8 @@ async def test_sync_all_connected_profiles(test_db: Session, sample_profiles):
         refresh_token=encrypt_token("refresh1"),
         token_expires_at=get_now() + timedelta(hours=1),
         scope="activity",
-        connected_at=get_now()
+        connected_at=get_now(),
+        last_sync_at=get_now()
     )
     connection2 = FitbitConnection(
         user_id=2,
@@ -266,7 +267,8 @@ async def test_sync_all_connected_profiles(test_db: Session, sample_profiles):
         refresh_token=encrypt_token("refresh2"),
         token_expires_at=get_now() + timedelta(hours=1),
         scope="activity",
-        connected_at=get_now()
+        connected_at=get_now(),
+        last_sync_at=get_now()
     )
     test_db.add(connection1)
     test_db.add(connection2)
@@ -296,7 +298,8 @@ async def test_sync_all_connected_profiles_with_failure(test_db: Session, sample
         refresh_token=encrypt_token("refresh1"),
         token_expires_at=get_now() + timedelta(hours=1),
         scope="activity",
-        connected_at=get_now()
+        connected_at=get_now(),
+        last_sync_at=get_now()
     )
     connection2 = FitbitConnection(
         user_id=2,
@@ -305,19 +308,20 @@ async def test_sync_all_connected_profiles_with_failure(test_db: Session, sample
         refresh_token=encrypt_token("refresh2"),
         token_expires_at=get_now() + timedelta(hours=1),
         scope="activity",
-        connected_at=get_now()
+        connected_at=get_now(),
+        last_sync_at=get_now()
     )
     test_db.add(connection1)
     test_db.add(connection2)
     test_db.commit()
 
-    # Mock sync_profile_recent to fail for profile 1 at top level
-    async def mock_sync_side_effect(db, profile_id):
+    # Mock sync_profile_smart to fail for profile 1 at top level
+    async def mock_sync_side_effect(db, profile_id, backfill_days=7):
         if profile_id == 1:
             raise Exception("API error for profile 1")
         return {"success_days": 2, "error_days": 0, "total_metrics": 2}
 
-    with patch("app.services.fitbit_sync.sync_profile_recent", side_effect=mock_sync_side_effect):
+    with patch("app.services.fitbit_sync.sync_profile_smart", side_effect=mock_sync_side_effect):
         results = await fitbit_sync.sync_all_connected_profiles(test_db)
 
         assert len(results) == 2
