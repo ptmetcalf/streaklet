@@ -63,11 +63,14 @@ def upgrade() -> None:
     # Create index on user_id
     conn.execute(sa.text("CREATE INDEX ix_task_checks_new_user_id ON task_checks_new (user_id)"))
 
-    # Copy data from old table
+    # Copy data from old table, excluding orphaned records
+    # Use INNER JOIN to only copy records with valid foreign keys
     conn.execute(sa.text("""
         INSERT INTO task_checks_new (date, task_id, user_id, checked, checked_at)
-        SELECT date, task_id, user_id, checked, checked_at
-        FROM task_checks
+        SELECT tc.date, tc.task_id, tc.user_id, tc.checked, tc.checked_at
+        FROM task_checks tc
+        INNER JOIN tasks t ON tc.task_id = t.id
+        INNER JOIN profiles p ON tc.user_id = p.id
     """))
 
     # Drop old table
