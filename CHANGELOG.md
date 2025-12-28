@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/ptmetcalf/streaklet/compare/v0.2.0...v0.2.1) (2025-12-28)
+
+
+### Bug Fixes
+
+* improve task deletion confirmation and error handling ([073bd7c](https://github.com/ptmetcalf/streaklet/commit/073bd7cc034c4fb8961d29aa6f5d3598cbd51a5b))
+
 ## [0.2.0](https://github.com/ptmetcalf/streaklet/compare/v0.1.1...v0.2.0) (2025-12-27)
 
 
