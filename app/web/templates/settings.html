@@ -546,18 +546,30 @@ function settings() {
         },
 
         async deleteTask(task) {
-            if (!confirm(`Delete "${task.title}"?`)) return;
+            // Better confirmation message
+            if (!confirm(`Are you sure you want to delete "${task.title}"?\n\nThis action cannot be undone.`)) {
+                return;
+            }
 
             try {
                 const response = await fetchWithProfile(`/api/tasks/${task.id}`, {
                     method: 'DELETE'
                 });
 
-                if (response.ok) {
+                if (response.ok || response.status === 204) {
+                    // Success - reload tasks
                     await this.loadTasks();
+                } else if (response.status === 404) {
+                    alert('Task not found. It may have already been deleted.');
+                    await this.loadTasks();
+                } else {
+                    // Other error
+                    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+                    alert('Error deleting task: ' + (error.detail || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error deleting task:', error);
+                alert('Failed to delete task. Please check your connection and try again.');
             }
         },
 
