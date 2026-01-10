@@ -474,22 +474,6 @@ button:active {
     color: #666;
 }
 
-.history-date-picker label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 6px;
-}
-
-.history-date-picker input[type="date"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 14px;
-}
-
 .history-checklist-body .checklist {
     box-shadow: none;
 }
@@ -637,10 +621,6 @@ button:active {
         flex-direction: row;
         align-items: center;
         justify-content: space-between;
-    }
-
-    .history-date-picker {
-        min-width: 220px;
     }
 
     /* Settings sections side by side */

@@ -82,28 +82,15 @@
         </div>
     </div>
 
-    <section class="history-checklist">
+    <section class="history-checklist" x-show="selectedDate">
         <div class="history-checklist-header">
             <div>
-                <h2>Daily Checklist</h2>
+                <h2>Day Review</h2>
                 <div class="history-selected-date" x-text="selectedDateDisplay"></div>
-            </div>
-            <div class="history-date-picker">
-                <label for="history-date">Pick a past date</label>
-                <input
-                    id="history-date"
-                    type="date"
-                    x-model="selectedDate"
-                    :max="maxSelectableDate"
-                    @change="loadDayData(selectedDate)"
-                >
             </div>
         </div>
 
         <div class="history-checklist-body">
-            <div class="empty-state" x-show="!selectedDate">
-                Select a past date to view and edit its checklist.
-            </div>
             <div class="empty-state" x-show="selectedDate && !selectedDay && !loadingDay">
                 No checklist data yet for this date.
             </div>
@@ -175,14 +162,6 @@ function calendar() {
         async loadHistoryData() {
             await this.fetchCalendarData();
             await this.refreshStreak();
-
-            if (!this.selectedDate) {
-                this.selectedDate = this.maxSelectableDate;
-            }
-
-            if (this.selectedDate) {
-                await this.loadDayData(this.selectedDate);
-            }
         },
 
         async fetchCalendarData() {
