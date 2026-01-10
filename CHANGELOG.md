@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/ptmetcalf/streaklet/compare/v0.5.0...v0.6.0) (2026-01-10)
+
+
+### Features
+
+* **milestones:** add milestone messages and toast notifications ([00b4040](https://github.com/ptmetcalf/streaklet/commit/00b4040b23f7ae572c00df504ebe723c20b7d689))
+
 ## [0.5.0](https://github.com/ptmetcalf/streaklet/compare/v0.4.2...v0.5.0) (2026-01-10)
 
 
