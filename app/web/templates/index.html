@@ -16,6 +16,8 @@
             <div class="progress-fill" :style="`width: ${progress}%`"></div>
         </div>
         <div class="progress-text" x-text="`${completedCount}/${requiredCount} required tasks completed`"></div>
+        <div class="milestone-banner" x-show="milestoneMessage" x-text="milestoneMessage"></div>
+        <div class="milestone-next" x-show="nextMilestoneMessage" x-text="nextMilestoneMessage"></div>
     </header>
 
     <div class="checklist">
@@ -46,6 +48,8 @@
             </div>
         </template>
     </div>
+
+    <div class="milestone-toast" x-show="showToast" x-text="toastMessage"></div>
 </div>
 
 <script>
@@ -56,6 +60,10 @@ function checklist() {
         date: null,
         todayComplete: false,
         lastCompletedDate: null,
+        milestoneMessage: '',
+        nextMilestoneMessage: '',
+        showToast: false,
+        toastMessage: '',
 
         get formattedDate() {
             if (!this.date) return '';
@@ -146,6 +154,7 @@ function checklist() {
                 this.todayComplete = data.streak.today_complete;
                 this.lastCompletedDate = data.streak.last_completed_date;
                 this.date = data.date;
+                this.updateCelebration();
             } catch (error) {
                 console.error('Error loading today data:', error);
             }
@@ -170,10 +179,50 @@ function checklist() {
                     this.streak = streakData.current_streak;
                     this.todayComplete = streakData.today_complete;
                     this.lastCompletedDate = streakData.last_completed_date;
+                    this.updateCelebration(true);
                 }
             } catch (error) {
                 console.error('Error updating task:', error);
             }
+        },
+
+        updateCelebration(showToast = false) {
+            const milestones = [3, 7, 14, 21, 30, 45, 60, 90, 120, 180, 365];
+            const current = this.streak || 0;
+            const isMilestone = this.todayComplete && milestones.includes(current);
+
+            if (isMilestone) {
+                this.milestoneMessage = `Nice! ${current}-day streak.`;
+            } else if (this.todayComplete && current > 0) {
+                this.milestoneMessage = `Streak alive — ${current} days and counting.`;
+            } else {
+                this.milestoneMessage = '';
+            }
+
+            const nextMilestone = milestones.find((value) => value > current);
+            if (this.todayComplete && nextMilestone) {
+                const remaining = nextMilestone - current;
+                this.nextMilestoneMessage = `${remaining} day${remaining === 1 ? '' : 's'} to your next milestone (${nextMilestone}).`;
+            } else {
+                this.nextMilestoneMessage = '';
+            }
+
+            if (!showToast || !isMilestone || !this.date) {
+                return;
+            }
+
+            const storageKey = `streaklet_milestone_${this.date}`;
+            const lastShown = localStorage.getItem(storageKey);
+            if (lastShown === String(current)) {
+                return;
+            }
+
+            this.toastMessage = `🎉 ${current}-day streak!`;
+            this.showToast = true;
+            localStorage.setItem(storageKey, String(current));
+            setTimeout(() => {
+                this.showToast = false;
+            }, 3000);
         }
     }
 }
