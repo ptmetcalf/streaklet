@@ -41,8 +41,11 @@
                         'completed': day.isCompleted,
                         'incomplete': day.isIncomplete,
                         'future': day.isFuture,
-                        'today': day.isToday
+                        'today': day.isToday,
+                        'selectable': day.isPast,
+                        'selected': day.dateStr === selectedDate
                     }"
+                    @click="selectCalendarDate(day)"
                 >
                     <div class="day-number" x-text="day.dayNumber"></div>
 
@@ -78,6 +81,59 @@
             </div>
         </div>
     </div>
+
+    <section class="history-checklist">
+        <div class="history-checklist-header">
+            <div>
+                <h2>Daily Checklist</h2>
+                <div class="history-selected-date" x-text="selectedDateDisplay"></div>
+            </div>
+            <div class="history-date-picker">
+                <label for="history-date">Pick a past date</label>
+                <input
+                    id="history-date"
+                    type="date"
+                    x-model="selectedDate"
+                    :max="maxSelectableDate"
+                    @change="loadDayData(selectedDate)"
+                >
+            </div>
+        </div>
+
+        <div class="history-checklist-body">
+            <div class="empty-state" x-show="!selectedDate">
+                Select a past date to view and edit its checklist.
+            </div>
+            <div class="empty-state" x-show="selectedDate && !selectedDay && !loadingDay">
+                No checklist data yet for this date.
+            </div>
+            <div class="empty-state" x-show="loadingDay">
+                Loading checklist...
+            </div>
+
+            <div class="checklist" x-show="selectedDay">
+                <template x-for="task in selectedDay.tasks" :key="task.id">
+                    <div
+                        class="task-item"
+                        :class="{ 'checked': task.checked, 'disabled': !isSelectedDateEditable }"
+                        @click="toggleTask(task)"
+                    >
+                        <div class="checkbox">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="task-content">
+                            <div class="task-title" x-text="task.title"></div>
+                        </div>
+                        <span class="task-badge" :class="{ 'required': task.is_required }" x-show="task.is_required">
+                            Required
+                        </span>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>
@@ -89,6 +145,9 @@ function calendar() {
         streak: {{ streak | tojson }},
         stats: null,
         today: '{{ today }}',
+        selectedDate: null,
+        selectedDay: null,
+        loadingDay: false,
         weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
 
         get monthYearDisplay() {
@@ -114,6 +173,19 @@ function calendar() {
         },
 
         async loadHistoryData() {
+            await this.fetchCalendarData();
+            await this.refreshStreak();
+
+            if (!this.selectedDate) {
+                this.selectedDate = this.maxSelectableDate;
+            }
+
+            if (this.selectedDate) {
+                await this.loadDayData(this.selectedDate);
+            }
+        },
+
+        async fetchCalendarData() {
             try {
                 const response = await fetchWithProfile(`/api/history/${this.year}/${this.month}`);
                 if (response.ok) {
@@ -128,7 +200,9 @@ function calendar() {
             } catch (error) {
                 console.error('Error loading history data:', error);
             }
+        },
 
+        async refreshStreak() {
             try {
                 const streakResponse = await fetchWithProfile('/api/streak');
                 if (streakResponse.ok) {
@@ -163,6 +237,7 @@ function calendar() {
                     isIncomplete: dayData && !dayData.completed && dateStr <= this.today,
                     isFuture: dateStr > this.today,
                     isToday: dateStr === this.today,
+                    isPast: dateStr < this.today,
                     isEmpty: false,
                     fitbitMetrics: dayData && dayData.fitbit_metrics,
                     key: dateStr
@@ -235,6 +310,93 @@ function calendar() {
                 .length;
 
             return total > 0 ? Math.round((completed / total) * 100) : 0;
+        },
+
+        get maxSelectableDate() {
+            if (!this.today) return null;
+            const todayDate = parseDateOnly(this.today);
+            todayDate.setDate(todayDate.getDate() - 1);
+            return this.formatDateInput(todayDate);
+        },
+
+        get selectedDateDisplay() {
+            if (!this.selectedDate) return 'Pick a past date';
+            const date = parseDateOnly(this.selectedDate);
+            return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        },
+
+        get isSelectedDateEditable() {
+            return this.selectedDate && this.maxSelectableDate && this.selectedDate <= this.maxSelectableDate;
+        },
+
+        formatDateInput(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
+
+        selectCalendarDate(day) {
+            if (!day || day.isEmpty || !day.isPast) {
+                return;
+            }
+            this.selectedDate = day.dateStr;
+            this.loadDayData(day.dateStr);
+        },
+
+        async loadDayData(dateStr) {
+            if (!dateStr) {
+                this.selectedDay = null;
+                return;
+            }
+            if (this.maxSelectableDate && dateStr > this.maxSelectableDate) {
+                return;
+            }
+
+            this.loadingDay = true;
+            try {
+                const response = await fetchWithProfile(`/api/days/${dateStr}`);
+                if (response.ok) {
+                    this.selectedDay = await response.json();
+                } else {
+                    this.selectedDay = null;
+                    console.error('Error loading day data:', await response.text());
+                }
+            } catch (error) {
+                this.selectedDay = null;
+                console.error('Error loading day data:', error);
+            } finally {
+                this.loadingDay = false;
+            }
+        },
+
+        async toggleTask(task) {
+            if (!this.isSelectedDateEditable) {
+                return;
+            }
+
+            const nextChecked = !task.checked;
+            try {
+                const response = await fetchWithProfile(
+                    `/api/days/${this.selectedDate}/checks/${task.id}`,
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ checked: nextChecked })
+                    }
+                );
+
+                if (!response.ok) {
+                    console.error('Error updating task check:', await response.text());
+                    return;
+                }
+
+                await this.loadDayData(this.selectedDate);
+                await this.fetchCalendarData();
+                await this.refreshStreak();
+            } catch (error) {
+                console.error('Error updating task check:', error);
+            }
         }
     }
 }

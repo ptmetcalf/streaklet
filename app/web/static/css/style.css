@@ -400,6 +400,14 @@ button:active {
     border-width: 3px;
 }
 
+.calendar-day.selectable {
+    cursor: pointer;
+}
+
+.calendar-day.selected {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
 .day-number {
     font-size: 14px;
     font-weight: 500;
@@ -441,6 +449,56 @@ button:active {
     background-color: var(--bg-color);
 }
 
+.history-checklist {
+    margin-top: 24px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.history-checklist-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.history-checklist-header h2 {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.history-selected-date {
+    font-size: 14px;
+    color: #666;
+}
+
+.history-date-picker label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.history-date-picker input[type="date"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.history-checklist-body .checklist {
+    box-shadow: none;
+}
+
+.task-item.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
 /* ============================================
    MOBILE OPTIMIZATIONS (Small Screens)
    ============================================ */
@@ -479,6 +537,10 @@ button:active {
         flex-direction: column;
         gap: 8px;
         align-items: center;
+    }
+
+    .history-checklist {
+        padding: 16px;
     }
 }
 
@@ -569,6 +631,16 @@ button:active {
 
     .streak-label {
         font-size: 14px;
+    }
+
+    .history-checklist-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .history-date-picker {
+        min-width: 220px;
     }
 
     /* Settings sections side by side */
