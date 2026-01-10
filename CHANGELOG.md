@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/ptmetcalf/streaklet/compare/v0.4.2...v0.5.0) (2026-01-10)
+
+
+### Features
+
+* **history:** edit past days from history ([6150ddf](https://github.com/ptmetcalf/streaklet/commit/6150ddf73ac1bd5fe4e87dde272d82c3137995c4))
+
 ## [0.4.2](https://github.com/ptmetcalf/streaklet/compare/v0.4.1...v0.4.2) (2025-12-28)
 
 
