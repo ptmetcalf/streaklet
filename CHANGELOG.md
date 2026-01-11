@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/ptmetcalf/streaklet/compare/v0.6.0...v0.7.0) (2026-01-11)
+
+
+### Features
+
+* **fitbit:** update chart type to line and adjust styling for better visualization ([489cbac](https://github.com/ptmetcalf/streaklet/commit/489cbac90585a47e2f26fbfa5ea29f275699c8ba))
+
 ## [0.6.0](https://github.com/ptmetcalf/streaklet/compare/v0.5.0...v0.6.0) (2026-01-10)
 
 
