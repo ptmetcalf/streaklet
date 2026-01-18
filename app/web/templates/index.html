@@ -207,6 +207,14 @@ function checklist() {
                 this.nextMilestoneMessage = '';
             }
 
+            // Trigger confetti when all required tasks completed
+            if (showToast && this.todayComplete && this.completedCount === this.requiredCount && this.requiredCount > 0) {
+                const confettiEnabled = localStorage.getItem('streaklet_confetti_enabled');
+                if (confettiEnabled === null || confettiEnabled === 'true') {
+                    this.triggerConfetti(current);
+                }
+            }
+
             if (!showToast || !isMilestone || !this.date) {
                 return;
             }
@@ -223,6 +231,216 @@ function checklist() {
             setTimeout(() => {
                 this.showToast = false;
             }, 3000);
+        },
+
+        triggerConfetti(streakLength) {
+            if (typeof confetti === 'undefined') return;
+
+            const streak = streakLength || 1;
+
+            // Level 1: Days 1-2 - Simple celebration
+            if (streak <= 2) {
+                confetti({
+                    particleCount: 80,
+                    spread: 60,
+                    origin: { y: 0.6 },
+                    colors: ['#52c41a', '#73d13d', '#95de64']
+                });
+            }
+            // Level 2: Days 3-6 - Enhanced burst
+            else if (streak <= 6) {
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f'],
+                    ticks: 200
+                });
+            }
+            // Level 3: Days 7-13 - Double burst (first milestone!)
+            else if (streak <= 13) {
+                // Center burst
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.6 },
+                    colors: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f', '#d9f7be']
+                });
+                // Side cannons
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 80,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0, y: 0.6 },
+                        colors: ['#3b82f6', '#667eea', '#764ba2']
+                    });
+                    confetti({
+                        particleCount: 80,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1, y: 0.6 },
+                        colors: ['#f5222d', '#fa541c', '#fa8c16']
+                    });
+                }, 250);
+            }
+            // Level 4: Days 14-29 - Triple burst with rainbow
+            else if (streak <= 29) {
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+
+                // Main burst
+                confetti({
+                    particleCount: 200,
+                    spread: 120,
+                    origin: { y: 0.6 },
+                    colors: colors,
+                    ticks: 300
+                });
+
+                // Left and right cannons
+                [0, 250, 500].forEach((delay) => {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 100,
+                            angle: 60,
+                            spread: 70,
+                            origin: { x: 0, y: 0.7 },
+                            colors: colors
+                        });
+                        confetti({
+                            particleCount: 100,
+                            angle: 120,
+                            spread: 70,
+                            origin: { x: 1, y: 0.7 },
+                            colors: colors
+                        });
+                    }, delay);
+                });
+            }
+            // Level 5: Days 30-59 - Fireworks style
+            else if (streak <= 59) {
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
+
+                // Continuous bursts from different positions
+                const positions = [
+                    { x: 0.2, y: 0.5 },
+                    { x: 0.5, y: 0.4 },
+                    { x: 0.8, y: 0.5 },
+                    { x: 0.35, y: 0.6 },
+                    { x: 0.65, y: 0.6 }
+                ];
+
+                positions.forEach((pos, i) => {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 150,
+                            spread: 360,
+                            startVelocity: 30,
+                            decay: 0.9,
+                            scalar: 1.2,
+                            origin: pos,
+                            colors: colors,
+                            shapes: ['circle', 'square']
+                        });
+                    }, i * 150);
+                });
+            }
+            // Level 6: Days 60-89 - Epic multi-wave
+            else if (streak <= 89) {
+                const duration = 3000;
+                const animationEnd = Date.now() + duration;
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3', '#ff1493'];
+
+                (function frame() {
+                    confetti({
+                        particleCount: 7,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: colors
+                    });
+                    confetti({
+                        particleCount: 7,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: colors
+                    });
+
+                    if (Date.now() < animationEnd) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+
+                // Center explosions
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 200,
+                        spread: 200,
+                        origin: { y: 0.5 },
+                        colors: colors,
+                        shapes: ['circle', 'square', 'star']
+                    });
+                }, 500);
+            }
+            // Level 7: Days 90+ - ULTIMATE CELEBRATION
+            else {
+                const duration = 4000;
+                const animationEnd = Date.now() + duration;
+                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3', '#ff1493', '#ffd700'];
+
+                // Continuous side cannons
+                (function frame() {
+                    confetti({
+                        particleCount: 10,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: colors,
+                        shapes: ['circle', 'square', 'star']
+                    });
+                    confetti({
+                        particleCount: 10,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: colors,
+                        shapes: ['circle', 'square', 'star']
+                    });
+
+                    if (Date.now() < animationEnd) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+
+                // Multiple explosions at different times
+                [0, 500, 1000, 1500, 2000, 2500].forEach((delay) => {
+                    setTimeout(() => {
+                        confetti({
+                            particleCount: 250,
+                            spread: 360,
+                            startVelocity: 40,
+                            decay: 0.85,
+                            scalar: 1.5,
+                            origin: { x: 0.5, y: 0.4 },
+                            colors: colors,
+                            shapes: ['circle', 'square', 'star']
+                        });
+                    }, delay);
+                });
+
+                // Emoji confetti
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 50,
+                        spread: 100,
+                        origin: { y: 0.6 },
+                        scalar: 2,
+                        shapes: ['circle'],
+                        colors: ['#FFD700', '#FFA500', '#FF69B4']
+                    });
+                }, 1000);
+            }
         }
     }
 }

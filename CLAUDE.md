@@ -368,9 +368,116 @@ Then include router in `app/main.py`: `app.include_router(routes_something.route
 - **HTMX** available but not heavily used
 - **Mobile-first** CSS design
 
+## Fitbit Integration Architecture
+
+Streaklet includes optional Fitbit integration to auto-complete tasks based on fitness metrics.
+
+### Components
+
+**Models**:
+- `fitbit_connection.py` - OAuth credentials (encrypted), profile association
+- `fitbit_metric.py` - Metric configuration (steps, calories, distance, etc.)
+
+**Services**:
+- `fitbit_oauth.py` - OAuth 2.0 flow (authorization, token exchange, refresh)
+- `fitbit_api.py` - API client for fetching user data
+- `fitbit_sync.py` - Background sync logic (fetches metrics, auto-checks tasks)
+- `fitbit_checks.py` - Task auto-completion logic based on metric thresholds
+- `fitbit_scheduler.py` - APScheduler integration for periodic syncs
+- `fitbit_connection.py` - Connection management
+
+**Key Patterns**:
+1. **Token Encryption**: Access/refresh tokens encrypted at rest using `app/core/encryption.py`
+   - Uses Fernet symmetric encryption with `APP_SECRET_KEY`
+   - Tokens decrypted only when needed for API calls
+2. **Automatic Refresh**: Expired tokens auto-refreshed using refresh token
+3. **Profile Isolation**: Each profile has own Fitbit connection (1:1 relationship)
+4. **Sync Flow**:
+   - Scheduler calls `fitbit_sync.sync_all_profiles()` periodically
+   - For each profile: fetch metrics → compare to thresholds → auto-check tasks
+   - Only syncs profiles with active connections
+
+### Setup Requirements
+
+Set these environment variables for Fitbit integration:
+```bash
+FITBIT_CLIENT_ID=<your_app_client_id>
+FITBIT_CLIENT_SECRET=<your_app_client_secret>
+FITBIT_CALLBACK_URL=http://localhost:8080/api/fitbit/callback
+FITBIT_SYNC_INTERVAL_HOURS=1  # How often to sync (default: 1)
+APP_SECRET_KEY=<32-byte-base64-key>  # Generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+**Important**: Without `APP_SECRET_KEY`, Fitbit tokens cannot be encrypted and integration won't work.
+
+## Token Encryption Pattern
+
+All sensitive tokens (OAuth access/refresh tokens) are encrypted at rest:
+
+```python
+from app.core.encryption import encrypt_token, decrypt_token
+
+# Encrypting before storage
+encrypted = encrypt_token(access_token)
+connection.access_token = encrypted
+
+# Decrypting for use
+access_token = decrypt_token(connection.access_token)
+```
+
+**Never store plaintext tokens in the database**. Always use encryption helpers from `app/core/encryption.py`.
+
+## Backup and Restore
+
+Profiles can export/import their complete data (tasks, history, checks, Fitbit connections):
+
+- `app/services/backup.py` - Export/import logic
+- Export includes: tasks, daily status, task checks, Fitbit connection/metrics
+- Fitbit tokens remain encrypted in backup (require same `APP_SECRET_KEY` to restore)
+- Import validates profile ownership to prevent data leakage
+
+**API Endpoints**:
+- `GET /api/profiles/{id}/export` - Download JSON backup
+- `POST /api/profiles/{id}/import` - Restore from JSON
+
+## Docker Security
+
+The Dockerfile follows security best practices:
+- Runs as non-root user (`appuser`, UID 1000)
+- Data directory owned by `appuser` for write access
+- In CI, tests run as `appuser` to match production environment
+- Volume mounts should have proper permissions: `sudo chown -R 1000:1000 data/`
+
+## Documentation
+
+Documentation built with MkDocs (Material theme):
+```bash
+# Install mkdocs
+pip install mkdocs-material
+
+# Serve locally
+mkdocs serve
+
+# Build static site
+mkdocs build
+```
+
+Docs auto-deploy to GitHub Pages via `.github/workflows/docs.yml` on pushes to main.
+
 ## Environment Variables
 
 Set in `docker-compose.yml` or `.env`:
+
+**Core Settings**:
 - `APP_TIMEZONE` - Timezone for daily tracking (default: America/Chicago)
 - `DB_PATH` - Database file location (default: /data/app.db)
 - `PORT` - Application port (default: 8080)
+
+**Security** (required for Fitbit):
+- `APP_SECRET_KEY` - 32-byte base64 key for token encryption
+
+**Fitbit Integration** (optional):
+- `FITBIT_CLIENT_ID` - OAuth app client ID
+- `FITBIT_CLIENT_SECRET` - OAuth app client secret
+- `FITBIT_CALLBACK_URL` - OAuth callback URL (must match app settings)
+- `FITBIT_SYNC_INTERVAL_HOURS` - Sync frequency in hours (default: 1)

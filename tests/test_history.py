@@ -317,3 +317,125 @@ def test_calendar_first_day_weekday(test_db: Session, sample_profiles):
     for year, month, day, expected_weekday in test_cases:
         calendar_data = history_service.get_calendar_month_data(test_db, year, month, profile_id=1)
         assert calendar_data["first_day_weekday"] == expected_weekday
+
+
+def test_calendar_data_with_partial_completion(test_db: Session, sample_profiles, sample_tasks):
+    """Test calendar data includes completion percentages with partial completion."""
+    from unittest.mock import patch
+
+    # Get the 2 required tasks from sample_tasks
+    required_tasks = [t for t in sample_tasks if t.is_required and t.user_id == 1]
+    assert len(required_tasks) == 2  # Ensure we have 2 required tasks
+
+    # Create checks for different completion levels:
+    # Day 1: 2/2 complete (100%)
+    # Day 2: 1/2 complete (50%)
+    # Day 3: 0/2 complete (0%)
+
+    checks_data = [
+        # Day 1 - both tasks
+        (date(2024, 12, 1), required_tasks[0].id, True),
+        (date(2024, 12, 1), required_tasks[1].id, True),
+        # Day 2 - 1 task
+        (date(2024, 12, 2), required_tasks[0].id, True),
+        # Day 3 - 0 tasks (no checks)
+    ]
+
+    for check_date, task_id, checked in checks_data:
+        check = TaskCheck(date=check_date, task_id=task_id, user_id=1, checked=checked)
+        test_db.add(check)
+    test_db.commit()
+
+    # Mock today as December 10, 2024 (so all test days are in the past)
+    with patch('app.core.time.get_today', return_value=date(2024, 12, 10)):
+        calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12, profile_id=1)
+
+        # Check completion percentages
+        assert calendar_data["days"]["2024-12-01"]["completion_percentage"] == 100.0
+        assert calendar_data["days"]["2024-12-01"]["tasks_completed"] == 2
+        assert calendar_data["days"]["2024-12-01"]["tasks_required"] == 2
+        assert calendar_data["days"]["2024-12-01"]["is_streak_break"] is False
+
+        assert calendar_data["days"]["2024-12-02"]["completion_percentage"] == 50.0
+        assert calendar_data["days"]["2024-12-02"]["tasks_completed"] == 1
+        assert calendar_data["days"]["2024-12-02"]["tasks_required"] == 2
+        assert calendar_data["days"]["2024-12-02"]["is_streak_break"] is False
+
+        # Day 3 has 0% completion and is in the past - should be marked as streak break
+        assert calendar_data["days"]["2024-12-03"]["completion_percentage"] == 0.0
+        assert calendar_data["days"]["2024-12-03"]["tasks_completed"] == 0
+        assert calendar_data["days"]["2024-12-03"]["tasks_required"] == 2
+        assert calendar_data["days"]["2024-12-03"]["is_streak_break"] is True
+
+
+def test_streak_break_only_past_days(test_db: Session, sample_profiles, sample_tasks):
+    """Test that future days and today are not marked as streak breaks."""
+    from unittest.mock import patch
+
+    # Mock today as December 10, 2024
+    with patch('app.core.time.get_today', return_value=date(2024, 12, 10)):
+        calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12, profile_id=1)
+
+        # Today (Dec 10) should not be marked as streak break even with 0%
+        assert calendar_data["days"]["2024-12-10"]["completion_percentage"] == 0.0
+        assert calendar_data["days"]["2024-12-10"]["is_streak_break"] is False
+
+        # Future dates should not be marked as streak breaks
+        assert calendar_data["days"]["2024-12-11"]["completion_percentage"] == 0.0
+        assert calendar_data["days"]["2024-12-11"]["is_streak_break"] is False
+
+        assert calendar_data["days"]["2024-12-20"]["completion_percentage"] == 0.0
+        assert calendar_data["days"]["2024-12-20"]["is_streak_break"] is False
+
+        # Past day with 0% should be marked as streak break
+        assert calendar_data["days"]["2024-12-05"]["completion_percentage"] == 0.0
+        assert calendar_data["days"]["2024-12-05"]["is_streak_break"] is True
+
+
+def test_no_required_tasks_edge_case(test_db: Session, sample_profiles):
+    """Test behavior when profile has no required tasks."""
+    from unittest.mock import patch
+
+    # Deactivate all tasks for profile 1
+    test_db.query(Task).filter(Task.user_id == 1).update({Task.is_active: False})
+    test_db.commit()
+
+    # Mock today as December 10, 2024
+    with patch('app.core.time.get_today', return_value=date(2024, 12, 10)):
+        calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12, profile_id=1)
+
+        # Should handle gracefully - 0/0 = 0% (not error)
+        assert calendar_data["days"]["2024-12-01"]["completion_percentage"] == 0.0
+        assert calendar_data["days"]["2024-12-01"]["tasks_required"] == 0
+        assert calendar_data["days"]["2024-12-01"]["tasks_completed"] == 0
+        # Should not be marked as streak break when there are no required tasks
+        assert calendar_data["days"]["2024-12-01"]["is_streak_break"] is True  # Past day with 0%
+
+
+def test_completion_percentage_with_optional_tasks(test_db: Session, sample_profiles, sample_tasks):
+    """Test that only required tasks count toward completion percentage."""
+    from unittest.mock import patch
+
+    # Get required and optional tasks
+    required_tasks = [t for t in sample_tasks if t.is_required and t.user_id == 1]
+    optional_task = test_db.query(Task).filter(
+        Task.user_id == 1,
+        Task.is_required == False,
+        Task.is_active == True
+    ).first()
+
+    # Create checks: complete optional task but not required tasks
+    if optional_task:
+        check = TaskCheck(date=date(2024, 12, 1), task_id=optional_task.id, user_id=1, checked=True)
+        test_db.add(check)
+    test_db.commit()
+
+    # Mock today as December 10, 2024
+    with patch('app.core.time.get_today', return_value=date(2024, 12, 10)):
+        calendar_data = history_service.get_calendar_month_data(test_db, 2024, 12, profile_id=1)
+
+        # Completing optional task should not contribute to completion percentage
+        assert calendar_data["days"]["2024-12-01"]["completion_percentage"] == 0.0
+        assert calendar_data["days"]["2024-12-01"]["tasks_completed"] == 0
+        assert calendar_data["days"]["2024-12-01"]["tasks_required"] == 2
+        assert calendar_data["days"]["2024-12-01"]["is_streak_break"] is True  # Past day with 0%

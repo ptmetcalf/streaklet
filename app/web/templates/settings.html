@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container" x-data="settings()">
     <header>
-        <h1>Task Settings</h1>
+        <h1>Settings</h1>
     </header>
 
     <div class="settings-section">
@@ -277,6 +277,38 @@
         </div>
     </div>
 
+    <!-- Profile Management Section -->
+    <div class="settings-section" style="margin-top: 32px;">
+        <h2>Profile Management</h2>
+        <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <p style="margin-bottom: 16px; color: #666;">
+                Manage profiles, switch between users, and backup/restore your data.
+            </p>
+            <a href="/profiles" class="btn-primary" style="display: inline-block; text-decoration: none;">
+                Manage Profiles →
+            </a>
+        </div>
+    </div>
+
+    <!-- App Preferences Section -->
+    <div class="settings-section" style="margin-top: 32px;">
+        <h2>App Preferences</h2>
+        <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                    <input type="checkbox"
+                           x-model="confettiEnabled"
+                           @change="saveConfettiPreference"
+                           style="width: 20px; height: 20px; cursor: pointer;">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 4px;">Celebration Confetti</div>
+                        <div style="font-size: 14px; color: #666;">Show confetti animation when completing all required tasks</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div x-show="deleteConfirm.show"
          x-cloak
@@ -388,8 +420,13 @@ function settings() {
         // UI state
         deleteConfirm: { show: false, taskTitle: '', taskId: null },
         alertMessage: '',
+        confettiEnabled: true,
 
         async init() {
+            // Load confetti preference (default: true)
+            const savedPref = localStorage.getItem('streaklet_confetti_enabled');
+            this.confettiEnabled = savedPref === null ? true : savedPref === 'true';
+
             await this.loadTasks();
             await this.loadFitbitStatus();
 
@@ -765,6 +802,10 @@ function settings() {
             const hours = Math.floor(minutes / 60);
             const mins = minutes % 60;
             return `${hours}h ${mins}m`;
+        },
+
+        saveConfettiPreference() {
+            localStorage.setItem('streaklet_confetti_enabled', this.confettiEnabled);
         }
     }
 }

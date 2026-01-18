@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     <script>
         // Alpine.js profile store - manages profile selection via localStorage
         document.addEventListener('alpine:init', () => {
@@ -115,7 +116,7 @@
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
             font-weight: 500;
-            z-index: 999;
+            z-index: 1000;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
@@ -133,19 +134,18 @@
             background: white;
             opacity: 0.9;
         }
-        .profile-indicator-link {
-            color: white;
-            text-decoration: none;
-            opacity: 0.9;
-            font-size: 0.75rem;
-            transition: opacity 0.2s;
-        }
-        .profile-indicator-link:hover {
-            opacity: 1;
-            text-decoration: underline;
-        }
         .container {
             padding-top: 2.5rem;
+        }
+
+        /* Desktop adjustments for profile indicator + top nav */
+        @media (min-width: 768px) {
+            body {
+                padding-top: 120px; /* Profile indicator (~40px) + Nav (~60px) + spacing */
+            }
+            .container {
+                padding-top: 20px;
+            }
         }
     </style>
 </head>
@@ -169,23 +169,33 @@
             <div class="profile-indicator-dot"></div>
             <span x-text="profileName"></span>
         </div>
-        <a href="/profiles" class="profile-indicator-link">Switch Profile</a>
     </div>
 
     {% block content %}{% endblock %}
 
     <nav class="nav">
-        <a href="/" class="{{ 'active' if request.url.path == '/' else '' }}">
-            Checklist
+        <a href="/" class="nav-item {{ 'active' if request.url.path == '/' else '' }}" title="Today's Checklist">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 11l3 3L22 4"></path>
+                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
+            </svg>
+            <span class="nav-label">Today</span>
         </a>
-        <a href="/history" class="{{ 'active' if request.url.path == '/history' else '' }}">
-            History
+        <a href="/history" class="nav-item {{ 'active' if request.url.path == '/history' else '' }}" title="Completion History">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span class="nav-label">History</span>
         </a>
-        <a href="/fitbit" class="{{ 'active' if request.url.path == '/fitbit' else '' }}">
-            Fitbit
-        </a>
-        <a href="/settings" class="{{ 'active' if request.url.path == '/settings' else '' }}">
-            Settings
+        <a href="/settings" class="nav-item {{ 'active' if request.url.path == '/settings' or request.url.path == '/fitbit' or request.url.path == '/profiles' else '' }}" title="Settings & Integrations">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m5.2-13.2l-4.3 4.3m-3.9 3.9L4.8 19.2M23 12h-6m-6 0H1m18.2 5.2l-4.3-4.3m-3.9-3.9L4.8 4.8"></path>
+            </svg>
+            <span class="nav-label">Settings</span>
         </a>
     </nav>
 </body>

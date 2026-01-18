@@ -1,1 +1,1 @@
-Reference CLAUDE.md for content.
+Reference CLAUDE.md for instructions.

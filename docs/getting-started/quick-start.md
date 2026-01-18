@@ -4,9 +4,42 @@ Get up and running with Streaklet in 5 minutes.
 
 ## 1. Start Streaklet
 
+Choose your preferred method:
+
+### Option 1: Docker (Recommended)
+
 ```bash
 docker run -d -p 8080:8080 -v ./data:/data ghcr.io/ptmetcalf/streaklet:latest
 ```
+
+### Option 2: Local Development
+
+**Prerequisites:** Python 3.12+, `python3-venv` (Ubuntu/Debian: `apt install python3.12-venv`)
+
+```bash
+# Clone repository
+git clone https://github.com/ptmetcalf/streaklet.git
+cd streaklet
+
+# Create data directory
+mkdir -p data
+
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # Linux/macOS
+# Windows: .venv\Scripts\Activate.ps1
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run database migrations (use local path)
+DB_PATH=data/app.db alembic upgrade head
+
+# Start development server (use local path)
+DB_PATH=data/app.db uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+See [Local Development Setup](../development/local-setup.md) for detailed instructions.
 
 ## 2. Open in Browser
 

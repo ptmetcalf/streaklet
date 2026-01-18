@@ -39,20 +39,36 @@
                     :class="{
                         'empty': day.isEmpty,
                         'completed': day.isCompleted,
+                        'partial': day.isPartial,
                         'incomplete': day.isIncomplete,
+                        'streak-break': day.isStreakBreak,
                         'future': day.isFuture,
                         'today': day.isToday,
-                        'selectable': day.isPast,
+                        'selectable': day.isPast || day.isToday,
                         'selected': day.dateStr === selectedDate
                     }"
+                    :style="day.isPartial ? {'--completion-height': day.completionPercentage + '%'} : {}"
                     @click="selectCalendarDate(day)"
                 >
                     <div class="day-number" x-text="day.dayNumber"></div>
 
-                    <!-- Tooltip with Fitbit metrics -->
-                    <div x-show="day.fitbitMetrics && !day.isEmpty" class="day-tooltip">
+                    <!-- Enhanced Tooltip with completion and Fitbit metrics -->
+                    <div x-show="!day.isEmpty && !day.isFuture" class="day-tooltip">
                         <div class="tooltip-date" x-text="formatTooltipDate(day.dateStr)"></div>
-                        <div class="tooltip-metrics">
+
+                        <!-- Completion Info -->
+                        <div class="tooltip-completion">
+                            <div class="completion-bar">
+                                <div class="completion-fill" :style="{'width': day.completionPercentage + '%'}"></div>
+                            </div>
+                            <div class="completion-text">
+                                <span class="completion-percent" x-text="Math.round(day.completionPercentage) + '%'"></span>
+                                <span class="completion-fraction" x-text="'(' + day.tasksCompleted + '/' + day.tasksRequired + ' tasks)'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Fitbit Metrics (if available) -->
+                        <div x-show="day.fitbitMetrics" class="tooltip-metrics">
                             <template x-for="metric in formatFitbitMetrics(day.fitbitMetrics)" :key="metric.label">
                                 <div class="tooltip-metric">
                                     <span class="metric-icon" x-text="metric.icon"></span>
@@ -72,8 +88,14 @@
                 <span>Completed</span>
             </div>
             <div class="legend-item">
-                <div class="legend-box incomplete"></div>
-                <span>Incomplete</span>
+                <div class="legend-box partial" style="background: linear-gradient(to top, var(--success-color) 50%, #f0f0f0 50%);"></div>
+                <span>Partial</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box incomplete" style="position: relative;">
+                    <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--danger-color); font-weight: bold;">✕</span>
+                </div>
+                <span>Missed Day</span>
             </div>
             <div class="legend-item">
                 <div class="legend-box future"></div>
@@ -209,15 +231,25 @@ function calendar() {
                 const dateStr = `${this.year}-${String(this.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const dayData = this.calendarData.days[dateStr];
 
+                const completionPct = dayData?.completion_percentage || 0;
+                const isCompleted = completionPct === 100;
+                const isPartial = completionPct > 0 && completionPct < 100;
+                const isStreakBreak = dayData?.is_streak_break || false;
+
                 days.push({
                     dayNumber: day,
                     dateStr: dateStr,
-                    isCompleted: dayData && dayData.completed,
-                    isIncomplete: dayData && !dayData.completed && dateStr <= this.today,
+                    isCompleted: isCompleted,
+                    isPartial: isPartial,
+                    isIncomplete: !isCompleted && !isPartial && dateStr <= this.today,
+                    isStreakBreak: isStreakBreak,
                     isFuture: dateStr > this.today,
                     isToday: dateStr === this.today,
                     isPast: dateStr < this.today,
                     isEmpty: false,
+                    completionPercentage: completionPct,
+                    tasksCompleted: dayData?.tasks_completed || 0,
+                    tasksRequired: dayData?.tasks_required || 0,
                     fitbitMetrics: dayData && dayData.fitbit_metrics,
                     key: dateStr
                 });
@@ -316,9 +348,21 @@ function calendar() {
         },
 
         selectCalendarDate(day) {
-            if (!day || day.isEmpty || !day.isPast) {
+            if (!day || day.isEmpty) {
                 return;
             }
+
+            // If clicking today, redirect to main today page
+            if (day.isToday) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Only load historical data for past days
+            if (!day.isPast) {
+                return;
+            }
+
             this.selectedDate = day.dateStr;
             this.loadDayData(day.dateStr);
         },
@@ -386,25 +430,36 @@ function calendar() {
     position: relative;
 }
 
+/* Increase z-index when hovering to place tooltip above other days */
+.calendar-day:hover {
+    z-index: 100;
+}
+
 .day-tooltip {
     display: none;
     position: absolute;
     bottom: 100%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(4px);
     margin-bottom: 8px;
     background: white;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    padding: 12px;
-    min-width: 200px;
-    z-index: 1000;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    padding: 14px;
+    min-width: 220px;
+    z-index: 10;
     white-space: nowrap;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+    backdrop-filter: blur(10px);
 }
 
 .calendar-day:hover .day-tooltip {
     display: block;
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
 }
 
 /* Arrow pointing down from tooltip */
@@ -436,6 +491,45 @@ function calendar() {
     padding-bottom: 8px;
     border-bottom: 1px solid #e0e0e0;
     color: #333;
+}
+
+/* Completion info in tooltip */
+.tooltip-completion {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.completion-bar {
+    height: 8px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.completion-fill {
+    height: 100%;
+    background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 4px;
+}
+
+.completion-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.completion-percent {
+    font-weight: 600;
+    color: #52c41a;
+    font-size: 14px;
+}
+
+.completion-fraction {
+    color: #666;
 }
 
 .tooltip-metrics {
