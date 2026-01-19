@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from app.models.daily_status import DailyStatus
 from app.models.fitbit_metric import FitbitMetric
 from app.models.task import Task
@@ -47,16 +47,15 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
         for status in completed_days
     }
 
-    # Get all required active tasks for the profile (current state)
-    required_tasks = db.query(Task).filter(
+    # Get all required active tasks for the profile
+    # We'll filter by active_since for each specific date later
+    all_required_tasks = db.query(Task).filter(
         and_(
             Task.user_id == profile_id,
             Task.is_active == True,
             Task.is_required == True
         )
     ).all()
-    required_task_ids: Set[int] = {task.id for task in required_tasks}
-    total_required = len(required_task_ids)
 
     # Get all task checks for the month
     task_checks = db.query(TaskCheck).filter(
@@ -68,13 +67,12 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
         )
     ).all()
 
-    # Group checks by date and count completed required tasks
+    # Group checks by date
     checks_by_date: Dict[date, Set[int]] = {}
     for check in task_checks:
         if check.date not in checks_by_date:
             checks_by_date[check.date] = set()
-        if check.task_id in required_task_ids:
-            checks_by_date[check.date].add(check.task_id)
+        checks_by_date[check.date].add(check.task_id)
 
     # Query Fitbit metrics for the month
     fitbit_metrics = db.query(FitbitMetric).filter(
@@ -102,9 +100,19 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
         day_date = date(year, month, day)
         date_str = day_date.isoformat()
 
-        # Calculate completion metrics
-        tasks_completed = len(checks_by_date.get(day_date, set()))
-        completion_percentage = (tasks_completed / total_required * 100) if total_required > 0 else 0
+        # Filter required tasks to only those active on this specific date
+        # Respects active_since field to prevent new tasks from affecting historical completion
+        required_task_ids_for_date = {
+            task.id for task in all_required_tasks
+            if task.active_since is None or task.active_since <= day_date
+        }
+        total_required_for_date = len(required_task_ids_for_date)
+
+        # Calculate completion metrics for this specific date
+        completed_task_ids = checks_by_date.get(day_date, set())
+        # Only count tasks that were required on this date
+        tasks_completed = len(completed_task_ids & required_task_ids_for_date)
+        completion_percentage = (tasks_completed / total_required_for_date * 100) if total_required_for_date > 0 else 0
 
         # Mark as streak break if 0% completion and in the past
         is_streak_break = (completion_percentage == 0) and (day_date < today)
@@ -118,10 +126,10 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
                 'completed_at': None
             }
 
-        # Add completion percentage data
+        # Add completion percentage data (using date-specific counts)
         days_dict[date_str]['completion_percentage'] = round(completion_percentage, 1)
         days_dict[date_str]['tasks_completed'] = tasks_completed
-        days_dict[date_str]['tasks_required'] = total_required
+        days_dict[date_str]['tasks_required'] = total_required_for_date
         days_dict[date_str]['is_streak_break'] = is_streak_break
 
         # Add Fitbit metrics if available

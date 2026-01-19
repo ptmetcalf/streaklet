@@ -97,7 +97,8 @@ def sample_tasks(test_db: Session, sample_profiles):
     from datetime import date
 
     # Set active_since to a date in the past to ensure tasks count toward completion
-    past_date = date(2025, 1, 1)
+    # Using 2024-11-01 so tasks are active for December 2024 tests
+    past_date = date(2024, 11, 1)
 
     tasks = [
         Task(id=1, user_id=1, title="Task 1", sort_order=1, is_required=True, is_active=True, active_since=past_date),
