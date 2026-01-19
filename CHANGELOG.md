@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/ptmetcalf/streaklet/compare/v1.2.0...v1.2.1) (2026-01-19)
+
+
+### Bug Fixes
+
+* improve household UX, Fitbit visualizations, and mobile responsiveness ([7bcf269](https://github.com/ptmetcalf/streaklet/commit/7bcf269f65e6c5aaa7c340a4c023aad25919eb56))
+
 ## [1.2.0](https://github.com/ptmetcalf/streaklet/compare/v1.1.0...v1.2.0) (2026-01-19)
 
 
