@@ -17,7 +17,9 @@ class Task(Base):
     task_type = Column(String, nullable=False, default='daily', index=True)
 
     # Active since date - only counts toward completion on dates >= this
-    active_since = Column(Date, nullable=False, server_default=func.current_date(), index=True)
+    # Nullable for SQLite compatibility (migration 006 adds as nullable)
+    # Application code should set to created_at date if NULL
+    active_since = Column(Date, nullable=True, index=True)
 
     # Punch list fields
     due_date = Column(Date, nullable=True, index=True)

@@ -24,21 +24,23 @@ def upgrade() -> None:
     This field tracks when a task becomes active for completion tracking.
     Only counts toward daily completion on dates >= active_since.
 
-    Note: SQLite doesn't support ALTER COLUMN, so we add the column with
-    a default value directly.
+    Note: SQLite doesn't support ALTER COLUMN or non-constant defaults when
+    adding NOT NULL columns. We add as nullable, populate data, then rely on
+    application-level validation.
     """
-    # Add active_since column with default for new rows
-    # SQLite will use DATE('now') for any new inserts
+    # Step 1: Add active_since column as nullable (required for SQLite compatibility)
     op.add_column('tasks',
-        sa.Column('active_since', sa.Date(), nullable=False,
-                  server_default=sa.text("DATE('now')"))
+        sa.Column('active_since', sa.Date(), nullable=True)
     )
 
-    # Update existing rows to use their created_at date
+    # Step 2: Update existing rows to use their created_at date
     op.execute("""
         UPDATE tasks
         SET active_since = DATE(created_at)
     """)
+
+    # Note: SQLite does not support ALTER COLUMN to add NOT NULL constraint.
+    # Application code should treat NULL active_since as created_at date.
 
 
 def downgrade() -> None:

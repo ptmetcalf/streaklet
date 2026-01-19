@@ -131,7 +131,11 @@ def recompute_daily_completion(db: Session, check_date: date, profile_id: int) -
             Task.is_active == True,
             Task.is_required == True,
             Task.user_id == profile_id,
-            Task.active_since <= check_date,  # Only count tasks active on this date
+            # Only count tasks active on this date (NULL treated as always active for legacy data)
+            or_(
+                Task.active_since <= check_date,
+                Task.active_since.is_(None)
+            ),
             or_(
                 Task.task_type == 'daily',
                 and_(
