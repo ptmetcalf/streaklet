@@ -27,7 +27,7 @@ router = APIRouter(prefix="/api/household", tags=["household"])
 
 @router.get("/tasks", response_model=List[HouseholdTaskWithStatus])
 def list_household_tasks(
-    frequency: Optional[str] = Query(None, pattern="^(weekly|monthly|quarterly|annual)$"),
+    frequency: Optional[str] = Query(None, pattern="^(weekly|monthly|quarterly|annual|todo)$"),
     include_inactive: bool = False,
     db: Session = Depends(get_db)
 ):
@@ -98,6 +98,7 @@ def create_household_task(
         title=task_data.title,
         description=task_data.description,
         frequency=task_data.frequency,
+        due_date=task_data.due_date,
         sort_order=task_data.sort_order
     )
     return task
@@ -125,6 +126,7 @@ def update_household_task(
         title=task_data.title,
         description=task_data.description,
         frequency=task_data.frequency,
+        due_date=task_data.due_date,
         sort_order=task_data.sort_order,
         is_active=task_data.is_active
     )

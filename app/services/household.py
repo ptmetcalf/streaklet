@@ -6,14 +6,14 @@ Unlike other services, household tasks are SHARED across all profiles (no profil
 profile_id is ONLY used for completion attribution (tracking WHO completed a task).
 """
 from typing import List, Optional, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from app.models.household_task import HouseholdTask
 from app.models.household_completion import HouseholdCompletion
 from app.models.profile import Profile
-from app.core.time import get_now
+from app.core.time import get_now, get_today
 
 
 # Frequency thresholds in days
@@ -65,7 +65,8 @@ def get_household_task_by_id(db: Session, task_id: int) -> Optional[HouseholdTas
     return db.query(HouseholdTask).filter(HouseholdTask.id == task_id).first()
 
 
-def create_household_task(db: Session, title: str, description: Optional[str], frequency: str, sort_order: int = 0) -> HouseholdTask:
+def create_household_task(db: Session, title: str, description: Optional[str], frequency: str,
+                         due_date: Optional[date] = None, sort_order: int = 0) -> HouseholdTask:
     """
     Create a new household task (SHARED - no profile association).
 
@@ -73,7 +74,8 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         db: Database session
         title: Task title
         description: Optional task description
-        frequency: One of 'weekly', 'monthly', 'quarterly', 'annual'
+        frequency: One of 'weekly', 'monthly', 'quarterly', 'annual', 'todo'
+        due_date: Optional due date (primarily for to-do items)
         sort_order: Sort order for display
 
     Returns:
@@ -83,6 +85,7 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         title=title,
         description=description,
         frequency=frequency,
+        due_date=due_date,
         sort_order=sort_order,
         is_active=True
     )
@@ -94,7 +97,8 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
 
 def update_household_task(db: Session, task_id: int, title: Optional[str] = None,
                          description: Optional[str] = None, frequency: Optional[str] = None,
-                         sort_order: Optional[int] = None, is_active: Optional[bool] = None) -> Optional[HouseholdTask]:
+                         due_date: Optional[date] = None, sort_order: Optional[int] = None,
+                         is_active: Optional[bool] = None) -> Optional[HouseholdTask]:
     """
     Update an existing household task.
 
@@ -104,6 +108,7 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         title: New title (if provided)
         description: New description (if provided)
         frequency: New frequency (if provided)
+        due_date: New due date (if provided)
         sort_order: New sort order (if provided)
         is_active: New active status (if provided)
 
@@ -120,6 +125,8 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         task.description = description
     if frequency is not None:
         task.frequency = frequency
+    if due_date is not None:
+        task.due_date = due_date
     if sort_order is not None:
         task.sort_order = sort_order
     if is_active is not None:
@@ -238,11 +245,13 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
     Get a household task enriched with completion status.
 
     Adds:
+    - due_date: Optional due date (for to-do items)
     - last_completed_at: DateTime of last completion
     - last_completed_by_profile_id: Profile ID of who last completed
     - last_completed_by_profile_name: Name of who last completed
     - days_since_completion: Days since last completion
-    - is_overdue: Whether task is overdue based on frequency
+    - is_overdue: Whether task is overdue based on frequency/due date
+    - is_completed: Whether to-do task has been completed (for filtering)
 
     Returns:
         Dict with task and status info, or None if not found
@@ -258,6 +267,7 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         'title': task.title,
         'description': task.description,
         'frequency': task.frequency,
+        'due_date': task.due_date,
         'sort_order': task.sort_order,
         'is_active': task.is_active,
         'created_at': task.created_at,
@@ -266,7 +276,8 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         'last_completed_by_profile_id': None,
         'last_completed_by_profile_name': None,
         'days_since_completion': None,
-        'is_overdue': False
+        'is_overdue': False,
+        'is_completed': False  # For to-do items
     }
 
     if last_completion:
@@ -290,30 +301,56 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
 
         days_since = (now - completed_at).days
 
+        # For to-do items, mark as completed (will be filtered from list)
+        is_todo_completed = task.frequency == 'todo'
+
+        # Calculate is_overdue based on task type
+        if task.frequency == 'todo':
+            # To-do tasks: overdue only if they have a due_date in the past and aren't completed
+            is_overdue = False
+            if task.due_date and not is_todo_completed:
+                is_overdue = get_today() > task.due_date
+        else:
+            # Recurring tasks: overdue if days since completion > threshold
+            is_overdue = days_since > FREQUENCY_THRESHOLDS.get(task.frequency, 999999)
+
         result.update({
             'last_completed_at': last_completion.completed_at,
             'last_completed_by_profile_id': last_completion.completed_by_profile_id,
             'last_completed_by_profile_name': profile_name,
             'days_since_completion': days_since,
-            'is_overdue': days_since > FREQUENCY_THRESHOLDS.get(task.frequency, 999999)
+            'is_overdue': is_overdue,
+            'is_completed': is_todo_completed
         })
+    else:
+        # No completion yet
+        # For to-do items with due dates, check if overdue
+        if task.frequency == 'todo' and task.due_date:
+            result['is_overdue'] = get_today() > task.due_date
 
     return result
 
 
-def get_all_tasks_with_status(db: Session, include_inactive: bool = False) -> List[Dict]:
+def get_all_tasks_with_status(db: Session, include_inactive: bool = False, include_completed_todos: bool = False) -> List[Dict]:
     """
     Get all household tasks enriched with completion status.
 
     Args:
         db: Database session
         include_inactive: Whether to include inactive tasks
+        include_completed_todos: Whether to include completed to-do items (default: hide them)
 
     Returns:
         List of dicts with task and status info
     """
     tasks = get_all_household_tasks(db, include_inactive=include_inactive)
-    return [get_task_with_status(db, task.id) for task in tasks]
+    tasks_with_status = [get_task_with_status(db, task.id) for task in tasks]
+
+    # Filter out completed to-dos unless explicitly requested
+    if not include_completed_todos:
+        tasks_with_status = [t for t in tasks_with_status if not t.get('is_completed', False)]
+
+    return tasks_with_status
 
 
 def get_overdue_tasks(db: Session) -> List[Dict]:

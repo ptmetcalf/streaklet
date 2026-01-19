@@ -70,6 +70,48 @@
         </div>
     </section>
 
+    <!-- To-Do Items Section -->
+    <section x-show="getTasksByFrequency('todo').length > 0" class="household-section">
+        <div class="section-header">
+            <h2>To-Do Items</h2>
+            <span class="task-count" x-text="getTasksByFrequency('todo').length"></span>
+        </div>
+        <div class="household-tasks">
+            <template x-for="task in getTasksByFrequency('todo')" :key="task.id">
+                <div class="household-task-card" :class="{ 'overdue': task.is_overdue }">
+                    <div class="task-main">
+                        <div class="task-info">
+                            <h3 x-text="task.title"></h3>
+                            <p class="task-description" x-show="task.description" x-text="task.description"></p>
+                            <div class="task-meta">
+                                <span class="frequency-badge todo">To-Do</span>
+                                <span class="completion-info" :class="{ 'overdue-text': task.is_overdue }">
+                                    <template x-if="task.due_date">
+                                        <span x-text="formatDueDate(task.due_date)"></span>
+                                    </template>
+                                    <template x-if="!task.due_date">
+                                        <span>No due date</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button
+                                @click="markComplete(task)"
+                                :disabled="isCompleting(task.id)"
+                                class="btn btn-complete"
+                                :class="{ 'disabled': isCompleting(task.id) }">
+                                <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
+                                <span x-show="isCompleting(task.id)">⏳ Completing...</span>
+                            </button>
+                            <button @click="showHistory(task)" class="btn btn-secondary">History</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
     <!-- Weekly Tasks -->
     <section x-show="getTasksByFrequency('weekly').length > 0" class="household-section">
         <div class="section-header">
@@ -443,6 +485,29 @@ function householdMaintenance() {
             return frequency.charAt(0).toUpperCase() + frequency.slice(1);
         },
 
+        formatDueDate(dueDateStr) {
+            if (!dueDateStr) return '';
+            const dueDate = new Date(dueDateStr + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const diffTime = dueDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) {
+                const absDays = Math.abs(diffDays);
+                return `Overdue by ${absDays} day${absDays !== 1 ? 's' : ''}`;
+            } else if (diffDays === 0) {
+                return 'Due today';
+            } else if (diffDays === 1) {
+                return 'Due tomorrow';
+            } else if (diffDays <= 7) {
+                return `Due in ${diffDays} days`;
+            } else {
+                return `Due ${dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+            }
+        },
+
         isCompleting(taskId) {
             return this.completingTaskIds.has(taskId);
         },
@@ -588,7 +653,20 @@ function householdMaintenance() {
             };
 
             return this.allTasksForCalendar.filter(task => {
-                // Show task if it's overdue or due soon based on last completion
+                // Handle to-do items separately
+                if (task.frequency === 'todo') {
+                    // If has due_date, show on that date (if not completed)
+                    if (task.due_date && !task.is_completed) {
+                        return task.due_date === dateStr;
+                    }
+                    // If no due_date, show on today (if not completed)
+                    if (!task.due_date && !task.is_completed) {
+                        return dateStr === today;
+                    }
+                    return false; // Don't show completed to-dos
+                }
+
+                // Handle recurring tasks
                 if (!task.last_completed_at) {
                     // Never completed - show on current day only
                     return dateStr === today;
@@ -749,6 +827,11 @@ function householdMaintenance() {
 .frequency-badge.annual {
     background: #fcffe6;
     color: #7cb305;
+}
+
+.frequency-badge.todo {
+    background: #f0f0f0;
+    color: #595959;
 }
 
 .completion-info {

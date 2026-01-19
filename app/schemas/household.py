@@ -5,14 +5,15 @@ These schemas define the request/response models for household task operations.
 """
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Literal
-from datetime import datetime
+from datetime import datetime, date
 
 
 class HouseholdTaskBase(BaseModel):
     """Base schema for household task data."""
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
-    frequency: Literal['weekly', 'monthly', 'quarterly', 'annual']
+    frequency: Literal['weekly', 'monthly', 'quarterly', 'annual', 'todo']
+    due_date: Optional[date] = None  # Optional due date for to-do items
     sort_order: int = 0
 
 
@@ -25,7 +26,8 @@ class HouseholdTaskUpdate(BaseModel):
     """Schema for updating a household task (all fields optional)."""
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
-    frequency: Optional[Literal['weekly', 'monthly', 'quarterly', 'annual']] = None
+    frequency: Optional[Literal['weekly', 'monthly', 'quarterly', 'annual', 'todo']] = None
+    due_date: Optional[date] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
 
