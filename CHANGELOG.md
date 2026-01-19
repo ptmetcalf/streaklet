@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/ptmetcalf/streaklet/compare/v1.1.0...v1.2.0) (2026-01-19)
+
+
+### Features
+
+* **task:** make active_since nullable for SQLite compatibility and update migration logic ([484c1e3](https://github.com/ptmetcalf/streaklet/commit/484c1e37a35bbb0f58aac1ad0232534cd038b55b))
+
 ## [1.1.0](https://github.com/ptmetcalf/streaklet/compare/v1.0.0...v1.1.0) (2026-01-19)
 
 
