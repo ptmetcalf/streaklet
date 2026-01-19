@@ -5,14 +5,36 @@
 {% block content %}
 <div class="container" x-data="householdMaintenance()" x-init="await loadTasks()">
     <header class="page-header">
-        <h1>🏠 Household Maintenance</h1>
+        <h1>Household Maintenance</h1>
         <p class="page-subtitle">Shared tasks for everyone in the household</p>
     </header>
+
+    <!-- View Tabs -->
+    <div class="task-tabs" style="margin-bottom: 24px;">
+        <button class="tab-button"
+                :class="{ 'active': activeView === 'list' }"
+                @click="switchView('list')">
+            <span>List View</span>
+        </button>
+        <button class="tab-button"
+                :class="{ 'active': activeView === 'calendar' }"
+                @click="switchView('calendar')">
+            <span>Calendar View</span>
+        </button>
+    </div>
+
+    <!-- List View -->
+    <div x-show="activeView === 'list'">
+    <!-- Empty State -->
+    <div x-show="!loading && !hasVisibleTasks" class="empty-state" style="text-align: center; padding: 60px 20px;">
+        <h2 style="color: #52c41a; margin-bottom: 8px;">All caught up!</h2>
+        <p style="color: #666;">No household tasks need attention right now.</p>
+    </div>
 
     <!-- Overdue Tasks Section -->
     <section x-show="overdueTasks.length > 0" class="household-section overdue-section">
         <div class="section-header overdue-header">
-            <h2>⚠️ Overdue Tasks</h2>
+            <h2>Overdue Tasks</h2>
             <span class="task-count" x-text="overdueTasks.length"></span>
         </div>
         <div class="household-tasks">
@@ -32,7 +54,14 @@
                             </div>
                         </div>
                         <div class="task-actions">
-                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button
+                                @click="markComplete(task)"
+                                :disabled="isCompleting(task.id)"
+                                class="btn btn-complete"
+                                :class="{ 'disabled': isCompleting(task.id) }">
+                                <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
+                                <span x-show="isCompleting(task.id)">⏳ Completing...</span>
+                            </button>
                             <button @click="showHistory(task)" class="btn btn-secondary">History</button>
                         </div>
                     </div>
@@ -44,7 +73,7 @@
     <!-- Weekly Tasks -->
     <section x-show="getTasksByFrequency('weekly').length > 0" class="household-section">
         <div class="section-header">
-            <h2>📅 Weekly Tasks</h2>
+            <h2>Weekly Tasks</h2>
             <span class="task-count" x-text="getTasksByFrequency('weekly').length"></span>
         </div>
         <div class="household-tasks">
@@ -61,13 +90,20 @@
                                         <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
                                     </template>
                                     <template x-if="!task.last_completed_at">
-                                        <span>❓ Never completed</span>
+                                        <span>Never completed</span>
                                     </template>
                                 </span>
                             </div>
                         </div>
                         <div class="task-actions">
-                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button
+                                @click="markComplete(task)"
+                                :disabled="isCompleting(task.id)"
+                                class="btn btn-complete"
+                                :class="{ 'disabled': isCompleting(task.id) }">
+                                <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
+                                <span x-show="isCompleting(task.id)">⏳ Completing...</span>
+                            </button>
                             <button @click="showHistory(task)" class="btn btn-secondary">History</button>
                         </div>
                     </div>
@@ -79,7 +115,7 @@
     <!-- Monthly Tasks -->
     <section x-show="getTasksByFrequency('monthly').length > 0" class="household-section">
         <div class="section-header">
-            <h2>📆 Monthly Tasks</h2>
+            <h2>Monthly Tasks</h2>
             <span class="task-count" x-text="getTasksByFrequency('monthly').length"></span>
         </div>
         <div class="household-tasks">
@@ -96,13 +132,20 @@
                                         <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
                                     </template>
                                     <template x-if="!task.last_completed_at">
-                                        <span>❓ Never completed</span>
+                                        <span>Never completed</span>
                                     </template>
                                 </span>
                             </div>
                         </div>
                         <div class="task-actions">
-                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button
+                                @click="markComplete(task)"
+                                :disabled="isCompleting(task.id)"
+                                class="btn btn-complete"
+                                :class="{ 'disabled': isCompleting(task.id) }">
+                                <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
+                                <span x-show="isCompleting(task.id)">⏳ Completing...</span>
+                            </button>
                             <button @click="showHistory(task)" class="btn btn-secondary">History</button>
                         </div>
                     </div>
@@ -114,7 +157,7 @@
     <!-- Quarterly Tasks -->
     <section x-show="getTasksByFrequency('quarterly').length > 0" class="household-section">
         <div class="section-header">
-            <h2>🗓️ Quarterly Tasks</h2>
+            <h2>Quarterly Tasks</h2>
             <span class="task-count" x-text="getTasksByFrequency('quarterly').length"></span>
         </div>
         <div class="household-tasks">
@@ -131,13 +174,20 @@
                                         <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
                                     </template>
                                     <template x-if="!task.last_completed_at">
-                                        <span>❓ Never completed</span>
+                                        <span>Never completed</span>
                                     </template>
                                 </span>
                             </div>
                         </div>
                         <div class="task-actions">
-                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button
+                                @click="markComplete(task)"
+                                :disabled="isCompleting(task.id)"
+                                class="btn btn-complete"
+                                :class="{ 'disabled': isCompleting(task.id) }">
+                                <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
+                                <span x-show="isCompleting(task.id)">⏳ Completing...</span>
+                            </button>
                             <button @click="showHistory(task)" class="btn btn-secondary">History</button>
                         </div>
                     </div>
@@ -149,7 +199,7 @@
     <!-- Annual Tasks -->
     <section x-show="getTasksByFrequency('annual').length > 0" class="household-section">
         <div class="section-header">
-            <h2>📅 Annual Tasks</h2>
+            <h2>Annual Tasks</h2>
             <span class="task-count" x-text="getTasksByFrequency('annual').length"></span>
         </div>
         <div class="household-tasks">
@@ -166,13 +216,20 @@
                                         <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
                                     </template>
                                     <template x-if="!task.last_completed_at">
-                                        <span>❓ Never completed</span>
+                                        <span>Never completed</span>
                                     </template>
                                 </span>
                             </div>
                         </div>
                         <div class="task-actions">
-                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button
+                                @click="markComplete(task)"
+                                :disabled="isCompleting(task.id)"
+                                class="btn btn-complete"
+                                :class="{ 'disabled': isCompleting(task.id) }">
+                                <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
+                                <span x-show="isCompleting(task.id)">⏳ Completing...</span>
+                            </button>
                             <button @click="showHistory(task)" class="btn btn-secondary">History</button>
                         </div>
                     </div>
@@ -190,12 +247,106 @@
     <div x-show="loading" class="empty-state">
         <p>Loading household tasks...</p>
     </div>
+    </div>
+
+    <!-- Calendar View -->
+    <div x-show="activeView === 'calendar'">
+        <div class="calendar-nav" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <button @click="changeMonth(-1)" class="nav-arrow">‹</button>
+            <div class="calendar-month-year" x-text="currentMonthYear"></div>
+            <button @click="changeMonth(1)" class="nav-arrow">›</button>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-grid">
+                <!-- Weekday headers -->
+                <template x-for="day in weekdays" :key="day">
+                    <div class="calendar-header" x-text="day"></div>
+                </template>
+
+                <!-- Calendar days -->
+                <template x-for="day in calendarDays" :key="day.key">
+                    <div
+                        class="calendar-day household-calendar-day"
+                        :class="{
+                            'empty': day.isEmpty,
+                            'future': day.isFuture,
+                            'today': day.isToday,
+                            'has-due-tasks': day.hasDueTasks,
+                            'has-overdue-tasks': day.hasOverdueTasks,
+                            'has-completed-tasks': day.hasCompletedTasks
+                        }"
+                        @click="selectCalendarDate(day)"
+                        :style="day.taskCount > 0 ? {'cursor': 'pointer'} : {}"
+                    >
+                        <div class="day-number" x-text="day.dayNumber"></div>
+                        <div x-show="day.taskCount > 0" class="task-count-badge" x-text="day.taskCount"></div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="calendar-legend" style="margin-top: 20px;">
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #fff2f0; border: 2px solid #ff4d4f;"></div>
+                    <span>Overdue Tasks</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #fffbe6; border: 2px solid #faad14;"></div>
+                    <span>Due Soon</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box" style="background: #f6ffed; border: 2px solid #52c41a;"></div>
+                    <span>Recently Completed</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected Day Tasks -->
+        <div x-show="selectedDay" style="margin-top: 24px;">
+            <h3 style="margin-bottom: 16px;" x-text="selectedDateDisplay"></h3>
+            <div x-show="selectedDayTasks.length === 0" class="empty-state">
+                <p>No household tasks for this date.</p>
+            </div>
+            <template x-for="task in selectedDayTasks" :key="task.id">
+                <div class="household-task-card" :class="{ 'overdue': task.is_overdue }">
+                    <div class="task-main">
+                        <div class="task-info">
+                            <h3 x-text="task.title"></h3>
+                            <p class="task-description" x-show="task.description" x-text="task.description"></p>
+                            <div class="task-meta">
+                                <span class="frequency-badge" :class="task.frequency" x-text="task.frequency"></span>
+                                <span class="completion-info">
+                                    <template x-if="task.last_completed_at">
+                                        <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
+                                    </template>
+                                    <template x-if="!task.last_completed_at">
+                                        <span>Never completed</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button
+                                @click="markComplete(task)"
+                                :disabled="isCompleting(task.id)"
+                                class="btn btn-complete"
+                                :class="{ 'disabled': isCompleting(task.id) }">
+                                <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
+                                <span x-show="isCompleting(task.id)">⏳ Completing...</span>
+                            </button>
+                            <button @click="showHistory(task)" class="btn btn-secondary">History</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
 
     <!-- History Modal -->
     <div x-show="historyModal.show" class="modal-overlay" @click.self="closeHistory()">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📋 Completion History</h2>
+                <h2>Completion History</h2>
                 <button @click="closeHistory()" class="btn-close">✕</button>
             </div>
             <div class="modal-body">
@@ -223,14 +374,24 @@
 <script>
 function householdMaintenance() {
     return {
+        activeView: 'list', // 'list' or 'calendar'
         allTasks: [],
+        allTasksForCalendar: [], // Store ALL tasks for calendar view
         overdueTasks: [],
         loading: true,
+        completingTaskIds: new Set(), // Track tasks being completed
         historyModal: {
             show: false,
             task: null,
             history: []
         },
+
+        // Calendar state
+        currentYear: new Date().getFullYear(),
+        currentMonth: new Date().getMonth() + 1,
+        selectedDay: null,
+        selectedDayTasks: [],
+        weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
 
         async loadTasks() {
             this.loading = true;
@@ -239,8 +400,19 @@ function householdMaintenance() {
                 const response = await fetch('/api/household/tasks');
                 if (response.ok) {
                     const tasks = await response.json();
-                    this.allTasks = tasks.filter(t => !t.is_overdue);
-                    this.overdueTasks = tasks.filter(t => t.is_overdue);
+
+                    // Store ALL tasks for calendar view
+                    this.allTasksForCalendar = tasks;
+
+                    // Only show tasks that need attention in list view:
+                    // 1. Never completed (last_completed_at is null)
+                    // 2. Overdue (is_overdue is true)
+                    const needsAttention = tasks.filter(t =>
+                        !t.last_completed_at || t.is_overdue
+                    );
+
+                    this.allTasks = needsAttention.filter(t => !t.is_overdue);
+                    this.overdueTasks = needsAttention.filter(t => t.is_overdue);
                 } else {
                     console.error('Error loading household tasks:', await response.text());
                 }
@@ -251,15 +423,37 @@ function householdMaintenance() {
             }
         },
 
-        getTasksByFrequency(frequency) {
+        switchView(view) {
+            this.activeView = view;
+            if (view === 'calendar') {
+                this.selectedDay = null;
+                this.selectedDayTasks = [];
+            }
+        },
+
+                getTasksByFrequency(frequency) {
             return this.allTasks.filter(t => t.frequency === frequency);
+        },
+
+        get hasVisibleTasks() {
+            return this.overdueTasks.length > 0 || this.allTasks.length > 0;
         },
 
         formatFrequency(frequency) {
             return frequency.charAt(0).toUpperCase() + frequency.slice(1);
         },
 
+        isCompleting(taskId) {
+            return this.completingTaskIds.has(taskId);
+        },
+
         async markComplete(task) {
+            // Prevent duplicate completions
+            if (this.completingTaskIds.has(task.id)) {
+                return;
+            }
+
+            this.completingTaskIds.add(task.id);
             try {
                 // USE fetchWithProfile for completion (attribution)
                 const response = await fetchWithProfile(`/api/household/tasks/${task.id}/complete`, {
@@ -276,6 +470,8 @@ function householdMaintenance() {
             } catch (error) {
                 console.error('Error marking task complete:', error);
                 alert('Failed to mark task complete');
+            } finally {
+                this.completingTaskIds.delete(task.id);
             }
         },
 
@@ -312,6 +508,115 @@ function householdMaintenance() {
                 hour: 'numeric',
                 minute: '2-digit'
             });
+        },
+
+        // Calendar methods
+        get currentMonthYear() {
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                              'July', 'August', 'September', 'October', 'November', 'December'];
+            return `${monthNames[this.currentMonth - 1]} ${this.currentYear}`;
+        },
+
+        get selectedDateDisplay() {
+            if (!this.selectedDay) return '';
+            return this.selectedDay;
+        },
+
+        changeMonth(delta) {
+            this.currentMonth += delta;
+            if (this.currentMonth > 12) {
+                this.currentMonth = 1;
+                this.currentYear++;
+            } else if (this.currentMonth < 1) {
+                this.currentMonth = 12;
+                this.currentYear--;
+            }
+            this.selectedDay = null;
+            this.selectedDayTasks = [];
+        },
+
+        get calendarDays() {
+            const days = [];
+            const firstDay = new Date(this.currentYear, this.currentMonth - 1, 1);
+            const lastDay = new Date(this.currentYear, this.currentMonth, 0);
+            const daysInMonth = lastDay.getDate();
+
+            // Get first day of week (0 = Sunday, convert to 0 = Monday)
+            let firstDayWeekday = firstDay.getDay() - 1;
+            if (firstDayWeekday < 0) firstDayWeekday = 6;
+
+            const today = new Date().toISOString().split('T')[0];
+
+            // Add empty cells for days before month starts
+            for (let i = 0; i < firstDayWeekday; i++) {
+                days.push({ isEmpty: true, key: `empty-${i}` });
+            }
+
+            // Add actual days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${this.currentYear}-${String(this.currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const tasksForDay = this.getTasksForDate(dateStr);
+
+                const hasOverdue = tasksForDay.some(t => t.is_overdue);
+                const hasDueSoon = tasksForDay.some(t => !t.is_overdue && t.days_since_completion >= 5);
+                const hasCompleted = tasksForDay.some(t => t.last_completed_at && t.days_since_completion < 5);
+
+                days.push({
+                    dayNumber: day,
+                    dateStr: dateStr,
+                    isEmpty: false,
+                    isFuture: dateStr > today,
+                    isToday: dateStr === today,
+                    taskCount: tasksForDay.length,
+                    hasOverdueTasks: hasOverdue,
+                    hasDueTasks: hasDueSoon,
+                    hasCompletedTasks: hasCompleted && !hasOverdue && !hasDueSoon,
+                    key: dateStr
+                });
+            }
+
+            return days;
+        },
+
+        getTasksForDate(dateStr) {
+            const today = new Date().toISOString().split('T')[0];
+            const THRESHOLDS = {
+                'weekly': 7,
+                'monthly': 30,
+                'quarterly': 90,
+                'annual': 365
+            };
+
+            return this.allTasksForCalendar.filter(task => {
+                // Show task if it's overdue or due soon based on last completion
+                if (!task.last_completed_at) {
+                    // Never completed - show on current day only
+                    return dateStr === today;
+                }
+
+                // Calculate when task becomes due based on last completion
+                const lastCompleted = new Date(task.last_completed_at);
+                const threshold = THRESHOLDS[task.frequency] || 999;
+                const dueDate = new Date(lastCompleted);
+                dueDate.setDate(dueDate.getDate() + threshold);
+
+                const dueDateStr = dueDate.toISOString().split('T')[0];
+
+                // Show task on its due date
+                return dateStr === dueDateStr;
+            });
+        },
+
+        selectCalendarDate(day) {
+            if (day.isEmpty || day.taskCount === 0) return;
+
+            this.selectedDay = new Date(day.dateStr).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            this.selectedDayTasks = this.getTasksForDate(day.dateStr);
         }
     }
 }
@@ -481,6 +786,19 @@ function householdMaintenance() {
     background: #45a617;
 }
 
+.btn-complete:disabled,
+.btn-complete.disabled {
+    background: #d9d9d9;
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-complete:disabled:hover,
+.btn-complete.disabled:hover {
+    background: #d9d9d9;
+}
+
 .btn-secondary {
     background: #f0f0f0;
     color: #666;
@@ -614,6 +932,86 @@ function householdMaintenance() {
         width: 95%;
         max-height: 90vh;
     }
+}
+
+/* Calendar View Styles */
+.household-calendar-day {
+    position: relative;
+}
+
+.household-calendar-day.has-overdue-tasks {
+    background: #fff2f0;
+    border: 2px solid #ff4d4f;
+}
+
+.household-calendar-day.has-due-tasks {
+    background: #fffbe6;
+    border: 2px solid #faad14;
+}
+
+.household-calendar-day.has-completed-tasks {
+    background: #f6ffed;
+    border: 2px solid #52c41a;
+}
+
+.task-count-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: #1890ff;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.household-calendar-day.has-overdue-tasks .task-count-badge {
+    background: #ff4d4f;
+}
+
+.household-calendar-day.has-due-tasks .task-count-badge {
+    background: #faad14;
+}
+
+.household-calendar-day.has-completed-tasks .task-count-badge {
+    background: #52c41a;
+}
+
+.calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.nav-arrow {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.nav-arrow:hover {
+    background: var(--bg-color);
+    border-color: var(--primary-color);
+}
+
+.calendar-month-year {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
 }
 </style>
 {% endblock %}

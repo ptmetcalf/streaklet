@@ -854,9 +854,11 @@ function fitbitMetrics() {
             this.trendsLoading = true;
             try {
                 // Calculate date range using timezone-aware today
+                // Exclude today to avoid incomplete data affecting trends
                 const endDate = parseDateOnly(this.today);
+                endDate.setDate(endDate.getDate() - 1); // Use yesterday as end date
                 const startDate = parseDateOnly(this.today);
-                startDate.setDate(startDate.getDate() - this.trendRange + 1);
+                startDate.setDate(startDate.getDate() - this.trendRange);
 
                 const startStr = this.formatDateLocal(startDate);
                 const endStr = this.formatDateLocal(endDate);
@@ -929,6 +931,7 @@ function fitbitMetrics() {
                     label: 'Resting HR',
                     color: '#ec4899',
                     yAxisLabel: 'BPM',
+                    yAxisMin: 40, // Start at 40 bpm instead of 0 for better visualization
                     formatter: (val) => Math.round(val) + ' bpm',
                     visible: this.visibleMetrics.resting_heart_rate
                 }
@@ -997,7 +1000,7 @@ function fitbitMetrics() {
                         }
                     },
                     yaxis: {
-                        min: 0,
+                        min: config.yAxisMin !== undefined ? config.yAxisMin : 0,
                         title: {
                             text: config.yAxisLabel,
                             style: {
@@ -1114,15 +1117,17 @@ function fitbitMetrics() {
             this.overviewLoading = true;
             try {
                 // Calculate date ranges
+                // Exclude today to avoid incomplete data affecting trends
                 const endDate = parseDateOnly(this.today);
+                endDate.setDate(endDate.getDate() - 1); // Use yesterday as end date
                 const startDate30 = parseDateOnly(this.today);
-                startDate30.setDate(startDate30.getDate() - 30);
+                startDate30.setDate(startDate30.getDate() - 31); // Adjust start to get 30 complete days
 
                 const startDateWeek = parseDateOnly(this.today);
-                startDateWeek.setDate(startDateWeek.getDate() - 7);
+                startDateWeek.setDate(startDateWeek.getDate() - 8); // Last 7 complete days (excluding today)
 
                 const startDatePrevWeek = parseDateOnly(this.today);
-                startDatePrevWeek.setDate(startDatePrevWeek.getDate() - 14);
+                startDatePrevWeek.setDate(startDatePrevWeek.getDate() - 15); // Previous 7 complete days
 
                 // Fetch 30-day data
                 const response30 = await fetchWithProfile(
@@ -1316,9 +1321,11 @@ function fitbitMetrics() {
             this.compareLoading = true;
             try {
                 // Fetch last 60 days for comparisons
+                // Exclude today to avoid incomplete data affecting trends
                 const endDate = parseDateOnly(this.today);
+                endDate.setDate(endDate.getDate() - 1); // Use yesterday as end date
                 const startDate = parseDateOnly(this.today);
-                startDate.setDate(startDate.getDate() - 60);
+                startDate.setDate(startDate.getDate() - 61); // Adjust to get 60 complete days
 
                 const response = await fetchWithProfile(
                     `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
@@ -1413,6 +1420,13 @@ function fitbitMetrics() {
                     }
                 },
                 yaxis: {
+                    title: {
+                        text: 'Average Steps',
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 500
+                        }
+                    },
                     labels: {
                         formatter: (val) => Math.round(val).toLocaleString()
                     }
@@ -1433,21 +1447,54 @@ function fitbitMetrics() {
 
             const steps = metricsData.steps || [];
 
-            // Group by week
+            // Get the start of the current week (Monday)
+            const today = new Date();
+            const currentDayOfWeek = today.getDay();
+            const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; // Sunday = 6, Monday = 0
+            const currentWeekStart = new Date(today);
+            currentWeekStart.setDate(today.getDate() - daysToMonday);
+            currentWeekStart.setHours(0, 0, 0, 0);
+
+            // Group by week start date (Monday)
             const weeklyData = {};
             steps.forEach(d => {
                 const date = new Date(d.date + 'T00:00:00');
-                const weekNum = this.getWeekNumber(date);
-                if (!weeklyData[weekNum]) {
-                    weeklyData[weekNum] = [];
+
+                // Calculate Monday of this date's week
+                const dayOfWeek = date.getDay();
+                const daysToMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - daysToMon);
+                weekStart.setHours(0, 0, 0, 0);
+
+                const weekKey = weekStart.toISOString().split('T')[0];
+
+                // Skip current week (incomplete data)
+                if (weekStart.getTime() === currentWeekStart.getTime()) {
+                    return;
                 }
-                weeklyData[weekNum].push(d.value);
+
+                if (!weeklyData[weekKey]) {
+                    weeklyData[weekKey] = {
+                        total: 0,
+                        count: 0,
+                        startDate: weekStart
+                    };
+                }
+                weeklyData[weekKey].total += d.value;
+                weeklyData[weekKey].count += 1;
             });
 
-            // Calculate weekly totals
-            const weeks = Object.keys(weeklyData).sort((a, b) => b - a).slice(0, 8).reverse();
-            const weeklyTotals = weeks.map(week => {
-                return weeklyData[week].reduce((sum, v) => sum + v, 0);
+            // Sort by week start date and get last 8 complete weeks
+            const weekKeys = Object.keys(weeklyData)
+                .sort((a, b) => new Date(b) - new Date(a))
+                .slice(0, 8)
+                .reverse();
+
+            const weeklyTotals = weekKeys.map(key => weeklyData[key].total);
+            const weekLabels = weekKeys.map(key => {
+                const date = new Date(key);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             });
 
             const options = {
@@ -1475,9 +1522,23 @@ function fitbitMetrics() {
                 },
                 colors: ['#3b82f6'],
                 xaxis: {
-                    categories: weeks.map(w => 'Week ' + w)
+                    categories: weekLabels,
+                    title: {
+                        text: 'Week Starting',
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 500
+                        }
+                    }
                 },
                 yaxis: {
+                    title: {
+                        text: 'Total Weekly Steps',
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 500
+                        }
+                    },
                     labels: {
                         formatter: (val) => Math.round(val).toLocaleString()
                     }
@@ -1550,10 +1611,19 @@ function fitbitMetrics() {
                 },
                 colors: ['#10b981'],
                 xaxis: {
-                    categories: months,
+                    title: {
+                        text: 'Average Daily Steps',
+                        style: {
+                            fontSize: '12px',
+                            fontWeight: 500
+                        }
+                    },
                     labels: {
                         formatter: (val) => Math.round(val).toLocaleString()
                     }
+                },
+                yaxis: {
+                    categories: months
                 }
             };
 
@@ -1565,9 +1635,11 @@ function fitbitMetrics() {
             this.insightsLoading = true;
             try {
                 // Fetch last 90 days for analysis
+                // Exclude today to avoid incomplete data affecting trends
                 const endDate = parseDateOnly(this.today);
+                endDate.setDate(endDate.getDate() - 1); // Use yesterday as end date
                 const startDate = parseDateOnly(this.today);
-                startDate.setDate(startDate.getDate() - 90);
+                startDate.setDate(startDate.getDate() - 91); // Adjust to get 90 complete days
 
                 const response = await fetchWithProfile(
                     `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`

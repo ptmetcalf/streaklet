@@ -40,6 +40,12 @@
             <span>Scheduled</span>
             <span class="badge-count" x-show="scheduledCount > 0" x-text="scheduledCount"></span>
         </button>
+        <button class="tab-button"
+                :class="{ 'active': activeTab === 'household' }"
+                @click="switchTab('household')">
+            <span>Household</span>
+            <span class="badge-count" x-show="householdCount > 0" x-text="householdCount"></span>
+        </button>
     </div>
 
     <!-- Daily Tasks Tab -->
@@ -168,6 +174,39 @@
         </div>
     </div>
 
+    <!-- Household Tasks Tab -->
+    <div x-show="activeTab === 'household'" class="tab-content">
+        <div x-show="householdTasks.length > 0" style="margin-bottom: 20px;">
+            <template x-for="task in householdTasks" :key="task.id">
+                <div class="household-task-item" :class="{ 'overdue': task.is_overdue }">
+                    <div class="task-info">
+                        <div class="task-title" x-text="task.title"></div>
+                        <div class="task-meta" style="display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap;">
+                            <span class="frequency-badge" :class="task.frequency" x-text="task.frequency"></span>
+                            <template x-if="task.last_completed_at">
+                                <span class="task-status" x-text="`Last: ${task.days_since_completion}d ago by ${task.last_completed_by_profile_name}`"></span>
+                            </template>
+                            <template x-if="!task.last_completed_at">
+                                <span class="task-status">Never completed</span>
+                            </template>
+                        </div>
+                    </div>
+                    <button
+                        @click="markHouseholdComplete(task)"
+                        :disabled="completingHouseholdId === task.id"
+                        class="btn-household-complete"
+                        :class="{ 'disabled': completingHouseholdId === task.id }">
+                        <span x-show="completingHouseholdId !== task.id">✓ Complete</span>
+                        <span x-show="completingHouseholdId === task.id">⏳</span>
+                    </button>
+                </div>
+            </template>
+        </div>
+        <div x-show="householdTasks.length === 0" class="empty-state">
+            <p>✨ All household tasks are up to date!</p>
+        </div>
+    </div>
+
     <div class="milestone-toast" x-show="showToast" x-text="toastMessage"></div>
 </div>
 
@@ -193,6 +232,10 @@ function checklist() {
         // Scheduled tasks state
         scheduledTasksDueToday: [],
 
+        // Household tasks state
+        householdTasks: [],
+        completingHouseholdId: null,
+
         // Tab state
         activeTab: 'daily',
 
@@ -205,6 +248,9 @@ function checklist() {
         },
         get scheduledCount() {
             return this.scheduledTasksDueToday.filter(t => !t.checked && t.is_required).length;
+        },
+        get householdCount() {
+            return this.householdTasks.length;
         },
         get activePunchListTasks() {
             return this.punchListTasks.filter(t => !t.completed_at);
@@ -268,10 +314,11 @@ function checklist() {
             await this.loadDailyTasks();
             await this.loadPunchListTasks();
             await this.loadScheduledTasks();
+            await this.loadHouseholdTasks();
 
             // Restore last active tab
             const lastTab = localStorage.getItem('streaklet_last_tab');
-            if (lastTab && ['daily', 'punch_list', 'scheduled'].includes(lastTab)) {
+            if (lastTab && ['daily', 'punch_list', 'scheduled', 'household'].includes(lastTab)) {
                 this.activeTab = lastTab;
             }
         },
@@ -307,6 +354,50 @@ function checklist() {
                 this.scheduledTasksDueToday = await response.json();
             } catch (error) {
                 console.error('Error loading scheduled tasks:', error);
+            }
+        },
+
+        async loadHouseholdTasks() {
+            try {
+                // NO fetchWithProfile - household tasks are shared
+                const response = await fetch('/api/household/tasks');
+                if (response.ok) {
+                    const tasks = await response.json();
+                    // Show only tasks that need attention (never completed OR overdue)
+                    this.householdTasks = tasks.filter(t =>
+                        !t.last_completed_at || t.is_overdue
+                    );
+                } else {
+                    console.error('Error loading household tasks:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error loading household tasks:', error);
+            }
+        },
+
+        async markHouseholdComplete(task) {
+            if (this.completingHouseholdId === task.id) {
+                return;
+            }
+
+            this.completingHouseholdId = task.id;
+            try {
+                const response = await fetchWithProfile(`/api/household/tasks/${task.id}/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    await this.loadHouseholdTasks();
+                } else {
+                    console.error('Error marking household task complete:', await response.text());
+                    alert('Failed to mark task complete');
+                }
+            } catch (error) {
+                console.error('Error marking household task complete:', error);
+                alert('Failed to mark task complete');
+            } finally {
+                this.completingHouseholdId = null;
             }
         },
 
@@ -631,6 +722,115 @@ function checklist() {
 .empty-state p {
     margin: 0;
     font-size: 14px;
+}
+
+/* Household Tasks */
+.household-task-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: white;
+    border: 2px solid #52c41a;
+    border-radius: 12px;
+    gap: 16px;
+}
+
+.household-task-item.overdue {
+    border-color: #ff4d4f;
+    background: #fff2f0;
+}
+
+.household-task-item .task-info {
+    flex: 1;
+}
+
+.household-task-item .task-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.household-task-item .task-meta {
+    font-size: 13px;
+    color: #666;
+}
+
+.household-task-item .frequency-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.household-task-item .frequency-badge.weekly {
+    background: #e6f7ff;
+    color: #1890ff;
+}
+
+.household-task-item .frequency-badge.monthly {
+    background: #f9f0ff;
+    color: #722ed1;
+}
+
+.household-task-item .frequency-badge.quarterly {
+    background: #fff7e6;
+    color: #fa8c16;
+}
+
+.household-task-item .frequency-badge.annual {
+    background: #fff1f0;
+    color: #f5222d;
+}
+
+.household-task-item .task-status {
+    color: #8c8c8c;
+    font-size: 12px;
+}
+
+.btn-household-complete {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #52c41a;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+
+.btn-household-complete:hover {
+    background: #45a617;
+}
+
+.btn-household-complete:disabled,
+.btn-household-complete.disabled {
+    background: #d9d9d9;
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.btn-household-complete:disabled:hover,
+.btn-household-complete.disabled:hover {
+    background: #d9d9d9;
+}
+
+@media (max-width: 480px) {
+    .household-task-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-household-complete {
+        width: 100%;
+    }
 }
 </style>
 {% endblock %}

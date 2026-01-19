@@ -948,9 +948,10 @@ button:active {
     }
 
     .calendar-day {
-        min-height: 56px; /* Better touch target */
-        font-size: 16px;
+        min-height: 48px; /* Reduce height to fit better on mobile */
+        font-size: 14px; /* Slightly smaller for mobile */
         overflow: visible !important; /* Ensure pseudo-elements show on mobile */
+        box-sizing: border-box; /* Include border in size calculation */
     }
 
     /* Make partial completion more visible on mobile */
@@ -1016,12 +1017,19 @@ button:active {
         font-size: 20px;
     }
 
+    .calendar-container {
+        padding: 12px; /* Reduce padding to prevent overflow on small screens */
+        box-sizing: border-box;
+        overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+
     .calendar-grid {
         gap: 4px;
+        box-sizing: border-box;
     }
 
     .day-number {
-        font-size: 12px;
+        font-size: 13px; /* Slightly larger for readability */
     }
 
     .calendar-header {
