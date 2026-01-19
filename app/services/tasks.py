@@ -89,7 +89,15 @@ def get_task_by_id(db: Session, task_id: int, profile_id: int) -> Optional[Task]
 
 def create_task(db: Session, task: TaskCreate, profile_id: int) -> Task:
     """Create a new task for a profile."""
-    db_task = Task(**task.model_dump(), user_id=profile_id)
+    from app.core.time import get_today
+
+    task_data = task.model_dump()
+
+    # Set active_since to today if not provided
+    if task_data.get('active_since') is None:
+        task_data['active_since'] = get_today()
+
+    db_task = Task(**task_data, user_id=profile_id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)

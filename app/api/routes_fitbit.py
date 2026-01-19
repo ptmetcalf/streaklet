@@ -14,7 +14,7 @@ from datetime import date
 from typing import Optional, List
 import secrets
 import re
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from app.core.db import get_db
 from app.core.profile_context import get_profile_id
@@ -34,17 +34,42 @@ from app.models.fitbit_metric import FitbitMetric
 router = APIRouter(prefix="/api/fitbit", tags=["fitbit"])
 _NOT_CONNECTED_DETAIL = "Not connected to Fitbit"
 
+# Hardcoded safe redirect path - never modified by user input
+_SETTINGS_REDIRECT_PATH = "/settings"
 
 # In-memory state storage (use Redis in production for multi-instance deployments)
 _oauth_states = {}
+
+
+def _is_safe_redirect_url(url: str) -> bool:
+    """
+    Validate that a URL is safe for redirect (relative path only, no external domains).
+
+    Args:
+        url: URL to validate
+
+    Returns:
+        True if URL is safe (relative path with no scheme/netloc), False otherwise
+    """
+    # Remove backslashes (some browsers treat them as forward slashes)
+    url = url.replace('\\', '')
+
+    parsed = urlparse(url)
+
+    # URL is safe if it has no scheme (http://, https://, etc.) and no netloc (domain)
+    # This ensures it's a relative path like "/settings?param=value"
+    return not parsed.scheme and not parsed.netloc
 
 
 def _safe_settings_redirect(fitbit_status: str, message: str = "") -> RedirectResponse:
     """
     Create a safe redirect to settings page with Fitbit status.
 
-    Prevents open redirect vulnerabilities by always redirecting to /settings
-    and sanitizing query parameters.
+    Prevents open redirect vulnerabilities by:
+    - Using a hardcoded, constant redirect path (no user input in path)
+    - Sanitizing and URL-encoding all query parameters
+    - Limiting message length and character set
+    - Validating final URL is a relative path (no external domain)
 
     Args:
         fitbit_status: Status to pass (e.g., "connected", "error")
@@ -52,12 +77,15 @@ def _safe_settings_redirect(fitbit_status: str, message: str = "") -> RedirectRe
 
     Returns:
         RedirectResponse to /settings with safe query parameters
-    """
-    # Always redirect to /settings (hardcoded safe path)
-    base_url = "/settings"
 
+    Raises:
+        ValueError: If constructed URL is not safe for redirect
+    """
     # URL-encode the status to prevent injection
     safe_status = quote(fitbit_status, safe="")
+
+    # Build query string safely
+    query_params = f"fitbit={safe_status}"
 
     if message:
         # Sanitize message: restrict to safe character set, limit length and URL-encode
@@ -66,9 +94,17 @@ def _safe_settings_redirect(fitbit_status: str, message: str = "") -> RedirectRe
         normalized_message = re.sub(r"[^a-zA-Z0-9 _\-.]", "", raw_message)
         trimmed_message = normalized_message[:200]
         safe_message = quote(trimmed_message, safe="")
-        return RedirectResponse(url=f"{base_url}?fitbit={safe_status}&message={safe_message}")
+        query_params = f"{query_params}&message={safe_message}"
 
-    return RedirectResponse(url=f"{base_url}?fitbit={safe_status}")
+    # Construct URL with hardcoded path constant
+    redirect_url = f"{_SETTINGS_REDIRECT_PATH}?{query_params}"
+
+    # Validate URL is safe before redirecting
+    if not _is_safe_redirect_url(redirect_url):
+        # This should never happen with our hardcoded path, but check anyway
+        raise ValueError(f"Unsafe redirect URL detected: {redirect_url}")
+
+    return RedirectResponse(url=redirect_url)
 
 
 @router.get("/connect", response_model=FitbitConnectResponse)

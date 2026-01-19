@@ -12,6 +12,9 @@ class TaskBase(BaseModel):
     # Task type
     task_type: Literal['daily', 'punch_list', 'scheduled'] = 'daily'
 
+    # Active since - only counts toward completion on dates >= this
+    active_since: Optional[date] = None
+
     # Punch list fields
     due_date: Optional[date] = None
 
@@ -68,6 +71,7 @@ class TaskUpdate(BaseModel):
     is_required: Optional[bool] = None
     is_active: Optional[bool] = None
     task_type: Optional[Literal['daily', 'punch_list', 'scheduled']] = None
+    active_since: Optional[date] = None
     due_date: Optional[date] = None
     recurrence_pattern: Optional[Dict[str, Any]] = None
     fitbit_metric_type: Optional[str] = None

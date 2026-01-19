@@ -122,6 +122,8 @@ def recompute_daily_completion(db: Session, check_date: date, profile_id: int) -
     - Daily tasks (always)
     - Scheduled tasks (if due on this date)
     Does NOT consider punch list tasks.
+
+    Also filters by active_since: only tasks with active_since <= check_date count.
     """
     # Get required tasks that count toward daily completion
     required_tasks = db.query(Task).filter(
@@ -129,6 +131,7 @@ def recompute_daily_completion(db: Session, check_date: date, profile_id: int) -
             Task.is_active == True,
             Task.is_required == True,
             Task.user_id == profile_id,
+            Task.active_since <= check_date,  # Only count tasks active on this date
             or_(
                 Task.task_type == 'daily',
                 and_(

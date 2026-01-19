@@ -16,6 +16,9 @@ class Task(Base):
     # Task type discriminator
     task_type = Column(String, nullable=False, default='daily', index=True)
 
+    # Active since date - only counts toward completion on dates >= this
+    active_since = Column(Date, nullable=False, server_default=func.current_date(), index=True)
+
     # Punch list fields
     due_date = Column(Date, nullable=True, index=True)
     completed_at = Column(DateTime, nullable=True)
