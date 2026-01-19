@@ -196,8 +196,8 @@ async def test_evaluate_and_apply_auto_checks_skips_disabled_tasks(test_db: Sess
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=False  # Disabled,
-    active_since=date(2025, 1, 1)
+        fitbit_auto_check=False,  # Disabled
+        active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()

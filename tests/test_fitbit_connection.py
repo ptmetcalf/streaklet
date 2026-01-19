@@ -1,6 +1,6 @@
 """Tests for Fitbit connection management service."""
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from sqlalchemy.orm import Session
 
 from app.services import fitbit_connection
