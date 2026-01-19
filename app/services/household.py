@@ -1,0 +1,333 @@
+"""
+Household Maintenance Service Layer
+
+CRITICAL ARCHITECTURE NOTE:
+Unlike other services, household tasks are SHARED across all profiles (no profile_id filtering).
+profile_id is ONLY used for completion attribution (tracking WHO completed a task).
+"""
+from typing import List, Optional, Dict
+from datetime import datetime, timedelta
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+
+from app.models.household_task import HouseholdTask
+from app.models.household_completion import HouseholdCompletion
+from app.models.profile import Profile
+from app.core.time import get_now
+
+
+# Frequency thresholds in days
+FREQUENCY_THRESHOLDS = {
+    'weekly': 7,
+    'monthly': 30,
+    'quarterly': 90,
+    'annual': 365
+}
+
+
+def get_all_household_tasks(db: Session, include_inactive: bool = False) -> List[HouseholdTask]:
+    """
+    Get all household tasks (SHARED - no profile filtering).
+
+    Args:
+        db: Database session
+        include_inactive: Whether to include inactive tasks
+
+    Returns:
+        List of all household tasks
+    """
+    query = db.query(HouseholdTask)
+    if not include_inactive:
+        query = query.filter(HouseholdTask.is_active == True)
+    return query.order_by(HouseholdTask.sort_order, HouseholdTask.id).all()
+
+
+def get_household_tasks_by_frequency(db: Session, frequency: str, include_inactive: bool = False) -> List[HouseholdTask]:
+    """
+    Get household tasks filtered by frequency.
+
+    Args:
+        db: Database session
+        frequency: One of 'weekly', 'monthly', 'quarterly', 'annual'
+        include_inactive: Whether to include inactive tasks
+
+    Returns:
+        List of household tasks with matching frequency
+    """
+    query = db.query(HouseholdTask).filter(HouseholdTask.frequency == frequency)
+    if not include_inactive:
+        query = query.filter(HouseholdTask.is_active == True)
+    return query.order_by(HouseholdTask.sort_order, HouseholdTask.id).all()
+
+
+def get_household_task_by_id(db: Session, task_id: int) -> Optional[HouseholdTask]:
+    """Get a single household task by ID."""
+    return db.query(HouseholdTask).filter(HouseholdTask.id == task_id).first()
+
+
+def create_household_task(db: Session, title: str, description: Optional[str], frequency: str, sort_order: int = 0) -> HouseholdTask:
+    """
+    Create a new household task (SHARED - no profile association).
+
+    Args:
+        db: Database session
+        title: Task title
+        description: Optional task description
+        frequency: One of 'weekly', 'monthly', 'quarterly', 'annual'
+        sort_order: Sort order for display
+
+    Returns:
+        Created HouseholdTask
+    """
+    task = HouseholdTask(
+        title=title,
+        description=description,
+        frequency=frequency,
+        sort_order=sort_order,
+        is_active=True
+    )
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def update_household_task(db: Session, task_id: int, title: Optional[str] = None,
+                         description: Optional[str] = None, frequency: Optional[str] = None,
+                         sort_order: Optional[int] = None, is_active: Optional[bool] = None) -> Optional[HouseholdTask]:
+    """
+    Update an existing household task.
+
+    Args:
+        db: Database session
+        task_id: Task ID to update
+        title: New title (if provided)
+        description: New description (if provided)
+        frequency: New frequency (if provided)
+        sort_order: New sort order (if provided)
+        is_active: New active status (if provided)
+
+    Returns:
+        Updated HouseholdTask or None if not found
+    """
+    task = get_household_task_by_id(db, task_id)
+    if not task:
+        return None
+
+    if title is not None:
+        task.title = title
+    if description is not None:
+        task.description = description
+    if frequency is not None:
+        task.frequency = frequency
+    if sort_order is not None:
+        task.sort_order = sort_order
+    if is_active is not None:
+        task.is_active = is_active
+
+    task.updated_at = get_now()
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+def delete_household_task(db: Session, task_id: int) -> bool:
+    """
+    Delete a household task (cascade deletes completions).
+
+    Args:
+        db: Database session
+        task_id: Task ID to delete
+
+    Returns:
+        True if deleted, False if not found
+    """
+    task = get_household_task_by_id(db, task_id)
+    if not task:
+        return False
+
+    db.delete(task)
+    db.commit()
+    return True
+
+
+def mark_task_complete(db: Session, task_id: int, profile_id: int, notes: Optional[str] = None) -> Optional[HouseholdCompletion]:
+    """
+    Mark a household task as completed by a specific profile.
+
+    Args:
+        db: Database session
+        task_id: Household task ID
+        profile_id: Profile ID of who completed the task (ATTRIBUTION ONLY)
+        notes: Optional completion notes
+
+    Returns:
+        Created HouseholdCompletion or None if task not found
+    """
+    task = get_household_task_by_id(db, task_id)
+    if not task:
+        return None
+
+    completion = HouseholdCompletion(
+        household_task_id=task_id,
+        completed_by_profile_id=profile_id,
+        completed_at=get_now(),
+        notes=notes
+    )
+    db.add(completion)
+    db.commit()
+    db.refresh(completion)
+    return completion
+
+
+def get_last_completion(db: Session, task_id: int) -> Optional[HouseholdCompletion]:
+    """
+    Get the most recent completion for a task.
+
+    Args:
+        db: Database session
+        task_id: Household task ID
+
+    Returns:
+        Most recent HouseholdCompletion or None
+    """
+    return (
+        db.query(HouseholdCompletion)
+        .filter(HouseholdCompletion.household_task_id == task_id)
+        .order_by(desc(HouseholdCompletion.completed_at))
+        .first()
+    )
+
+
+def get_completion_history(db: Session, task_id: int, limit: int = 10) -> List[Dict]:
+    """
+    Get completion history for a task with profile names.
+
+    Args:
+        db: Database session
+        task_id: Household task ID
+        limit: Maximum number of completions to return
+
+    Returns:
+        List of completion dicts with profile names
+    """
+    completions = (
+        db.query(HouseholdCompletion, Profile.name)
+        .join(Profile, HouseholdCompletion.completed_by_profile_id == Profile.id)
+        .filter(HouseholdCompletion.household_task_id == task_id)
+        .order_by(desc(HouseholdCompletion.completed_at))
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        {
+            'id': completion.id,
+            'household_task_id': completion.household_task_id,
+            'completed_at': completion.completed_at,
+            'completed_by_profile_id': completion.completed_by_profile_id,
+            'completed_by_profile_name': profile_name,
+            'notes': completion.notes
+        }
+        for completion, profile_name in completions
+    ]
+
+
+def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
+    """
+    Get a household task enriched with completion status.
+
+    Adds:
+    - last_completed_at: DateTime of last completion
+    - last_completed_by_profile_id: Profile ID of who last completed
+    - last_completed_by_profile_name: Name of who last completed
+    - days_since_completion: Days since last completion
+    - is_overdue: Whether task is overdue based on frequency
+
+    Returns:
+        Dict with task and status info, or None if not found
+    """
+    task = get_household_task_by_id(db, task_id)
+    if not task:
+        return None
+
+    last_completion = get_last_completion(db, task_id)
+
+    result = {
+        'id': task.id,
+        'title': task.title,
+        'description': task.description,
+        'frequency': task.frequency,
+        'sort_order': task.sort_order,
+        'is_active': task.is_active,
+        'created_at': task.created_at,
+        'updated_at': task.updated_at,
+        'last_completed_at': None,
+        'last_completed_by_profile_id': None,
+        'last_completed_by_profile_name': None,
+        'days_since_completion': None,
+        'is_overdue': False
+    }
+
+    if last_completion:
+        # Get profile name
+        profile = db.query(Profile).filter(Profile.id == last_completion.completed_by_profile_id).first()
+        profile_name = profile.name if profile else "Unknown"
+
+        # Handle timezone-aware vs naive datetime comparison
+        now = get_now()
+        completed_at = last_completion.completed_at
+
+        # If completed_at is naive, make it timezone-aware
+        if completed_at.tzinfo is None:
+            from datetime import timezone
+            completed_at = completed_at.replace(tzinfo=timezone.utc)
+
+        # If now is naive, make it timezone-aware
+        if now.tzinfo is None:
+            from datetime import timezone
+            now = now.replace(tzinfo=timezone.utc)
+
+        days_since = (now - completed_at).days
+
+        result.update({
+            'last_completed_at': last_completion.completed_at,
+            'last_completed_by_profile_id': last_completion.completed_by_profile_id,
+            'last_completed_by_profile_name': profile_name,
+            'days_since_completion': days_since,
+            'is_overdue': days_since > FREQUENCY_THRESHOLDS.get(task.frequency, 999999)
+        })
+
+    return result
+
+
+def get_all_tasks_with_status(db: Session, include_inactive: bool = False) -> List[Dict]:
+    """
+    Get all household tasks enriched with completion status.
+
+    Args:
+        db: Database session
+        include_inactive: Whether to include inactive tasks
+
+    Returns:
+        List of dicts with task and status info
+    """
+    tasks = get_all_household_tasks(db, include_inactive=include_inactive)
+    return [get_task_with_status(db, task.id) for task in tasks]
+
+
+def get_overdue_tasks(db: Session) -> List[Dict]:
+    """
+    Get all overdue household tasks.
+
+    A task is overdue if:
+    - It has been completed before AND
+    - Days since last completion > frequency threshold
+
+    Never-completed tasks are NOT considered overdue.
+
+    Returns:
+        List of overdue tasks with status info
+    """
+    all_tasks = get_all_tasks_with_status(db, include_inactive=False)
+    return [task for task in all_tasks if task['is_overdue']]

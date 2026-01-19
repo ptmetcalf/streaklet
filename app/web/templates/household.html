@@ -1,0 +1,619 @@
+{% extends "base.html" %}
+
+{% block title %}Streaklet - Household{% endblock %}
+
+{% block content %}
+<div class="container" x-data="householdMaintenance()" x-init="await loadTasks()">
+    <header class="page-header">
+        <h1>🏠 Household Maintenance</h1>
+        <p class="page-subtitle">Shared tasks for everyone in the household</p>
+    </header>
+
+    <!-- Overdue Tasks Section -->
+    <section x-show="overdueTasks.length > 0" class="household-section overdue-section">
+        <div class="section-header overdue-header">
+            <h2>⚠️ Overdue Tasks</h2>
+            <span class="task-count" x-text="overdueTasks.length"></span>
+        </div>
+        <div class="household-tasks">
+            <template x-for="task in overdueTasks" :key="task.id">
+                <div class="household-task-card overdue">
+                    <div class="task-main">
+                        <div class="task-info">
+                            <h3 x-text="task.title"></h3>
+                            <p class="task-description" x-show="task.description" x-text="task.description"></p>
+                            <div class="task-meta">
+                                <span class="frequency-badge" :class="task.frequency" x-text="formatFrequency(task.frequency)"></span>
+                                <span class="completion-info overdue-text">
+                                    <template x-if="task.last_completed_at">
+                                        <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button @click="showHistory(task)" class="btn btn-secondary">History</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Weekly Tasks -->
+    <section x-show="getTasksByFrequency('weekly').length > 0" class="household-section">
+        <div class="section-header">
+            <h2>📅 Weekly Tasks</h2>
+            <span class="task-count" x-text="getTasksByFrequency('weekly').length"></span>
+        </div>
+        <div class="household-tasks">
+            <template x-for="task in getTasksByFrequency('weekly')" :key="task.id">
+                <div class="household-task-card">
+                    <div class="task-main">
+                        <div class="task-info">
+                            <h3 x-text="task.title"></h3>
+                            <p class="task-description" x-show="task.description" x-text="task.description"></p>
+                            <div class="task-meta">
+                                <span class="frequency-badge weekly">Weekly</span>
+                                <span class="completion-info">
+                                    <template x-if="task.last_completed_at">
+                                        <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
+                                    </template>
+                                    <template x-if="!task.last_completed_at">
+                                        <span>❓ Never completed</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button @click="showHistory(task)" class="btn btn-secondary">History</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Monthly Tasks -->
+    <section x-show="getTasksByFrequency('monthly').length > 0" class="household-section">
+        <div class="section-header">
+            <h2>📆 Monthly Tasks</h2>
+            <span class="task-count" x-text="getTasksByFrequency('monthly').length"></span>
+        </div>
+        <div class="household-tasks">
+            <template x-for="task in getTasksByFrequency('monthly')" :key="task.id">
+                <div class="household-task-card">
+                    <div class="task-main">
+                        <div class="task-info">
+                            <h3 x-text="task.title"></h3>
+                            <p class="task-description" x-show="task.description" x-text="task.description"></p>
+                            <div class="task-meta">
+                                <span class="frequency-badge monthly">Monthly</span>
+                                <span class="completion-info">
+                                    <template x-if="task.last_completed_at">
+                                        <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
+                                    </template>
+                                    <template x-if="!task.last_completed_at">
+                                        <span>❓ Never completed</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button @click="showHistory(task)" class="btn btn-secondary">History</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Quarterly Tasks -->
+    <section x-show="getTasksByFrequency('quarterly').length > 0" class="household-section">
+        <div class="section-header">
+            <h2>🗓️ Quarterly Tasks</h2>
+            <span class="task-count" x-text="getTasksByFrequency('quarterly').length"></span>
+        </div>
+        <div class="household-tasks">
+            <template x-for="task in getTasksByFrequency('quarterly')" :key="task.id">
+                <div class="household-task-card">
+                    <div class="task-main">
+                        <div class="task-info">
+                            <h3 x-text="task.title"></h3>
+                            <p class="task-description" x-show="task.description" x-text="task.description"></p>
+                            <div class="task-meta">
+                                <span class="frequency-badge quarterly">Quarterly</span>
+                                <span class="completion-info">
+                                    <template x-if="task.last_completed_at">
+                                        <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
+                                    </template>
+                                    <template x-if="!task.last_completed_at">
+                                        <span>❓ Never completed</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button @click="showHistory(task)" class="btn btn-secondary">History</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Annual Tasks -->
+    <section x-show="getTasksByFrequency('annual').length > 0" class="household-section">
+        <div class="section-header">
+            <h2>📅 Annual Tasks</h2>
+            <span class="task-count" x-text="getTasksByFrequency('annual').length"></span>
+        </div>
+        <div class="household-tasks">
+            <template x-for="task in getTasksByFrequency('annual')" :key="task.id">
+                <div class="household-task-card">
+                    <div class="task-main">
+                        <div class="task-info">
+                            <h3 x-text="task.title"></h3>
+                            <p class="task-description" x-show="task.description" x-text="task.description"></p>
+                            <div class="task-meta">
+                                <span class="frequency-badge annual">Annual</span>
+                                <span class="completion-info">
+                                    <template x-if="task.last_completed_at">
+                                        <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
+                                    </template>
+                                    <template x-if="!task.last_completed_at">
+                                        <span>❓ Never completed</span>
+                                    </template>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button @click="markComplete(task)" class="btn btn-complete">✓ Mark Complete</button>
+                            <button @click="showHistory(task)" class="btn btn-secondary">History</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- Empty State -->
+    <div x-show="allTasks.length === 0 && !loading" class="empty-state">
+        <p>No household tasks yet. Add tasks from Settings.</p>
+    </div>
+
+    <!-- Loading State -->
+    <div x-show="loading" class="empty-state">
+        <p>Loading household tasks...</p>
+    </div>
+
+    <!-- History Modal -->
+    <div x-show="historyModal.show" class="modal-overlay" @click.self="closeHistory()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 Completion History</h2>
+                <button @click="closeHistory()" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <h3 x-text="historyModal.task?.title"></h3>
+                <p class="task-description" x-show="historyModal.task?.description" x-text="historyModal.task?.description"></p>
+
+                <div x-show="historyModal.history.length === 0" class="empty-state">
+                    No completion history yet.
+                </div>
+
+                <div x-show="historyModal.history.length > 0" class="history-list">
+                    <template x-for="completion in historyModal.history" :key="completion.id">
+                        <div class="history-item">
+                            <div class="history-date" x-text="formatDate(completion.completed_at)"></div>
+                            <div class="history-profile" x-text="`by ${completion.completed_by_profile_name}`"></div>
+                            <div x-show="completion.notes" class="history-notes" x-text="completion.notes"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function householdMaintenance() {
+    return {
+        allTasks: [],
+        overdueTasks: [],
+        loading: true,
+        historyModal: {
+            show: false,
+            task: null,
+            history: []
+        },
+
+        async loadTasks() {
+            this.loading = true;
+            try {
+                // NO fetchWithProfile - household tasks are shared!
+                const response = await fetch('/api/household/tasks');
+                if (response.ok) {
+                    const tasks = await response.json();
+                    this.allTasks = tasks.filter(t => !t.is_overdue);
+                    this.overdueTasks = tasks.filter(t => t.is_overdue);
+                } else {
+                    console.error('Error loading household tasks:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error loading household tasks:', error);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        getTasksByFrequency(frequency) {
+            return this.allTasks.filter(t => t.frequency === frequency);
+        },
+
+        formatFrequency(frequency) {
+            return frequency.charAt(0).toUpperCase() + frequency.slice(1);
+        },
+
+        async markComplete(task) {
+            try {
+                // USE fetchWithProfile for completion (attribution)
+                const response = await fetchWithProfile(`/api/household/tasks/${task.id}/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    await this.loadTasks();
+                } else {
+                    console.error('Error marking task complete:', await response.text());
+                    alert('Failed to mark task complete');
+                }
+            } catch (error) {
+                console.error('Error marking task complete:', error);
+                alert('Failed to mark task complete');
+            }
+        },
+
+        async showHistory(task) {
+            this.historyModal.task = task;
+            this.historyModal.show = true;
+            this.historyModal.history = [];
+
+            try {
+                const response = await fetch(`/api/household/tasks/${task.id}/history`);
+                if (response.ok) {
+                    this.historyModal.history = await response.json();
+                } else {
+                    console.error('Error loading history:', await response.text());
+                }
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        },
+
+        closeHistory() {
+            this.historyModal.show = false;
+            this.historyModal.task = null;
+            this.historyModal.history = [];
+        },
+
+        formatDate(dateStr) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        }
+    }
+}
+</script>
+
+<style>
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.household-section {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.section-header h2 {
+    font-size: 20px;
+    margin: 0;
+}
+
+.task-count {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.overdue-section {
+    background: #fff5f5;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid #ff4d4f;
+}
+
+.overdue-header {
+    border-bottom-color: #ff4d4f;
+}
+
+.overdue-header .task-count {
+    background: #ff4d4f;
+}
+
+.household-tasks {
+    display: grid;
+    gap: 15px;
+}
+
+.household-task-card {
+    background: white;
+    border: 2px solid #52c41a;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s;
+}
+
+.household-task-card.overdue {
+    border-color: #ff4d4f;
+    background: #fffbfb;
+}
+
+.household-task-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.task-main {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.task-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.task-description {
+    color: #666;
+    font-size: 14px;
+    margin: 0 0 12px 0;
+}
+
+.task-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.frequency-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.frequency-badge.weekly {
+    background: #e6f7ff;
+    color: #0066cc;
+}
+
+.frequency-badge.monthly {
+    background: #f0f5ff;
+    color: #5b21b6;
+}
+
+.frequency-badge.quarterly {
+    background: #fff7e6;
+    color: #d46b08;
+}
+
+.frequency-badge.annual {
+    background: #fcffe6;
+    color: #7cb305;
+}
+
+.completion-info {
+    font-size: 13px;
+    color: #666;
+}
+
+.overdue-text {
+    color: #ff4d4f;
+    font-weight: 600;
+}
+
+.task-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-complete {
+    background: #52c41a;
+    color: white;
+    flex: 1;
+}
+
+.btn-complete:hover {
+    background: #45a617;
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #999;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.btn-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.modal-body h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.history-list {
+    margin-top: 20px;
+}
+
+.history-item {
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.history-date {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.history-profile {
+    color: #666;
+    font-size: 14px;
+}
+
+.history-notes {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e0e0e0;
+    font-size: 13px;
+    color: #666;
+    font-style: italic;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .task-main {
+        gap: 12px;
+    }
+
+    .task-actions {
+        flex-direction: column;
+    }
+
+    .btn-complete {
+        flex: none;
+    }
+
+    .modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+}
+</style>
+{% endblock %}

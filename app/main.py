@@ -8,7 +8,7 @@ import os
 import logging
 
 from app.core.db import engine, get_db, Base
-from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit, routes_punch_list, routes_scheduled
+from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit, routes_punch_list, routes_scheduled, routes_household
 from app.services import tasks as task_service, history as history_service, profiles as profile_service
 
 
@@ -56,6 +56,7 @@ app.include_router(routes_profiles.router)
 app.include_router(routes_fitbit.router)
 app.include_router(routes_punch_list.router)
 app.include_router(routes_scheduled.router)
+app.include_router(routes_household.router)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -78,6 +79,14 @@ async def settings(request: Request):
 async def fitbit(request: Request):
     """Fitbit metrics viewing page."""
     return templates.TemplateResponse("fitbit.html", {
+        "request": request
+    })
+
+
+@app.get("/household", response_class=HTMLResponse)
+async def household(request: Request):
+    """Household maintenance tracker page."""
+    return templates.TemplateResponse("household.html", {
         "request": request
     })
 

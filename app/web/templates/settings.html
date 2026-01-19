@@ -539,6 +539,90 @@
         </div>
     </div>
 
+    <!-- Household Maintenance Section -->
+    <div class="settings-section" style="margin-top: 32px;">
+        <h2>🏠 Household Maintenance Tasks</h2>
+        <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
+            Manage shared household maintenance tasks. These tasks are visible to all profiles.
+        </p>
+
+        <!-- Household Task List -->
+        <div x-show="!showAddHouseholdForm && !editingHouseholdTask">
+            <template x-for="task in householdTasks" :key="task.id">
+                <div class="task-list-item" style="border-left: 3px solid #52c41a;">
+                    <div class="task-info">
+                        <div style="font-weight: 600;" x-text="task.title"></div>
+                        <div x-show="task.description" style="font-size: 13px; color: #666; margin-top: 4px;" x-text="task.description"></div>
+                        <div style="font-size: 12px; color: #999; margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span class="frequency-badge"
+                                  :class="task.frequency"
+                                  x-text="task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1)"></span>
+                            <span>•</span>
+                            <span x-show="task.is_active">Active</span>
+                            <span x-show="!task.is_active" style="color: #ff4d4f;">Inactive</span>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-secondary" @click="editHouseholdTask(task)">Edit</button>
+                        <button class="btn-danger" @click="deleteHouseholdTask(task)">Delete</button>
+                    </div>
+                </div>
+            </template>
+
+            <div x-show="householdTasks.length === 0" style="padding: 32px; text-align: center; color: #999; border: 1px solid var(--border-color); border-radius: 4px;">
+                No household tasks yet. Add one to get started!
+            </div>
+
+            <button class="btn-primary" @click="showAddHouseholdForm = true" style="margin-top: 16px; width: 100%;">
+                Add Household Task
+            </button>
+        </div>
+
+        <!-- Add/Edit Household Task Form -->
+        <div x-show="showAddHouseholdForm || editingHouseholdTask" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <h3 style="margin-bottom: 16px;" x-text="editingHouseholdTask ? 'Edit Household Task' : 'Add Household Task'"></h3>
+
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" x-model="householdForm.title" placeholder="e.g., Clean gutters">
+            </div>
+
+            <div class="form-group">
+                <label>Description (optional)</label>
+                <textarea x-model="householdForm.description" rows="2" placeholder="Additional details about this task"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Frequency</label>
+                <select x-model="householdForm.frequency">
+                    <option value="weekly">Weekly (every 7 days)</option>
+                    <option value="monthly">Monthly (every 30 days)</option>
+                    <option value="quarterly">Quarterly (every 90 days)</option>
+                    <option value="annual">Annual (every 365 days)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Sort Order</label>
+                <input type="number" x-model.number="householdForm.sort_order" placeholder="0">
+            </div>
+
+            <div class="form-group" x-show="editingHouseholdTask">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" x-model="householdForm.is_active">
+                    <span>Active</span>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button class="btn-secondary" @click="cancelHouseholdForm()">Cancel</button>
+                <button class="btn-primary" @click="saveHouseholdTask()">
+                    <span x-text="editingHouseholdTask ? 'Update' : 'Add'"></span> Task
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div x-show="deleteConfirm.show"
          x-cloak
@@ -604,6 +688,36 @@
     border-radius: 4px;
     text-align: center;
     background: var(--background-color);
+}
+
+/* Household task frequency badges */
+.frequency-badge {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+    display: inline-block;
+}
+
+.frequency-badge.weekly {
+    background: #e6f7ff;
+    color: #0066cc;
+}
+
+.frequency-badge.monthly {
+    background: #f0f5ff;
+    color: #5b21b6;
+}
+
+.frequency-badge.quarterly {
+    background: #fff7e6;
+    color: #d46b08;
+}
+
+.frequency-badge.annual {
+    background: #fcffe6;
+    color: #7cb305;
 }
 </style>
 
@@ -683,6 +797,18 @@ function settings() {
         alertMessage: '',
         confettiEnabled: true,
 
+        // Household task state
+        householdTasks: [],
+        showAddHouseholdForm: false,
+        editingHouseholdTask: null,
+        householdForm: {
+            title: '',
+            description: '',
+            frequency: 'monthly',
+            sort_order: 0,
+            is_active: true
+        },
+
         // Computed property: filtered tasks
         get filteredTasks() {
             let filtered = this.tasks.filter(task => {
@@ -721,6 +847,7 @@ function settings() {
             this.confettiEnabled = savedPref === null ? true : savedPref === 'true';
 
             await this.loadTasks();
+            await this.loadHouseholdTasks();
             await this.loadFitbitStatus();
             await this.loadFitbitPreferences();
 
@@ -1231,6 +1358,107 @@ function settings() {
 
         saveConfettiPreference() {
             localStorage.setItem('streaklet_confetti_enabled', this.confettiEnabled);
+        },
+
+        // Household task methods
+        async loadHouseholdTasks() {
+            try {
+                // NO fetchWithProfile - household tasks are shared
+                const response = await fetch('/api/household/tasks?include_inactive=true');
+                if (response.ok) {
+                    this.householdTasks = await response.json();
+                }
+            } catch (error) {
+                console.error('Error loading household tasks:', error);
+            }
+        },
+
+        resetHouseholdForm() {
+            this.householdForm = {
+                title: '',
+                description: '',
+                frequency: 'monthly',
+                sort_order: this.householdTasks.length + 1,
+                is_active: true
+            };
+        },
+
+        editHouseholdTask(task) {
+            this.editingHouseholdTask = task;
+            this.householdForm = {
+                title: task.title,
+                description: task.description || '',
+                frequency: task.frequency,
+                sort_order: task.sort_order,
+                is_active: task.is_active
+            };
+            this.showAddHouseholdForm = false;
+        },
+
+        cancelHouseholdForm() {
+            this.showAddHouseholdForm = false;
+            this.editingHouseholdTask = null;
+            this.resetHouseholdForm();
+        },
+
+        async saveHouseholdTask() {
+            if (!this.householdForm.title.trim()) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            try {
+                if (this.editingHouseholdTask) {
+                    // Update existing task
+                    const response = await fetch(`/api/household/tasks/${this.editingHouseholdTask.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.householdForm)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to update task');
+                    }
+                } else {
+                    // Create new task
+                    const response = await fetch('/api/household/tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.householdForm)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to create task');
+                    }
+                }
+
+                await this.loadHouseholdTasks();
+                this.cancelHouseholdForm();
+            } catch (error) {
+                console.error('Error saving household task:', error);
+                alert('Failed to save task. Please try again.');
+            }
+        },
+
+        async deleteHouseholdTask(task) {
+            if (!confirm(`Delete "${task.title}"? This will also delete all completion history.`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/household/tasks/${task.id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete task');
+                }
+
+                await this.loadHouseholdTasks();
+            } catch (error) {
+                console.error('Error deleting household task:', error);
+                alert('Failed to delete task. Please try again.');
+            }
         }
     }
 }
