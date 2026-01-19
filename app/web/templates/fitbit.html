@@ -121,7 +121,7 @@
         <!-- Metrics Display -->
         <div x-show="!loading && Object.keys(metrics).length > 0">
             <!-- Summary Cards -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+            <div class="daily-metrics-grid">
                 <!-- Steps -->
                 <div x-show="metrics.steps && visibleMetrics.steps" class="metric-card-large">
                     <div class="metric-icon">👟</div>
@@ -507,6 +507,21 @@
     }
 }
 
+.daily-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+@media (max-width: 768px) {
+    .daily-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+}
+
 .metric-card-large {
     padding: 24px;
     border: 1px solid var(--border-color);
@@ -515,9 +530,22 @@
     background: var(--background-color);
 }
 
+@media (max-width: 768px) {
+    .metric-card-large {
+        padding: 16px 12px;
+    }
+}
+
 .metric-icon {
     font-size: 48px;
     margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+    .metric-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+    }
 }
 
 .metric-value {
@@ -526,11 +554,25 @@
     margin-bottom: 8px;
 }
 
+@media (max-width: 768px) {
+    .metric-value {
+        font-size: 24px;
+        margin-bottom: 4px;
+    }
+}
+
 .metric-label {
     font-size: 14px;
     color: #666;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+    .metric-label {
+        font-size: 11px;
+        letter-spacing: 0.3px;
+    }
 }
 
 .tab-button {
