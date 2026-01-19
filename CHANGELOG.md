@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/ptmetcalf/streaklet/compare/v0.7.0...v1.0.0) (2026-01-19)
+
+
+### ⚠ BREAKING CHANGES
+
+* Calendar/heatmap tab removed from Fitbit page. Users relying on 365-day heatmap view should use Trends or Compare tabs instead.
+
+### Features
+
+* Enhance history page tooltips with completion metrics and visual improvements ([d647afa](https://github.com/ptmetcalf/streaklet/commit/d647afabeaadacaf0ae39340be55fee2ab8da95f))
+* major Fitbit enhancements and UI improvements ([0cc84ef](https://github.com/ptmetcalf/streaklet/commit/0cc84ef29797c664f670bc5e079694509332a92e))
+
 ## [0.7.0](https://github.com/ptmetcalf/streaklet/compare/v0.6.0...v0.7.0) (2026-01-11)
 
 
