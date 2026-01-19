@@ -50,7 +50,8 @@ async def test_evaluate_and_apply_auto_checks_goal_met(test_db: Session, sample_
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=True
+        fitbit_auto_check=True,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
@@ -97,7 +98,8 @@ async def test_evaluate_and_apply_auto_checks_goal_not_met(test_db: Session, sam
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=True
+        fitbit_auto_check=True,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
@@ -144,7 +146,8 @@ async def test_evaluate_and_apply_auto_checks_unchecks_when_goal_lost(test_db: S
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=True
+        fitbit_auto_check=True,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
@@ -193,7 +196,8 @@ async def test_evaluate_and_apply_auto_checks_skips_disabled_tasks(test_db: Sess
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=False  # Disabled
+        fitbit_auto_check=False  # Disabled,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
@@ -231,7 +235,8 @@ async def test_evaluate_and_apply_auto_checks_no_metric_data(test_db: Session, s
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=True
+        fitbit_auto_check=True,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
@@ -260,7 +265,8 @@ async def test_get_task_fitbit_progress(test_db: Session, sample_profiles):
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=True
+        fitbit_auto_check=True,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
@@ -298,7 +304,8 @@ async def test_get_task_fitbit_progress_goal_met(test_db: Session, sample_profil
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=False
+        fitbit_auto_check=False,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
@@ -333,7 +340,8 @@ async def test_get_task_fitbit_progress_no_data(test_db: Session, sample_profile
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=False
+        fitbit_auto_check=False,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()

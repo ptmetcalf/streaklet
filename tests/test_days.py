@@ -124,7 +124,8 @@ def test_get_today_info_different_profile(client: TestClient, test_db: Session, 
         title="Profile 2 Task",
         sort_order=1,
         is_required=True,
-        is_active=True
+        is_active=True,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()

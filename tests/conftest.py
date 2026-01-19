@@ -94,11 +94,15 @@ def sample_profiles(test_db: Session):
 def sample_tasks(test_db: Session, sample_profiles):
     """Create sample tasks for testing (for profile 1)."""
     from app.models.task import Task
+    from datetime import date
+
+    # Set active_since to a date in the past to ensure tasks count toward completion
+    past_date = date(2025, 1, 1)
 
     tasks = [
-        Task(id=1, user_id=1, title="Task 1", sort_order=1, is_required=True, is_active=True),
-        Task(id=2, user_id=1, title="Task 2", sort_order=2, is_required=True, is_active=True),
-        Task(id=3, user_id=1, title="Task 3", sort_order=3, is_required=False, is_active=True),
+        Task(id=1, user_id=1, title="Task 1", sort_order=1, is_required=True, is_active=True, active_since=past_date),
+        Task(id=2, user_id=1, title="Task 2", sort_order=2, is_required=True, is_active=True, active_since=past_date),
+        Task(id=3, user_id=1, title="Task 3", sort_order=3, is_required=False, is_active=True, active_since=past_date),
     ]
 
     for task in tasks:

@@ -195,13 +195,15 @@ def test_task_streak_profile_isolation(test_db: Session, sample_profiles, sample
         check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
 
     # Create a task for profile 2
+    past_date = date(2025, 1, 1)
     task_p2 = Task(
         id=10,
         user_id=2,
         title="Profile 2 Task",
         sort_order=1,
         is_required=True,
-        is_active=True
+        is_active=True,
+        active_since=past_date
     )
     test_db.add(task_p2)
     test_db.commit()

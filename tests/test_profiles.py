@@ -105,13 +105,16 @@ def test_profile_data_isolation(test_db: Session, sample_profiles):
     """Test that profiles have isolated data."""
     from app.models.task import Task
     from app.services import tasks as task_service
+    from datetime import date
+
+    past_date = date(2025, 1, 1)
 
     # Create tasks for profile 1
-    task1 = Task(user_id=1, title="Profile 1 Task", sort_order=1, is_required=True, is_active=True)
+    task1 = Task(user_id=1, title="Profile 1 Task", sort_order=1, is_required=True, is_active=True, active_since=past_date)
     test_db.add(task1)
 
     # Create tasks for profile 2
-    task2 = Task(user_id=2, title="Profile 2 Task", sort_order=1, is_required=True, is_active=True)
+    task2 = Task(user_id=2, title="Profile 2 Task", sort_order=1, is_required=True, is_active=True, active_since=past_date)
     test_db.add(task2)
     test_db.commit()
 

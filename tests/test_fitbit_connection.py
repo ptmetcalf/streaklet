@@ -165,7 +165,8 @@ async def test_delete_connection_resets_task_auto_check(test_db: Session, sample
         fitbit_metric_type="steps",
         fitbit_goal_value=10000,
         fitbit_goal_operator="gte",
-        fitbit_auto_check=True
+        fitbit_auto_check=True,
+    active_since=date(2025, 1, 1)
     )
     test_db.add(task)
     test_db.commit()
