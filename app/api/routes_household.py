@@ -99,6 +99,7 @@ def create_household_task(
         description=task_data.description,
         frequency=task_data.frequency,
         due_date=task_data.due_date,
+        icon=task_data.icon,
         sort_order=task_data.sort_order
     )
     return task
@@ -127,6 +128,7 @@ def update_household_task(
         description=task_data.description,
         frequency=task_data.frequency,
         due_date=task_data.due_date,
+        icon=task_data.icon,
         sort_order=task_data.sort_order,
         is_active=task_data.is_active
     )

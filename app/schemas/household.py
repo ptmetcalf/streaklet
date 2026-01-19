@@ -14,6 +14,7 @@ class HouseholdTaskBase(BaseModel):
     description: Optional[str] = None
     frequency: Literal['weekly', 'monthly', 'quarterly', 'annual', 'todo']
     due_date: Optional[date] = None  # Optional due date for to-do items
+    icon: Optional[str] = None  # Material Design Icon name
     sort_order: int = 0
 
 
@@ -28,6 +29,7 @@ class HouseholdTaskUpdate(BaseModel):
     description: Optional[str] = None
     frequency: Optional[Literal['weekly', 'monthly', 'quarterly', 'annual', 'todo']] = None
     due_date: Optional[date] = None
+    icon: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
 

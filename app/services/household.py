@@ -24,6 +24,107 @@ FREQUENCY_THRESHOLDS = {
     'annual': 365
 }
 
+# Default icon mappings based on task keywords
+DEFAULT_ICONS = {
+    # Cleaning
+    'clean': 'spray-bottle',
+    'vacuum': 'robot-vacuum',
+    'mop': 'water',
+    'dust': 'weather-dust',
+    'sweep': 'broom',
+    'scrub': 'dishwasher',
+    'wipe': 'paper-roll',
+
+    # Bathroom
+    'toilet': 'toilet',
+    'bathroom': 'shower',
+    'shower': 'shower',
+    'bath': 'bathtub',
+
+    # Kitchen
+    'kitchen': 'silverware-fork-knife',
+    'dish': 'dishwasher',
+    'oven': 'stove',
+    'microwave': 'microwave',
+    'refrigerator': 'fridge',
+    'fridge': 'fridge',
+
+    # Laundry
+    'laundry': 'washing-machine',
+    'wash': 'tshirt-crew',
+    'dry': 'tumble-dryer',
+    'iron': 'iron',
+
+    # Outdoor/Garden
+    'lawn': 'grass',
+    'mow': 'lawnmower',
+    'garden': 'flower',
+    'plant': 'sprout',
+    'leaf': 'leaf',
+    'leaves': 'leaf',
+    'yard': 'tree',
+    'gutter': 'home-roof',
+
+    # Maintenance
+    'fix': 'wrench',
+    'repair': 'tools',
+    'replace': 'swap-horizontal',
+    'filter': 'air-filter',
+    'hvac': 'air-conditioner',
+    'air': 'air-conditioner',
+    'check': 'clipboard-check',
+    'inspect': 'magnify',
+    'test': 'test-tube',
+
+    # Trash/Recycling
+    'trash': 'delete',
+    'garbage': 'delete',
+    'recycle': 'recycle',
+    'compost': 'sprout',
+
+    # Pets
+    'pet': 'paw',
+    'dog': 'dog',
+    'cat': 'cat',
+    'feed': 'bowl-mix',
+
+    # Vehicles
+    'car': 'car',
+    'vehicle': 'car-wash',
+    'oil': 'oil',
+
+    # Windows/Doors
+    'window': 'window-closed',
+    'door': 'door',
+    'lock': 'lock',
+
+    # General
+    'water': 'water',
+    'paint': 'format-paint',
+    'organize': 'folder-multiple',
+}
+
+
+def get_default_icon(title: str) -> str:
+    """
+    Get a sensible default icon based on task title keywords.
+
+    Args:
+        title: Task title to analyze
+
+    Returns:
+        Material Design Icon name (default: 'checkbox-marked-circle')
+    """
+    title_lower = title.lower()
+
+    # Check for keyword matches
+    for keyword, icon in DEFAULT_ICONS.items():
+        if keyword in title_lower:
+            return icon
+
+    # Default fallback icon
+    return 'checkbox-marked-circle'
+
 
 def get_all_household_tasks(db: Session, include_inactive: bool = False) -> List[HouseholdTask]:
     """
@@ -66,7 +167,8 @@ def get_household_task_by_id(db: Session, task_id: int) -> Optional[HouseholdTas
 
 
 def create_household_task(db: Session, title: str, description: Optional[str], frequency: str,
-                         due_date: Optional[date] = None, sort_order: int = 0) -> HouseholdTask:
+                         due_date: Optional[date] = None, icon: Optional[str] = None,
+                         sort_order: int = 0) -> HouseholdTask:
     """
     Create a new household task (SHARED - no profile association).
 
@@ -76,16 +178,22 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         description: Optional task description
         frequency: One of 'weekly', 'monthly', 'quarterly', 'annual', 'todo'
         due_date: Optional due date (primarily for to-do items)
+        icon: Optional Material Design Icon name (auto-assigned if None)
         sort_order: Sort order for display
 
     Returns:
         Created HouseholdTask
     """
+    # Auto-assign icon if not provided
+    if icon is None:
+        icon = get_default_icon(title)
+
     task = HouseholdTask(
         title=title,
         description=description,
         frequency=frequency,
         due_date=due_date,
+        icon=icon,
         sort_order=sort_order,
         is_active=True
     )
@@ -97,8 +205,8 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
 
 def update_household_task(db: Session, task_id: int, title: Optional[str] = None,
                          description: Optional[str] = None, frequency: Optional[str] = None,
-                         due_date: Optional[date] = None, sort_order: Optional[int] = None,
-                         is_active: Optional[bool] = None) -> Optional[HouseholdTask]:
+                         due_date: Optional[date] = None, icon: Optional[str] = None,
+                         sort_order: Optional[int] = None, is_active: Optional[bool] = None) -> Optional[HouseholdTask]:
     """
     Update an existing household task.
 
@@ -109,6 +217,7 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         description: New description (if provided)
         frequency: New frequency (if provided)
         due_date: New due date (if provided)
+        icon: New icon (if provided)
         sort_order: New sort order (if provided)
         is_active: New active status (if provided)
 
@@ -127,6 +236,8 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         task.frequency = frequency
     if due_date is not None:
         task.due_date = due_date
+    if icon is not None:
+        task.icon = icon
     if sort_order is not None:
         task.sort_order = sort_order
     if is_active is not None:

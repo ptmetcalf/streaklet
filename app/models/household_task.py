@@ -23,6 +23,7 @@ class HouseholdTask(Base):
         index=True
     )
     due_date = Column(Date, nullable=True)  # Optional due date for to-do items
+    icon = Column(String, nullable=True)  # Material Design Icon name (e.g., 'broom', 'leaf')
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())
