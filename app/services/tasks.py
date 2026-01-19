@@ -11,6 +11,7 @@ DEFAULT_TASKS = [
         "sort_order": 1,
         "is_required": True,
         "is_active": True,
+        "task_type": "daily",
         "fitbit_metric_type": "steps",
         "fitbit_goal_value": 10000,
         "fitbit_goal_operator": "gte",
@@ -21,6 +22,7 @@ DEFAULT_TASKS = [
         "sort_order": 2,
         "is_required": True,
         "is_active": True,
+        "task_type": "daily",
         "fitbit_metric_type": "sleep_minutes",
         "fitbit_goal_value": 420,
         "fitbit_goal_operator": "gte",
@@ -31,6 +33,7 @@ DEFAULT_TASKS = [
         "sort_order": 3,
         "is_required": True,
         "is_active": True,
+        "task_type": "daily",
         "fitbit_metric_type": "active_minutes",
         "fitbit_goal_value": 30,
         "fitbit_goal_operator": "gte",
@@ -40,13 +43,15 @@ DEFAULT_TASKS = [
         "title": "Read 10 pages",
         "sort_order": 4,
         "is_required": True,
-        "is_active": True
+        "is_active": True,
+        "task_type": "daily"
     },
     {
         "title": "20 minutes of hobby time",
         "sort_order": 5,
         "is_required": True,
-        "is_active": True
+        "is_active": True,
+        "task_type": "daily"
     },
 ]
 

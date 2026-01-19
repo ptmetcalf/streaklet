@@ -317,6 +317,322 @@ async def fetch_active_zone_minutes(
         return {}
 
 
+async def fetch_hrv_summary(
+    db: Session,
+    connection: FitbitConnection,
+    target_date: date
+) -> Dict[str, float]:
+    """
+    Fetch Heart Rate Variability (HRV) for a specific date.
+
+    HRV measures variation in time between heartbeats and is an indicator
+    of stress, recovery, and overall cardiovascular health.
+
+    Returns metrics:
+    - hrv_rmssd: Root Mean Square of Successive Differences (primary HRV metric)
+    - hrv_deep_rmssd: HRV during deep sleep
+
+    Args:
+        db: Database session
+        connection: FitbitConnection
+        target_date: Date to fetch data for
+
+    Returns:
+        Dictionary of metric_type -> value
+    """
+    endpoint = f"/1/user/-/hrv/date/{target_date.isoformat()}.json"
+
+    try:
+        data = await _make_fitbit_request(db, connection, endpoint)
+
+        metrics = {}
+
+        # Get HRV data
+        hrv_records = data.get("hrv", [])
+        if hrv_records:
+            for record in hrv_records:
+                # Daily HRV summary
+                daily_rmssd = record.get("value", {}).get("dailyRmssd")
+                if daily_rmssd is not None:
+                    metrics["hrv_rmssd"] = float(daily_rmssd)
+
+                # Deep sleep HRV
+                deep_rmssd = record.get("value", {}).get("deepRmssd")
+                if deep_rmssd is not None:
+                    metrics["hrv_deep_rmssd"] = float(deep_rmssd)
+
+        return metrics
+
+    except Exception as e:
+        print(f"Failed to fetch HRV for {target_date}: {e}")
+        return {}
+
+
+async def fetch_cardio_fitness(
+    db: Session,
+    connection: FitbitConnection,
+    target_date: date
+) -> Dict[str, float]:
+    """
+    Fetch Cardio Fitness Score (VO2 Max) for a specific date.
+
+    VO2 Max estimates aerobic fitness level based on user profile and activity.
+
+    Returns metrics:
+    - cardio_fitness_score: VO2 Max estimate (ml/kg/min)
+
+    Args:
+        db: Database session
+        connection: FitbitConnection
+        target_date: Date to fetch data for
+
+    Returns:
+        Dictionary of metric_type -> value
+    """
+    endpoint = f"/1/user/-/cardioscore/date/{target_date.isoformat()}.json"
+
+    try:
+        data = await _make_fitbit_request(db, connection, endpoint)
+
+        metrics = {}
+
+        # Get cardio fitness data
+        cardio_data = data.get("cardioScore", [])
+        if cardio_data:
+            for record in cardio_data:
+                vo2_max = record.get("value", {}).get("vo2Max")
+                if vo2_max is not None:
+                    metrics["cardio_fitness_score"] = float(vo2_max)
+
+        return metrics
+
+    except Exception as e:
+        print(f"Failed to fetch cardio fitness for {target_date}: {e}")
+        return {}
+
+
+async def fetch_breathing_rate(
+    db: Session,
+    connection: FitbitConnection,
+    target_date: date
+) -> Dict[str, float]:
+    """
+    Fetch Breathing Rate for a specific date.
+
+    Breathing rate is measured during sleep.
+
+    Returns metrics:
+    - breathing_rate: Average breaths per minute during sleep
+
+    Args:
+        db: Database session
+        connection: FitbitConnection
+        target_date: Date to fetch data for
+
+    Returns:
+        Dictionary of metric_type -> value
+    """
+    endpoint = f"/1/user/-/br/date/{target_date.isoformat()}.json"
+
+    try:
+        data = await _make_fitbit_request(db, connection, endpoint)
+
+        metrics = {}
+
+        # Get breathing rate data
+        br_records = data.get("br", [])
+        if br_records:
+            for record in br_records:
+                breathing_rate = record.get("value", {}).get("breathingRate")
+                if breathing_rate is not None:
+                    metrics["breathing_rate"] = float(breathing_rate)
+
+        return metrics
+
+    except Exception as e:
+        print(f"Failed to fetch breathing rate for {target_date}: {e}")
+        return {}
+
+
+async def fetch_spo2(
+    db: Session,
+    connection: FitbitConnection,
+    target_date: date
+) -> Dict[str, float]:
+    """
+    Fetch SpO2 (blood oxygen saturation) for a specific date.
+
+    SpO2 measures oxygen levels in blood, typically measured during sleep.
+
+    Returns metrics:
+    - spo2_avg: Average SpO2 percentage
+    - spo2_min: Minimum SpO2 percentage
+    - spo2_max: Maximum SpO2 percentage
+
+    Args:
+        db: Database session
+        connection: FitbitConnection
+        target_date: Date to fetch data for
+
+    Returns:
+        Dictionary of metric_type -> value
+    """
+    endpoint = f"/1/user/-/spo2/date/{target_date.isoformat()}.json"
+
+    try:
+        data = await _make_fitbit_request(db, connection, endpoint)
+
+        metrics = {}
+
+        # Get SpO2 data
+        spo2_records = data.get("dateTime")
+        if spo2_records:
+            value_data = spo2_records.get("value", {})
+
+            avg = value_data.get("avg")
+            if avg is not None:
+                metrics["spo2_avg"] = float(avg)
+
+            min_val = value_data.get("min")
+            if min_val is not None:
+                metrics["spo2_min"] = float(min_val)
+
+            max_val = value_data.get("max")
+            if max_val is not None:
+                metrics["spo2_max"] = float(max_val)
+
+        return metrics
+
+    except Exception as e:
+        print(f"Failed to fetch SpO2 for {target_date}: {e}")
+        return {}
+
+
+async def fetch_temperature(
+    db: Session,
+    connection: FitbitConnection,
+    target_date: date
+) -> Dict[str, float]:
+    """
+    Fetch skin temperature variation for a specific date.
+
+    Temperature is measured as a variation from personal baseline during sleep.
+
+    Returns metrics:
+    - temp_skin: Skin temperature variation from baseline (°F or °C)
+
+    Args:
+        db: Database session
+        connection: FitbitConnection
+        target_date: Date to fetch data for
+
+    Returns:
+        Dictionary of metric_type -> value
+    """
+    endpoint = f"/1/user/-/temp/skin/date/{target_date.isoformat()}.json"
+
+    try:
+        data = await _make_fitbit_request(db, connection, endpoint)
+
+        metrics = {}
+
+        # Get temperature data
+        temp_records = data.get("tempSkin", [])
+        if temp_records:
+            for record in temp_records:
+                temp_value = record.get("value", {}).get("nightlyRelative")
+                if temp_value is not None:
+                    metrics["temp_skin"] = float(temp_value)
+
+        return metrics
+
+    except Exception as e:
+        print(f"Failed to fetch temperature for {target_date}: {e}")
+        return {}
+
+
+async def fetch_sleep_stages(
+    db: Session,
+    connection: FitbitConnection,
+    target_date: date
+) -> Dict[str, float]:
+    """
+    Fetch detailed sleep stages for a specific date.
+
+    Breaks down sleep into stages: deep, light, REM, and wake.
+
+    Returns metrics:
+    - sleep_deep_minutes: Time in deep sleep
+    - sleep_light_minutes: Time in light sleep
+    - sleep_rem_minutes: Time in REM sleep
+    - sleep_wake_minutes: Time awake during sleep period
+
+    Args:
+        db: Database session
+        connection: FitbitConnection
+        target_date: Date to fetch data for
+
+    Returns:
+        Dictionary of metric_type -> value
+    """
+    endpoint = f"/1.2/user/-/sleep/date/{target_date.isoformat()}.json"
+
+    try:
+        data = await _make_fitbit_request(db, connection, endpoint)
+
+        metrics = {}
+
+        # Get sleep stage data
+        sleep_records = data.get("sleep", [])
+        if not sleep_records:
+            return metrics
+
+        # Sum stages from all sleep records for the day
+        total_deep = 0
+        total_light = 0
+        total_rem = 0
+        total_wake = 0
+
+        for record in sleep_records:
+            levels = record.get("levels", {})
+            summary = levels.get("summary", {})
+
+            # Deep sleep
+            deep_data = summary.get("deep", {})
+            if "minutes" in deep_data:
+                total_deep += deep_data["minutes"]
+
+            # Light sleep
+            light_data = summary.get("light", {})
+            if "minutes" in light_data:
+                total_light += light_data["minutes"]
+
+            # REM sleep
+            rem_data = summary.get("rem", {})
+            if "minutes" in rem_data:
+                total_rem += rem_data["minutes"]
+
+            # Wake time
+            wake_data = summary.get("wake", {})
+            if "minutes" in wake_data:
+                total_wake += wake_data["minutes"]
+
+        if total_deep > 0:
+            metrics["sleep_deep_minutes"] = float(total_deep)
+        if total_light > 0:
+            metrics["sleep_light_minutes"] = float(total_light)
+        if total_rem > 0:
+            metrics["sleep_rem_minutes"] = float(total_rem)
+        if total_wake > 0:
+            metrics["sleep_wake_minutes"] = float(total_wake)
+
+        return metrics
+
+    except Exception as e:
+        print(f"Failed to fetch sleep stages for {target_date}: {e}")
+        return {}
+
+
 async def fetch_all_metrics(
     db: Session,
     connection: FitbitConnection,
@@ -325,7 +641,7 @@ async def fetch_all_metrics(
     """
     Fetch all available metrics for a date.
 
-    Combines activity, sleep, heart rate, and active zone minutes data.
+    Combines activity, sleep, heart rate, active zone minutes, and extended health metrics.
 
     Args:
         db: Database session
@@ -418,5 +734,77 @@ async def fetch_all_metrics(
             }
     except Exception as e:
         print(f"Heart rate fetch failed: {e}")
+
+    # Fetch HRV metrics
+    try:
+        hrv_metrics = await fetch_hrv_summary(db, connection, target_date)
+        for metric_type, value in hrv_metrics.items():
+            all_metrics[metric_type] = {
+                "value": value,
+                "unit": "ms",
+                "metadata": None
+            }
+    except Exception as e:
+        print(f"HRV fetch failed: {e}")
+
+    # Fetch Cardio Fitness (VO2 Max)
+    try:
+        cardio_metrics = await fetch_cardio_fitness(db, connection, target_date)
+        for metric_type, value in cardio_metrics.items():
+            all_metrics[metric_type] = {
+                "value": value,
+                "unit": "ml/kg/min",
+                "metadata": None
+            }
+    except Exception as e:
+        print(f"Cardio fitness fetch failed: {e}")
+
+    # Fetch Breathing Rate
+    try:
+        br_metrics = await fetch_breathing_rate(db, connection, target_date)
+        for metric_type, value in br_metrics.items():
+            all_metrics[metric_type] = {
+                "value": value,
+                "unit": "bpm",
+                "metadata": None
+            }
+    except Exception as e:
+        print(f"Breathing rate fetch failed: {e}")
+
+    # Fetch SpO2
+    try:
+        spo2_metrics = await fetch_spo2(db, connection, target_date)
+        for metric_type, value in spo2_metrics.items():
+            all_metrics[metric_type] = {
+                "value": value,
+                "unit": "%",
+                "metadata": None
+            }
+    except Exception as e:
+        print(f"SpO2 fetch failed: {e}")
+
+    # Fetch Temperature
+    try:
+        temp_metrics = await fetch_temperature(db, connection, target_date)
+        for metric_type, value in temp_metrics.items():
+            all_metrics[metric_type] = {
+                "value": value,
+                "unit": "°F",
+                "metadata": None
+            }
+    except Exception as e:
+        print(f"Temperature fetch failed: {e}")
+
+    # Fetch Sleep Stages
+    try:
+        stage_metrics = await fetch_sleep_stages(db, connection, target_date)
+        for metric_type, value in stage_metrics.items():
+            all_metrics[metric_type] = {
+                "value": value,
+                "unit": "minutes",
+                "metadata": None
+            }
+    except Exception as e:
+        print(f"Sleep stages fetch failed: {e}")
 
     return all_metrics

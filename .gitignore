@@ -38,3 +38,12 @@ data/
 # Alembic
 versions/__pycache__/
 site/
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+*.egg-info/

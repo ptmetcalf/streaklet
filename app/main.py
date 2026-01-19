@@ -8,7 +8,7 @@ import os
 import logging
 
 from app.core.db import engine, get_db, Base
-from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit
+from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit, routes_punch_list, routes_scheduled
 from app.services import tasks as task_service, history as history_service, profiles as profile_service
 
 
@@ -54,6 +54,8 @@ app.include_router(routes_streaks.router)
 app.include_router(routes_history.router)
 app.include_router(routes_profiles.router)
 app.include_router(routes_fitbit.router)
+app.include_router(routes_punch_list.router)
+app.include_router(routes_scheduled.router)
 
 
 @app.get("/", response_class=HTMLResponse)

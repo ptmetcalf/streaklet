@@ -9,6 +9,7 @@ A self-hosted, Dockerized daily habit streak tracker with multi-user profile sup
 
 ## Features
 
+- **Three Task Types** - Daily habits, one-off todos, scheduled recurring tasks
 - **Multi-User Profiles** - Completely isolated data per user
 - **Fitbit Integration** - Auto-complete tasks based on fitness metrics
 - **Progressive Web App** - Install on mobile/desktop

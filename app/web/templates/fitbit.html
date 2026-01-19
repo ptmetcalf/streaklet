@@ -24,31 +24,44 @@
     <!-- Connected State -->
     <div x-show="fitbitConnected">
         <!-- Tabs -->
-        <div style="display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color);">
+        <div style="display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color); overflow-x: auto;">
             <button @click="currentTab = 'daily'; loadMetricsForDate()"
                     :class="currentTab === 'daily' ? 'tab-active' : 'tab-inactive'"
                     class="tab-button">
-                Daily View
+                Daily
+            </button>
+            <button @click="currentTab = 'overview'; loadOverviewData()"
+                    :class="currentTab === 'overview' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Overview
             </button>
             <button @click="currentTab = 'trends'; loadTrendData()"
                     :class="currentTab === 'trends' ? 'tab-active' : 'tab-inactive'"
                     class="tab-button">
                 Trends
             </button>
+            <button @click="currentTab = 'compare'; loadComparisonData()"
+                    :class="currentTab === 'compare' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Compare
+            </button>
+            <button @click="currentTab = 'insights'; loadInsightsData()"
+                    :class="currentTab === 'insights' ? 'tab-active' : 'tab-inactive'"
+                    class="tab-button">
+                Insights
+            </button>
         </div>
 
         <!-- Trends Tab -->
         <div x-show="currentTab === 'trends'">
             <!-- Date Range Selector -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <div>
-                    <label style="font-weight: 600; margin-right: 8px;">Time Range:</label>
-                    <select x-model="trendRange" @change="loadTrendData" style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                        <option value="7">Last 7 Days</option>
-                        <option value="14">Last 14 Days</option>
-                        <option value="30">Last 30 Days</option>
-                    </select>
-                </div>
+            <div style="margin-bottom: 24px;">
+                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Time Range:</label>
+                <select x-model="trendRange" @change="loadTrendData" class="trend-range-select">
+                    <option value="7">Last 7 Days</option>
+                    <option value="14">Last 14 Days</option>
+                    <option value="30">Last 30 Days</option>
+                </select>
             </div>
 
             <!-- Loading State -->
@@ -59,25 +72,25 @@
             <!-- Charts -->
             <div x-show="!trendsLoading" style="display: grid; grid-template-columns: 1fr; gap: 32px;">
                 <!-- Steps Chart -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                <div x-show="visibleMetrics.steps" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Steps</h3>
                     <div id="stepsChart"></div>
                 </div>
 
                 <!-- Sleep Chart -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                <div x-show="visibleMetrics.sleep_minutes" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Sleep</h3>
                     <div id="sleepChart"></div>
                 </div>
 
                 <!-- Active Minutes Chart -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                <div x-show="visibleMetrics.active_minutes" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Active Minutes</h3>
                     <div id="activeMinutesChart"></div>
                 </div>
 
                 <!-- Heart Rate Chart -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                <div x-show="visibleMetrics.resting_heart_rate" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
                     <h3 style="margin-bottom: 16px;">Resting Heart Rate</h3>
                     <div id="heartRateChart"></div>
                 </div>
@@ -87,18 +100,16 @@
         <!-- Daily View Tab -->
         <div x-show="currentTab === 'daily'">
             <!-- Date Selector -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <div>
-                    <input type="date"
-                           x-model="selectedDate"
-                           @change="loadMetricsForDate"
-                           :max="today"
-                           style="padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;">
-                </div>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-secondary" @click="previousDay">← Previous</button>
-                    <button class="btn-secondary" @click="nextDay">Next →</button>
+            <div class="date-selector">
+                <input type="date"
+                       x-model="selectedDate"
+                       @change="loadMetricsForDate"
+                       :max="today"
+                       class="date-input">
+                <div class="date-nav-buttons">
+                    <button class="btn-secondary" @click="previousDay">← Prev</button>
                     <button class="btn-secondary" @click="goToToday">Today</button>
+                    <button class="btn-secondary" @click="nextDay">Next →</button>
                 </div>
             </div>
 
@@ -112,59 +123,122 @@
             <!-- Summary Cards -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
                 <!-- Steps -->
-                <div x-show="metrics.steps" class="metric-card-large">
+                <div x-show="metrics.steps && visibleMetrics.steps" class="metric-card-large">
                     <div class="metric-icon">👟</div>
                     <div class="metric-value" x-text="formatNumber(metrics.steps?.value)"></div>
                     <div class="metric-label">Steps</div>
                 </div>
 
                 <!-- Sleep -->
-                <div x-show="metrics.sleep_minutes" class="metric-card-large">
+                <div x-show="metrics.sleep_minutes && visibleMetrics.sleep_minutes" class="metric-card-large">
                     <div class="metric-icon">😴</div>
                     <div class="metric-value" x-text="formatSleepHours(metrics.sleep_minutes?.value)"></div>
                     <div class="metric-label">Sleep</div>
                 </div>
 
                 <!-- Active Minutes -->
-                <div x-show="metrics.active_minutes" class="metric-card-large">
+                <div x-show="metrics.active_minutes && visibleMetrics.active_minutes" class="metric-card-large">
                     <div class="metric-icon">🔥</div>
                     <div class="metric-value" x-text="formatNumber(metrics.active_minutes?.value)"></div>
                     <div class="metric-label">Active Minutes</div>
                 </div>
 
                 <!-- Calories -->
-                <div x-show="metrics.calories_burned" class="metric-card-large">
+                <div x-show="metrics.calories_burned && visibleMetrics.calories_burned" class="metric-card-large">
                     <div class="metric-icon">⚡</div>
                     <div class="metric-value" x-text="formatNumber(metrics.calories_burned?.value)"></div>
                     <div class="metric-label">Calories Burned</div>
                 </div>
 
                 <!-- Distance -->
-                <div x-show="metrics.distance" class="metric-card-large">
+                <div x-show="metrics.distance && visibleMetrics.distance" class="metric-card-large">
                     <div class="metric-icon">🏃</div>
                     <div class="metric-value" x-text="formatDecimal(metrics.distance?.value)"></div>
                     <div class="metric-label">Distance (miles)</div>
                 </div>
 
                 <!-- Floors -->
-                <div x-show="metrics.floors" class="metric-card-large">
+                <div x-show="metrics.floors && visibleMetrics.floors" class="metric-card-large">
                     <div class="metric-icon">🪜</div>
                     <div class="metric-value" x-text="formatNumber(metrics.floors?.value)"></div>
                     <div class="metric-label">Floors Climbed</div>
                 </div>
 
                 <!-- Sleep Score -->
-                <div x-show="metrics.sleep_score" class="metric-card-large">
+                <div x-show="metrics.sleep_score && visibleMetrics.sleep_minutes" class="metric-card-large">
                     <div class="metric-icon">⭐</div>
                     <div class="metric-value" x-text="formatNumber(metrics.sleep_score?.value)"></div>
                     <div class="metric-label">Sleep Score</div>
                 </div>
 
                 <!-- Resting Heart Rate -->
-                <div x-show="metrics.resting_heart_rate" class="metric-card-large">
+                <div x-show="metrics.resting_heart_rate && visibleMetrics.resting_heart_rate" class="metric-card-large">
                     <div class="metric-icon">❤️</div>
                     <div class="metric-value" x-text="formatNumber(metrics.resting_heart_rate?.value)"></div>
                     <div class="metric-label">Resting HR (bpm)</div>
+                </div>
+
+                <!-- HRV (Heart Rate Variability) -->
+                <div x-show="metrics.hrv_rmssd && visibleMetrics.hrv" class="metric-card-large">
+                    <div class="metric-icon">🫀</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.hrv_rmssd?.value)"></div>
+                    <div class="metric-label">HRV (ms)</div>
+                </div>
+
+                <!-- VO2 Max / Cardio Fitness -->
+                <div x-show="metrics.cardio_fitness_score && visibleMetrics.cardio_fitness" class="metric-card-large">
+                    <div class="metric-icon">💪</div>
+                    <div class="metric-value" x-text="formatDecimal(metrics.cardio_fitness_score?.value)"></div>
+                    <div class="metric-label">VO2 Max</div>
+                </div>
+
+                <!-- SpO2 (Blood Oxygen) -->
+                <div x-show="metrics.spo2_avg && visibleMetrics.spo2" class="metric-card-large">
+                    <div class="metric-icon">🫁</div>
+                    <div class="metric-value" x-text="formatDecimal(metrics.spo2_avg?.value) + '%'"></div>
+                    <div class="metric-label">Blood Oxygen</div>
+                </div>
+
+                <!-- Breathing Rate -->
+                <div x-show="metrics.breathing_rate && visibleMetrics.breathing_rate" class="metric-card-large">
+                    <div class="metric-icon">🌬️</div>
+                    <div class="metric-value" x-text="formatDecimal(metrics.breathing_rate?.value)"></div>
+                    <div class="metric-label">Breathing Rate (bpm)</div>
+                </div>
+
+                <!-- Skin Temperature -->
+                <div x-show="metrics.temp_skin && visibleMetrics.temperature" class="metric-card-large">
+                    <div class="metric-icon">🌡️</div>
+                    <div class="metric-value" x-text="formatDecimal(metrics.temp_skin?.value) + '°'"></div>
+                    <div class="metric-label">Skin Temp Variation</div>
+                </div>
+
+                <!-- Sleep Stages: Deep Sleep -->
+                <div x-show="metrics.sleep_deep_minutes && visibleMetrics.sleep_stages" class="metric-card-large">
+                    <div class="metric-icon">🌙</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.sleep_deep_minutes?.value)"></div>
+                    <div class="metric-label">Deep Sleep (min)</div>
+                </div>
+
+                <!-- Sleep Stages: Light Sleep -->
+                <div x-show="metrics.sleep_light_minutes && visibleMetrics.sleep_stages" class="metric-card-large">
+                    <div class="metric-icon">💤</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.sleep_light_minutes?.value)"></div>
+                    <div class="metric-label">Light Sleep (min)</div>
+                </div>
+
+                <!-- Sleep Stages: REM Sleep -->
+                <div x-show="metrics.sleep_rem_minutes && visibleMetrics.sleep_stages" class="metric-card-large">
+                    <div class="metric-icon">💭</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.sleep_rem_minutes?.value)"></div>
+                    <div class="metric-label">REM Sleep (min)</div>
+                </div>
+
+                <!-- Sleep Stages: Awake Time -->
+                <div x-show="metrics.sleep_wake_minutes && visibleMetrics.sleep_stages" class="metric-card-large">
+                    <div class="metric-icon">👁️</div>
+                    <div class="metric-value" x-text="formatNumber(metrics.sleep_wake_minutes?.value)"></div>
+                    <div class="metric-label">Awake Time (min)</div>
                 </div>
             </div>
 
@@ -181,7 +255,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template x-for="[key, data] in Object.entries(metrics)" :key="key">
+                        <template x-for="[key, data] in Object.entries(metrics).filter(([k]) => visibleMetrics[k] !== false)" :key="key">
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <td style="padding: 12px;" x-text="formatMetricName(key)"></td>
                                 <td style="text-align: right; padding: 12px; font-weight: 600;" x-text="formatValue(data.value, key)"></td>
@@ -202,10 +276,237 @@
                 <p style="font-size: 14px; margin-top: 8px;">Try selecting a different date or sync your Fitbit data.</p>
             </div>
         </div>
+
+        <!-- Overview Tab -->
+        <div x-show="currentTab === 'overview'">
+            <div x-show="overviewLoading" style="text-align: center; padding: 40px; color: #666;">
+                Loading overview...
+            </div>
+            <div x-show="!overviewLoading">
+                <!-- Stats Summary Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                    <div class="stats-card" x-show="visibleMetrics.steps || visibleMetrics.sleep_minutes || visibleMetrics.active_minutes">
+                        <h3>30-Day Averages</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item" x-show="visibleMetrics.steps">
+                                <div class="stat-label">Steps</div>
+                                <div class="stat-value" x-text="formatNumber(stats.avg_steps)"></div>
+                            </div>
+                            <div class="stat-item" x-show="visibleMetrics.sleep_minutes">
+                                <div class="stat-label">Sleep</div>
+                                <div class="stat-value" x-text="formatSleepHours(stats.avg_sleep)"></div>
+                            </div>
+                            <div class="stat-item" x-show="visibleMetrics.active_minutes">
+                                <div class="stat-label">Active Min</div>
+                                <div class="stat-value" x-text="formatNumber(stats.avg_active)"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-card" x-show="visibleMetrics.steps || visibleMetrics.sleep_minutes">
+                        <h3>Personal Records</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item" x-show="visibleMetrics.steps">
+                                <div class="stat-label">Most Steps</div>
+                                <div class="stat-value" x-text="formatNumber(stats.max_steps)"></div>
+                                <div class="stat-date" x-text="stats.max_steps_date"></div>
+                            </div>
+                            <div class="stat-item" x-show="visibleMetrics.sleep_minutes">
+                                <div class="stat-label">Best Sleep</div>
+                                <div class="stat-value" x-text="formatSleepHours(stats.max_sleep)"></div>
+                                <div class="stat-date" x-text="stats.max_sleep_date"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-card" x-show="visibleMetrics.steps || visibleMetrics.sleep_minutes">
+                        <h3>This Week</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item" x-show="visibleMetrics.steps">
+                                <div class="stat-label">Total Steps</div>
+                                <div class="stat-value" x-text="formatNumber(stats.week_steps)"></div>
+                                <div class="stat-trend" :class="stats.week_steps_trend >= 0 ? 'trend-up' : 'trend-down'" x-text="formatTrend(stats.week_steps_trend)"></div>
+                            </div>
+                            <div class="stat-item" x-show="visibleMetrics.sleep_minutes">
+                                <div class="stat-label">Avg Sleep</div>
+                                <div class="stat-value" x-text="formatSleepHours(stats.week_sleep_avg)"></div>
+                                <div class="stat-trend" :class="stats.week_sleep_trend >= 0 ? 'trend-up' : 'trend-down'" x-text="formatTrend(stats.week_sleep_trend)"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi-Metric Chart -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 16px;">Multi-Metric Overview (Last 30 Days)</h3>
+                    <div id="multiMetricChart"></div>
+                </div>
+
+                <!-- Goal Progress -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Weekly Goals</h3>
+                    <div style="display: grid; gap: 16px;">
+                        <div class="goal-progress">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Steps Goal (70,000/week)</span>
+                                <span x-text="Math.round((stats.week_steps / 70000) * 100) + '%'"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="`width: ${Math.min((stats.week_steps / 70000) * 100, 100)}%`"></div>
+                            </div>
+                        </div>
+                        <div class="goal-progress">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>Active Minutes Goal (150/week)</span>
+                                <span x-text="Math.round((stats.week_active / 150) * 100) + '%'"></span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="`width: ${Math.min((stats.week_active / 150) * 100, 100)}%`"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compare Tab -->
+        <div x-show="currentTab === 'compare'">
+            <div x-show="compareLoading" style="text-align: center; padding: 40px; color: #666;">
+                Loading comparison...
+            </div>
+            <div x-show="!compareLoading">
+                <!-- Weekday vs Weekend -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 16px;">Weekday vs Weekend Patterns</h3>
+                    <div id="weekdayWeekendChart"></div>
+                </div>
+
+                <!-- Week Over Week -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 16px;">Week Over Week Comparison</h3>
+                    <div id="weekOverWeekChart"></div>
+                </div>
+
+                <!-- Month Comparison -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Monthly Comparison</h3>
+                    <div id="monthComparisonChart"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights Tab -->
+        <div x-show="currentTab === 'insights'">
+            <div x-show="insightsLoading" style="text-align: center; padding: 40px; color: #666;">
+                Analyzing data...
+            </div>
+            <div x-show="!insightsLoading">
+                <!-- Correlation Analysis -->
+                <div x-show="visibleMetrics.steps && visibleMetrics.sleep_minutes" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 16px;">Sleep vs Activity Correlation</h3>
+                    <div id="correlationChart"></div>
+                </div>
+
+                <!-- Distribution Chart -->
+                <div x-show="visibleMetrics.steps" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
+                    <h3 style="margin-bottom: 16px;">Steps Distribution</h3>
+                    <div id="distributionChart"></div>
+                </div>
+
+                <!-- Key Insights -->
+                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                    <h3 style="margin-bottom: 16px;">Key Insights</h3>
+                    <div style="display: grid; gap: 12px;">
+                        <div class="insight-item" x-show="insights.best_day && visibleMetrics.steps">
+                            <span class="insight-icon">🏆</span>
+                            <span x-text="'Your most active day is ' + insights.best_day"></span>
+                        </div>
+                        <div class="insight-item" x-show="insights.consistency && visibleMetrics.steps">
+                            <span class="insight-icon">📊</span>
+                            <span x-text="'Consistency score: ' + insights.consistency + '%'"></span>
+                        </div>
+                        <div class="insight-item" x-show="insights.sleep_quality && visibleMetrics.sleep_minutes">
+                            <span class="insight-icon">😴</span>
+                            <span x-text="insights.sleep_quality"></span>
+                        </div>
+                        <div class="insight-item" x-show="insights.improvement_area && (visibleMetrics.steps || visibleMetrics.sleep_minutes)">
+                            <span class="insight-icon">💡</span>
+                            <span x-text="'Opportunity: ' + insights.improvement_area"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <style>
+.date-selector {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.date-input {
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+    min-width: 180px;
+}
+
+.date-nav-buttons {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.date-nav-buttons .btn-secondary {
+    padding: 12px 20px;
+    white-space: nowrap;
+}
+
+.trend-range-select {
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+    min-width: 200px;
+    background: white;
+}
+
+@media (max-width: 640px) {
+    .date-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .date-input {
+        width: 100%;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+    }
+
+    .date-nav-buttons {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .date-nav-buttons .btn-secondary {
+        flex: 1;
+        padding: 14px 12px;
+        font-size: 15px;
+    }
+
+    .trend-range-select {
+        width: 100%;
+        font-size: 16px;
+    }
+}
+
 .metric-card-large {
     padding: 24px;
     border: 1px solid var(--border-color);
@@ -264,6 +565,113 @@
 .tab-inactive:hover {
     color: #333;
 }
+
+.stats-card {
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+}
+
+.stats-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+}
+
+.stats-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-date {
+    font-size: 11px;
+    color: #999;
+    margin-top: 2px;
+}
+
+.stat-trend {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+.trend-up {
+    color: #10b981;
+}
+
+.trend-down {
+    color: #ef4444;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 24px;
+    background: #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color) 0%, #10b981 100%);
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.goal-progress {
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+}
+
+.insight-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.insight-icon {
+    font-size: 24px;
+}
+
+@media (max-width: 768px) {
+    .stats-card {
+        padding: 16px;
+    }
+
+    .stat-value {
+        font-size: 20px;
+    }
+}
 </style>
 
 <script>
@@ -283,7 +691,63 @@ function fitbitMetrics() {
             steps: null,
             sleep: null,
             activeMinutes: null,
-            heartRate: null
+            heartRate: null,
+            multiMetric: null,
+            weekdayWeekend: null,
+            weekOverWeek: null,
+            monthComparison: null,
+            correlation: null,
+            distribution: null
+        },
+
+        // Overview state
+        overviewLoading: false,
+        stats: {
+            avg_steps: 0,
+            avg_sleep: 0,
+            avg_active: 0,
+            max_steps: 0,
+            max_steps_date: '',
+            max_sleep: 0,
+            max_sleep_date: '',
+            week_steps: 0,
+            week_steps_trend: 0,
+            week_sleep_avg: 0,
+            week_sleep_trend: 0,
+            week_active: 0
+        },
+
+        // Compare state
+        compareLoading: false,
+        compareData: {},
+
+        // Insights state
+        insightsLoading: false,
+        insights: {
+            best_day: '',
+            consistency: 0,
+            sleep_quality: '',
+            improvement_area: ''
+        },
+
+        // Preferences state
+        visibleMetrics: {
+            steps: true,
+            distance: true,
+            floors: true,
+            calories_burned: true,
+            active_minutes: true,
+            sleep_minutes: true,
+            sleep_stages: true,
+            resting_heart_rate: true,
+            hrv: true,
+            cardio_fitness: true,
+            breathing_rate: true,
+            spo2: true,
+            temperature: true,
+            weight: false,
+            body_fat: false,
+            water: false
         },
 
         async init() {
@@ -291,7 +755,20 @@ function fitbitMetrics() {
             await this.loadTodayDate();
             await this.checkFitbitConnection();
             if (this.fitbitConnected) {
+                await this.loadPreferences();
                 await this.loadMetricsForDate();
+            }
+        },
+
+        async loadPreferences() {
+            try {
+                const response = await fetchWithProfile('/api/fitbit/preferences/visible-metrics');
+                if (response.ok) {
+                    const prefs = await response.json();
+                    this.visibleMetrics = prefs;
+                }
+            } catch (error) {
+                console.error('Error loading preferences:', error);
             }
         },
 
@@ -420,7 +897,8 @@ function fitbitMetrics() {
                     label: 'Steps',
                     color: '#3b82f6',
                     yAxisLabel: 'Steps',
-                    formatter: (val) => Math.round(val).toLocaleString()
+                    formatter: (val) => Math.round(val).toLocaleString(),
+                    visible: this.visibleMetrics.steps
                 },
                 sleep: {
                     containerId: 'sleepChart',
@@ -433,7 +911,8 @@ function fitbitMetrics() {
                         const hours = Math.floor(val);
                         const mins = Math.round((val - hours) * 60);
                         return `${hours}h ${mins}m`;
-                    }
+                    },
+                    visible: this.visibleMetrics.sleep_minutes
                 },
                 activeMinutes: {
                     containerId: 'activeMinutesChart',
@@ -441,7 +920,8 @@ function fitbitMetrics() {
                     label: 'Active Minutes',
                     color: '#ef4444',
                     yAxisLabel: 'Minutes',
-                    formatter: (val) => Math.round(val) + ' min'
+                    formatter: (val) => Math.round(val) + ' min',
+                    visible: this.visibleMetrics.active_minutes
                 },
                 heartRate: {
                     containerId: 'heartRateChart',
@@ -449,14 +929,18 @@ function fitbitMetrics() {
                     label: 'Resting HR',
                     color: '#ec4899',
                     yAxisLabel: 'BPM',
-                    formatter: (val) => Math.round(val) + ' bpm'
+                    formatter: (val) => Math.round(val) + ' bpm',
+                    visible: this.visibleMetrics.resting_heart_rate
                 }
             };
 
             Object.keys(chartConfig).forEach(key => {
                 const config = chartConfig[key];
-                const container = document.getElementById(config.containerId);
 
+                // Skip if metric is hidden
+                if (!config.visible) return;
+
+                const container = document.getElementById(config.containerId);
                 if (!container) return;
 
                 const categories = config.data.map(d => {
@@ -581,7 +1065,19 @@ function fitbitMetrics() {
                 'calories_burned': 'Calories Burned',
                 'distance': 'Distance',
                 'floors': 'Floors Climbed',
-                'resting_heart_rate': 'Resting Heart Rate'
+                'resting_heart_rate': 'Resting Heart Rate',
+                'hrv_rmssd': 'Heart Rate Variability (RMSSD)',
+                'hrv_deep_rmssd': 'HRV Deep Sleep (RMSSD)',
+                'cardio_fitness_score': 'VO2 Max / Cardio Fitness',
+                'spo2_avg': 'Blood Oxygen (SpO2) Average',
+                'spo2_min': 'Blood Oxygen (SpO2) Minimum',
+                'spo2_max': 'Blood Oxygen (SpO2) Maximum',
+                'breathing_rate': 'Breathing Rate',
+                'temp_skin': 'Skin Temperature Variation',
+                'sleep_deep_minutes': 'Deep Sleep',
+                'sleep_light_minutes': 'Light Sleep',
+                'sleep_rem_minutes': 'REM Sleep',
+                'sleep_wake_minutes': 'Awake Time'
             };
             return names[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         },
@@ -606,6 +1102,698 @@ function fitbitMetrics() {
                 minute: '2-digit',
                 hour12: true
             });
+        },
+
+        formatTrend(value) {
+            if (value == null || value === 0) return '—';
+            const sign = value >= 0 ? '↑' : '↓';
+            return `${sign} ${Math.abs(Math.round(value))}%`;
+        },
+
+        async loadOverviewData() {
+            this.overviewLoading = true;
+            try {
+                // Calculate date ranges
+                const endDate = parseDateOnly(this.today);
+                const startDate30 = parseDateOnly(this.today);
+                startDate30.setDate(startDate30.getDate() - 30);
+
+                const startDateWeek = parseDateOnly(this.today);
+                startDateWeek.setDate(startDateWeek.getDate() - 7);
+
+                const startDatePrevWeek = parseDateOnly(this.today);
+                startDatePrevWeek.setDate(startDatePrevWeek.getDate() - 14);
+
+                // Fetch 30-day data
+                const response30 = await fetchWithProfile(
+                    `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate30)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
+                );
+
+                if (response30.ok) {
+                    const data30 = await response30.json();
+
+                    // Calculate averages
+                    const steps = data30.metrics.steps || [];
+                    const sleep = data30.metrics.sleep_minutes || [];
+                    const active = data30.metrics.active_minutes || [];
+
+                    this.stats.avg_steps = steps.length > 0 ? steps.reduce((sum, d) => sum + d.value, 0) / steps.length : 0;
+                    this.stats.avg_sleep = sleep.length > 0 ? sleep.reduce((sum, d) => sum + d.value, 0) / sleep.length : 0;
+                    this.stats.avg_active = active.length > 0 ? active.reduce((sum, d) => sum + d.value, 0) / active.length : 0;
+
+                    // Find max values
+                    if (steps.length > 0) {
+                        const maxSteps = steps.reduce((max, d) => d.value > max.value ? d : max);
+                        this.stats.max_steps = maxSteps.value;
+                        this.stats.max_steps_date = new Date(maxSteps.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+
+                    if (sleep.length > 0) {
+                        const maxSleep = sleep.reduce((max, d) => d.value > max.value ? d : max);
+                        this.stats.max_sleep = maxSleep.value;
+                        this.stats.max_sleep_date = new Date(maxSleep.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    }
+
+                    // Calculate this week's data
+                    const weekSteps = steps.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
+                    const weekSleep = sleep.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
+                    const weekActive = active.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
+
+                    this.stats.week_steps = weekSteps.reduce((sum, d) => sum + d.value, 0);
+                    this.stats.week_sleep_avg = weekSleep.length > 0 ? weekSleep.reduce((sum, d) => sum + d.value, 0) / weekSleep.length : 0;
+                    this.stats.week_active = weekActive.reduce((sum, d) => sum + d.value, 0);
+
+                    // Calculate previous week for trend
+                    const prevWeekSteps = steps.filter(d => {
+                        const date = new Date(d.date + 'T00:00:00');
+                        return date >= startDatePrevWeek && date < startDateWeek;
+                    });
+                    const prevWeekSleep = sleep.filter(d => {
+                        const date = new Date(d.date + 'T00:00:00');
+                        return date >= startDatePrevWeek && date < startDateWeek;
+                    });
+
+                    const prevWeekStepsTotal = prevWeekSteps.reduce((sum, d) => sum + d.value, 0);
+                    const prevWeekSleepAvg = prevWeekSleep.length > 0 ? prevWeekSleep.reduce((sum, d) => sum + d.value, 0) / prevWeekSleep.length : 0;
+
+                    this.stats.week_steps_trend = prevWeekStepsTotal > 0 ? ((this.stats.week_steps - prevWeekStepsTotal) / prevWeekStepsTotal) * 100 : 0;
+                    this.stats.week_sleep_trend = prevWeekSleepAvg > 0 ? ((this.stats.week_sleep_avg - prevWeekSleepAvg) / prevWeekSleepAvg) * 100 : 0;
+
+                    // Create multi-metric chart
+                    await this.$nextTick();
+                    this.createMultiMetricChart(data30.metrics);
+                }
+            } catch (error) {
+                console.error('Error loading overview data:', error);
+            } finally {
+                this.overviewLoading = false;
+            }
+        },
+
+        createMultiMetricChart(metricsData) {
+            if (this.charts.multiMetric) {
+                this.charts.multiMetric.destroy();
+            }
+
+            const container = document.getElementById('multiMetricChart');
+            if (!container) return;
+
+            const steps = metricsData.steps || [];
+            const sleep = metricsData.sleep_minutes || [];
+            const active = metricsData.active_minutes || [];
+
+            const categories = steps.map(d => {
+                const date = new Date(d.date + 'T00:00:00');
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+
+            const options = {
+                series: [
+                    {
+                        name: 'Steps',
+                        type: 'area',
+                        data: steps.map(d => Math.round(d.value))
+                    },
+                    {
+                        name: 'Active Minutes',
+                        type: 'line',
+                        data: active.map(d => Math.round(d.value))
+                    },
+                    {
+                        name: 'Sleep (hours)',
+                        type: 'line',
+                        data: sleep.map(d => Math.round((d.value / 60) * 10) / 10)
+                    }
+                ],
+                chart: {
+                    height: 350,
+                    type: 'line',
+                    stacked: false,
+                    toolbar: {
+                        show: true,
+                        tools: {
+                            download: true,
+                            selection: true,
+                            zoom: true,
+                            zoomin: true,
+                            zoomout: true,
+                            pan: true,
+                            reset: true
+                        }
+                    },
+                    zoom: {
+                        enabled: true
+                    }
+                },
+                stroke: {
+                    width: [0, 2, 2],
+                    curve: 'smooth'
+                },
+                fill: {
+                    type: ['gradient', 'solid', 'solid'],
+                    gradient: {
+                        shade: 'light',
+                        type: 'vertical',
+                        opacityFrom: 0.6,
+                        opacityTo: 0.1
+                    }
+                },
+                colors: ['#3b82f6', '#ef4444', '#8b5cf6'],
+                xaxis: {
+                    categories: categories,
+                    labels: {
+                        rotate: -45,
+                        style: {
+                            fontSize: '11px'
+                        }
+                    }
+                },
+                yaxis: [
+                    {
+                        title: {
+                            text: 'Steps'
+                        },
+                        labels: {
+                            formatter: (val) => Math.round(val).toLocaleString()
+                        }
+                    },
+                    {
+                        opposite: true,
+                        title: {
+                            text: 'Minutes / Hours'
+                        },
+                        labels: {
+                            formatter: (val) => Math.round(val)
+                        }
+                    },
+                    {
+                        show: false
+                    }
+                ],
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'center'
+                },
+                tooltip: {
+                    shared: true,
+                    intersect: false
+                }
+            };
+
+            this.charts.multiMetric = new ApexCharts(container, options);
+            this.charts.multiMetric.render();
+        },
+
+        getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        },
+
+        async loadComparisonData() {
+            this.compareLoading = true;
+            try {
+                // Fetch last 60 days for comparisons
+                const endDate = parseDateOnly(this.today);
+                const startDate = parseDateOnly(this.today);
+                startDate.setDate(startDate.getDate() - 60);
+
+                const response = await fetchWithProfile(
+                    `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+                    this.compareData = data.metrics;
+
+                    await this.$nextTick();
+                    this.createComparisonCharts(data.metrics);
+                }
+            } catch (error) {
+                console.error('Error loading comparison data:', error);
+            } finally {
+                this.compareLoading = false;
+            }
+        },
+
+        createComparisonCharts(metricsData) {
+            this.createWeekdayWeekendChart(metricsData);
+            this.createWeekOverWeekChart(metricsData);
+            this.createMonthComparisonChart(metricsData);
+        },
+
+        createWeekdayWeekendChart(metricsData) {
+            if (this.charts.weekdayWeekend) {
+                this.charts.weekdayWeekend.destroy();
+            }
+
+            const container = document.getElementById('weekdayWeekendChart');
+            if (!container) return;
+
+            const steps = metricsData.steps || [];
+
+            // Separate weekday and weekend data
+            const weekdaySteps = [];
+            const weekendSteps = [];
+
+            steps.forEach(d => {
+                const date = new Date(d.date + 'T00:00:00');
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    weekendSteps.push(d.value);
+                } else {
+                    weekdaySteps.push(d.value);
+                }
+            });
+
+            const avgWeekday = weekdaySteps.length > 0 ? weekdaySteps.reduce((sum, v) => sum + v, 0) / weekdaySteps.length : 0;
+            const avgWeekend = weekendSteps.length > 0 ? weekendSteps.reduce((sum, v) => sum + v, 0) / weekendSteps.length : 0;
+
+            const options = {
+                series: [{
+                    name: 'Average Steps',
+                    data: [avgWeekday, avgWeekend]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 300,
+                    toolbar: {
+                        show: false
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 8,
+                        horizontal: false,
+                        columnWidth: '60%',
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => Math.round(val).toLocaleString(),
+                    offsetY: -20,
+                    style: {
+                        fontSize: '12px',
+                        colors: ['#333']
+                    }
+                },
+                colors: ['#3b82f6'],
+                xaxis: {
+                    categories: ['Weekdays', 'Weekends'],
+                    labels: {
+                        style: {
+                            fontSize: '14px',
+                            fontWeight: 600
+                        }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        formatter: (val) => Math.round(val).toLocaleString()
+                    }
+                }
+            };
+
+            this.charts.weekdayWeekend = new ApexCharts(container, options);
+            this.charts.weekdayWeekend.render();
+        },
+
+        createWeekOverWeekChart(metricsData) {
+            if (this.charts.weekOverWeek) {
+                this.charts.weekOverWeek.destroy();
+            }
+
+            const container = document.getElementById('weekOverWeekChart');
+            if (!container) return;
+
+            const steps = metricsData.steps || [];
+
+            // Group by week
+            const weeklyData = {};
+            steps.forEach(d => {
+                const date = new Date(d.date + 'T00:00:00');
+                const weekNum = this.getWeekNumber(date);
+                if (!weeklyData[weekNum]) {
+                    weeklyData[weekNum] = [];
+                }
+                weeklyData[weekNum].push(d.value);
+            });
+
+            // Calculate weekly totals
+            const weeks = Object.keys(weeklyData).sort((a, b) => b - a).slice(0, 8).reverse();
+            const weeklyTotals = weeks.map(week => {
+                return weeklyData[week].reduce((sum, v) => sum + v, 0);
+            });
+
+            const options = {
+                series: [{
+                    name: 'Weekly Steps',
+                    data: weeklyTotals
+                }],
+                chart: {
+                    type: 'line',
+                    height: 300,
+                    toolbar: {
+                        show: false
+                    }
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 3
+                },
+                markers: {
+                    size: 6,
+                    strokeWidth: 2,
+                    hover: {
+                        size: 8
+                    }
+                },
+                colors: ['#3b82f6'],
+                xaxis: {
+                    categories: weeks.map(w => 'Week ' + w)
+                },
+                yaxis: {
+                    labels: {
+                        formatter: (val) => Math.round(val).toLocaleString()
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val) => Math.round(val).toLocaleString() + ' steps'
+                    }
+                }
+            };
+
+            this.charts.weekOverWeek = new ApexCharts(container, options);
+            this.charts.weekOverWeek.render();
+        },
+
+        createMonthComparisonChart(metricsData) {
+            if (this.charts.monthComparison) {
+                this.charts.monthComparison.destroy();
+            }
+
+            const container = document.getElementById('monthComparisonChart');
+            if (!container) return;
+
+            const steps = metricsData.steps || [];
+
+            // Group by month
+            const monthlyData = {};
+            steps.forEach(d => {
+                const date = new Date(d.date + 'T00:00:00');
+                const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                if (!monthlyData[monthKey]) {
+                    monthlyData[monthKey] = { total: 0, count: 0 };
+                }
+                monthlyData[monthKey].total += d.value;
+                monthlyData[monthKey].count += 1;
+            });
+
+            const months = Object.keys(monthlyData).slice(-3);
+            const monthlyAverages = months.map(month => Math.round(monthlyData[month].total / monthlyData[month].count));
+
+            const options = {
+                series: [{
+                    name: 'Daily Average',
+                    data: monthlyAverages
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 300,
+                    toolbar: {
+                        show: false
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 8,
+                        horizontal: true,
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: (val) => Math.round(val).toLocaleString(),
+                    offsetX: 30,
+                    style: {
+                        fontSize: '12px',
+                        colors: ['#333']
+                    }
+                },
+                colors: ['#10b981'],
+                xaxis: {
+                    categories: months,
+                    labels: {
+                        formatter: (val) => Math.round(val).toLocaleString()
+                    }
+                }
+            };
+
+            this.charts.monthComparison = new ApexCharts(container, options);
+            this.charts.monthComparison.render();
+        },
+
+        async loadInsightsData() {
+            this.insightsLoading = true;
+            try {
+                // Fetch last 90 days for analysis
+                const endDate = parseDateOnly(this.today);
+                const startDate = parseDateOnly(this.today);
+                startDate.setDate(startDate.getDate() - 90);
+
+                const response = await fetchWithProfile(
+                    `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`
+                );
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    await this.$nextTick();
+                    this.createInsightsCharts(data.metrics);
+                    this.calculateInsights(data.metrics);
+                }
+            } catch (error) {
+                console.error('Error loading insights data:', error);
+            } finally {
+                this.insightsLoading = false;
+            }
+        },
+
+        createInsightsCharts(metricsData) {
+            this.createCorrelationChart(metricsData);
+            this.createDistributionChart(metricsData);
+        },
+
+        createCorrelationChart(metricsData) {
+            // Skip if either metric is hidden
+            if (!this.visibleMetrics.steps || !this.visibleMetrics.sleep_minutes) {
+                return;
+            }
+
+            if (this.charts.correlation) {
+                this.charts.correlation.destroy();
+            }
+
+            const container = document.getElementById('correlationChart');
+            if (!container) return;
+
+            const steps = metricsData.steps || [];
+            const sleep = metricsData.sleep_minutes || [];
+
+            // Match dates and create pairs
+            const pairs = [];
+            steps.forEach(stepData => {
+                const sleepData = sleep.find(s => s.date === stepData.date);
+                if (sleepData) {
+                    pairs.push([stepData.value, sleepData.value / 60]); // Convert sleep to hours
+                }
+            });
+
+            const options = {
+                series: [{
+                    name: 'Activity',
+                    data: pairs
+                }],
+                chart: {
+                    type: 'scatter',
+                    height: 300,
+                    toolbar: {
+                        show: false
+                    },
+                    zoom: {
+                        enabled: true,
+                        type: 'xy'
+                    }
+                },
+                xaxis: {
+                    title: {
+                        text: 'Steps'
+                    },
+                    labels: {
+                        formatter: (val) => Math.round(val).toLocaleString()
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Sleep (hours)'
+                    },
+                    labels: {
+                        formatter: (val) => val.toFixed(1)
+                    }
+                },
+                colors: ['#8b5cf6'],
+                tooltip: {
+                    custom: function({ seriesIndex, dataPointIndex, w }) {
+                        const point = w.config.series[0].data[dataPointIndex];
+                        return '<div style="padding: 8px;">' +
+                            '<strong>Steps:</strong> ' + Math.round(point[0]).toLocaleString() + '<br>' +
+                            '<strong>Sleep:</strong> ' + point[1].toFixed(1) + ' hours' +
+                            '</div>';
+                    }
+                }
+            };
+
+            this.charts.correlation = new ApexCharts(container, options);
+            this.charts.correlation.render();
+        },
+
+        createDistributionChart(metricsData) {
+            // Skip if steps metric is hidden
+            if (!this.visibleMetrics.steps) {
+                return;
+            }
+
+            if (this.charts.distribution) {
+                this.charts.distribution.destroy();
+            }
+
+            const container = document.getElementById('distributionChart');
+            if (!container) return;
+
+            const steps = (metricsData.steps || []).map(d => d.value);
+
+            // Create histogram bins
+            const bins = [0, 2000, 4000, 6000, 8000, 10000, 12000, 15000, 20000];
+            const binCounts = Array(bins.length - 1).fill(0);
+
+            steps.forEach(value => {
+                for (let i = 0; i < bins.length - 1; i++) {
+                    if (value >= bins[i] && value < bins[i + 1]) {
+                        binCounts[i]++;
+                        break;
+                    }
+                }
+            });
+
+            const categories = bins.slice(0, -1).map((bin, i) =>
+                `${(bin / 1000).toFixed(0)}k-${(bins[i + 1] / 1000).toFixed(0)}k`
+            );
+
+            const options = {
+                series: [{
+                    name: 'Days',
+                    data: binCounts
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 300,
+                    toolbar: {
+                        show: false
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        columnWidth: '80%'
+                    }
+                },
+                colors: ['#3b82f6'],
+                xaxis: {
+                    categories: categories,
+                    title: {
+                        text: 'Steps Range'
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Number of Days'
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: (val) => val + ' days'
+                    }
+                }
+            };
+
+            this.charts.distribution = new ApexCharts(container, options);
+            this.charts.distribution.render();
+        },
+
+        calculateInsights(metricsData) {
+            const steps = metricsData.steps || [];
+            const sleep = metricsData.sleep_minutes || [];
+
+            // Only calculate step-related insights if steps are visible
+            if (this.visibleMetrics.steps && steps.length > 0) {
+                // Find best day of week
+                const dayTotals = Array(7).fill(0);
+                const dayCounts = Array(7).fill(0);
+                steps.forEach(d => {
+                    const date = new Date(d.date + 'T00:00:00');
+                    const day = date.getDay();
+                    dayTotals[day] += d.value;
+                    dayCounts[day]++;
+                });
+
+                const dayAverages = dayTotals.map((total, i) => dayCounts[i] > 0 ? total / dayCounts[i] : 0);
+                const maxDayIndex = dayAverages.indexOf(Math.max(...dayAverages));
+                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                this.insights.best_day = dayNames[maxDayIndex];
+
+                // Calculate consistency (days with > 5000 steps)
+                const consistentDays = steps.filter(d => d.value >= 5000).length;
+                this.insights.consistency = Math.round((consistentDays / steps.length) * 100);
+            } else {
+                this.insights.best_day = '';
+                this.insights.consistency = 0;
+            }
+
+            // Only calculate sleep insights if sleep is visible
+            if (this.visibleMetrics.sleep_minutes && sleep.length > 0) {
+                const avgSleep = sleep.reduce((sum, d) => sum + d.value, 0) / sleep.length;
+                if (avgSleep >= 420) {
+                    this.insights.sleep_quality = 'Your sleep duration is excellent (averaging ' + this.formatSleepHours(avgSleep) + ')';
+                } else if (avgSleep >= 360) {
+                    this.insights.sleep_quality = 'Your sleep duration is good (averaging ' + this.formatSleepHours(avgSleep) + ')';
+                } else {
+                    this.insights.sleep_quality = 'Consider improving sleep duration (averaging ' + this.formatSleepHours(avgSleep) + ')';
+                }
+            } else {
+                this.insights.sleep_quality = '';
+            }
+
+            // Find improvement area based on visible metrics
+            const avgSteps = steps.length > 0 ? steps.reduce((sum, d) => sum + d.value, 0) / steps.length : 0;
+            const avgSleep = sleep.length > 0 ? sleep.reduce((sum, d) => sum + d.value, 0) / sleep.length : 0;
+
+            if (this.visibleMetrics.steps && avgSteps < 7000) {
+                this.insights.improvement_area = 'Increase daily steps (currently averaging ' + Math.round(avgSteps).toLocaleString() + ')';
+            } else if (this.visibleMetrics.sleep_minutes && avgSleep < 420) {
+                this.insights.improvement_area = 'Focus on getting more sleep';
+            } else if (this.visibleMetrics.steps || this.visibleMetrics.sleep_minutes) {
+                this.insights.improvement_area = 'Great job! Keep up the consistency';
+            } else {
+                this.insights.improvement_area = '';
+            }
         }
     }
 }

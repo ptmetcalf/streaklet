@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>{% block title %}Streaklet{% endblock %}</title>
 
     <!-- PWA Meta Tags -->
@@ -138,10 +138,10 @@
             padding-top: 2.5rem;
         }
 
-        /* Desktop adjustments for profile indicator + top nav */
+        /* Desktop adjustments for profile indicator */
         @media (min-width: 768px) {
             body {
-                padding-top: 120px; /* Profile indicator (~40px) + Nav (~60px) + spacing */
+                padding-top: 60px; /* Profile indicator (~40px) + spacing */
             }
             .container {
                 padding-top: 20px;
@@ -173,8 +173,19 @@
 
     {% block content %}{% endblock %}
 
-    <nav class="nav">
-        <a href="/" class="nav-item {{ 'active' if request.url.path == '/' else '' }}" title="Today's Checklist">
+    <nav class="nav" x-data="{ fitbitConnected: false }" x-init="async () => {
+        const profileId = localStorage.getItem('streaklet_profile_id');
+        if (profileId) {
+            try {
+                const response = await fetch('/api/fitbit/connection', { headers: { 'X-Profile-Id': profileId } });
+                if (response.ok) {
+                    const data = await response.json();
+                    fitbitConnected = data.connected;
+                }
+            } catch (e) {}
+        }
+    }">
+        <a href="/" class="nav-item {{ 'active' if request.url.path == '/' else '' }}" title="Today's Checklist" onclick="localStorage.removeItem('streaklet_last_tab')">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 11l3 3L22 4"></path>
                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
@@ -190,7 +201,13 @@
             </svg>
             <span class="nav-label">History</span>
         </a>
-        <a href="/settings" class="nav-item {{ 'active' if request.url.path == '/settings' or request.url.path == '/fitbit' or request.url.path == '/profiles' else '' }}" title="Settings & Integrations">
+        <a x-show="fitbitConnected" href="/fitbit" class="nav-item {{ 'active' if request.url.path == '/fitbit' else '' }}" title="Fitbit Metrics">
+            <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+            <span class="nav-label">Fitbit</span>
+        </a>
+        <a href="/settings" class="nav-item {{ 'active' if request.url.path == '/settings' or request.url.path == '/profiles' else '' }}" title="Settings & Integrations">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M12 1v6m0 6v6m5.2-13.2l-4.3 4.3m-3.9 3.9L4.8 19.2M23 12h-6m-6 0H1m18.2 5.2l-4.3-4.3m-3.9-3.9L4.8 4.8"></path>

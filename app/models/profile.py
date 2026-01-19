@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.db import Base
 
@@ -11,3 +12,6 @@ class Profile(Base):
     color = Column(String, default="#3b82f6", nullable=False)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+
+    # Relationships
+    fitbit_preferences = relationship("FitbitPreferences", back_populates="profile", uselist=False, cascade="all, delete-orphan")

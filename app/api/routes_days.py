@@ -28,7 +28,22 @@ async def get_today_info(
     from app.services.fitbit_checks import evaluate_and_apply_auto_checks
     await evaluate_and_apply_auto_checks(db, profile_id, today)
 
-    active_tasks = task_service.get_active_tasks(db, profile_id)
+    # Get daily tasks and scheduled tasks that are due today
+    from app.models.task import Task
+    from sqlalchemy import or_
+    active_tasks = db.query(Task).filter(
+        and_(
+            Task.is_active == True,
+            Task.user_id == profile_id,
+            or_(
+                Task.task_type == 'daily',
+                and_(
+                    Task.task_type == 'scheduled',
+                    Task.next_occurrence_date == today
+                )
+            )
+        )
+    ).order_by(Task.sort_order).all()
     checks_map = {
         check.task_id: check
         for check in check_service.get_checks_for_date(db, today, profile_id)
@@ -45,6 +60,13 @@ async def get_today_info(
         fitbit_progress = {}
         if task.fitbit_metric_type and task.fitbit_goal_value:
             fitbit_progress = get_task_fitbit_progress(db, task, today, profile_id)
+
+        # Calculate per-task streak
+        task_streak, last_completed = streak_service.calculate_task_streak(db, task.id, profile_id)
+
+        # Determine next milestone
+        milestones = [3, 7, 14, 21, 30, 45, 60, 90, 100, 180, 365]
+        next_milestone = next((m for m in milestones if m > task_streak), None)
 
         tasks_with_checks.append(
             TaskWithCheck(
@@ -64,6 +86,10 @@ async def get_today_info(
                 fitbit_current_value=fitbit_progress.get("current_value"),
                 fitbit_goal_met=fitbit_progress.get("goal_met", False),
                 fitbit_unit=fitbit_progress.get("unit"),
+                # Per-task streak
+                task_streak=task_streak,
+                task_last_completed=last_completed,
+                task_streak_milestone=next_milestone,
             )
         )
 
@@ -120,6 +146,13 @@ async def get_day_info(
         if task.fitbit_metric_type and task.fitbit_goal_value:
             fitbit_progress = get_task_fitbit_progress(db, task, check_date, profile_id)
 
+        # Calculate per-task streak
+        task_streak, last_completed = streak_service.calculate_task_streak(db, task.id, profile_id)
+
+        # Determine next milestone
+        milestones = [3, 7, 14, 21, 30, 45, 60, 90, 100, 180, 365]
+        next_milestone = next((m for m in milestones if m > task_streak), None)
+
         tasks_with_checks.append(
             TaskWithCheck(
                 id=task.id,
@@ -138,6 +171,10 @@ async def get_day_info(
                 fitbit_current_value=fitbit_progress.get("current_value"),
                 fitbit_goal_met=fitbit_progress.get("goal_met", False),
                 fitbit_unit=fitbit_progress.get("unit"),
+                # Per-task streak
+                task_streak=task_streak,
+                task_last_completed=last_completed,
+                task_streak_milestone=next_milestone,
             )
         )
 

@@ -293,3 +293,119 @@ def test_get_today_info_no_active_tasks(client: TestClient, test_db: Session, sa
     # (The service returns False when no required tasks exist)
     assert data["all_required_complete"] is False
     assert data["streak"]["current_streak"] == 0
+
+
+def test_today_endpoint_includes_task_streaks(client: TestClient, test_db: Session, sample_tasks):
+    """Test /api/days/today returns task_streak fields."""
+    today = date.today()
+
+    # Create a 3-day streak for task 1
+    for i in range(3):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "tasks" in data
+    for task in data["tasks"]:
+        # Verify task streak fields are present
+        assert "task_streak" in task
+        assert "task_last_completed" in task
+        assert "task_streak_milestone" in task
+
+    # Task 1 should have a 3-day streak
+    task1 = next(t for t in data["tasks"] if t["id"] == 1)
+    assert task1["task_streak"] == 3
+    assert task1["task_last_completed"] == today.isoformat()
+    assert task1["task_streak_milestone"] == 7  # Next milestone
+
+
+def test_task_streak_different_values_per_task(client: TestClient, test_db: Session, sample_tasks):
+    """Test that different tasks can have different streak values."""
+    today = date.today()
+
+    # Task 1: 5-day streak
+    for i in range(5):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    # Task 2: 2-day streak
+    for i in range(2):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=2, checked=True, profile_id=1)
+
+    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    task1 = next(t for t in data["tasks"] if t["id"] == 1)
+    task2 = next(t for t in data["tasks"] if t["id"] == 2)
+    task3 = next(t for t in data["tasks"] if t["id"] == 3)
+
+    assert task1["task_streak"] == 5
+    assert task2["task_streak"] == 2
+    assert task3["task_streak"] == 0  # No checks for task 3
+
+
+def test_task_streak_milestone_calculation(client: TestClient, test_db: Session, sample_tasks):
+    """Test that milestone calculation works correctly."""
+    today = date.today()
+
+    # Create a 10-day streak for task 1
+    for i in range(10):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    task1 = next(t for t in data["tasks"] if t["id"] == 1)
+    assert task1["task_streak"] == 10
+    assert task1["task_streak_milestone"] == 14  # Next milestone after 10
+
+
+def test_task_streak_zero_for_no_checks(client: TestClient, sample_tasks):
+    """Test that task streak is 0 when task has no checks."""
+    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    # All tasks should have 0 streak initially
+    for task in data["tasks"]:
+        assert task["task_streak"] == 0 or task["task_streak"] is None
+        assert task["task_last_completed"] is None
+
+
+def test_get_specific_day_includes_task_streaks(client: TestClient, test_db: Session, sample_tasks):
+    """Test /api/days/{date} endpoint also includes task streak fields."""
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+
+    # Create a streak for task 1
+    for i in range(3):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    response = client.get(f"/api/days/{yesterday}", headers={"X-Profile-Id": "1"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    task1 = next(t for t in data["tasks"] if t["id"] == 1)
+    assert "task_streak" in task1
+    assert "task_last_completed" in task1
+    assert "task_streak_milestone" in task1
+    # Streak calculation should work for any date
+    assert task1["task_streak"] == 3

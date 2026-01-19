@@ -25,11 +25,17 @@ FITBIT_TOKEN_URL = "https://api.fitbit.com/oauth2/token"
 FITBIT_REVOKE_URL = "https://api.fitbit.com/oauth2/revoke"
 
 # OAuth scopes
+# Note: Extended metrics (cardio_fitness, respiratory_rate, oxygen_saturation, temperature)
+# require specific Fitbit device models with those sensors and may require Fitbit Premium.
 FITBIT_SCOPES = [
     "activity",
     "heartrate",
     "sleep",
-    "profile"
+    "profile",
+    "cardio_fitness",      # VO2 Max / Cardio Fitness Score
+    "respiratory_rate",    # Breathing rate during sleep
+    "oxygen_saturation",   # SpO2 blood oxygen levels
+    "temperature"          # Skin temperature variation
 ]
 
 

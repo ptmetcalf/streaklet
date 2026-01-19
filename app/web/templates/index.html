@@ -3,7 +3,7 @@
 {% block title %}Streaklet - Today's Checklist{% endblock %}
 
 {% block content %}
-<div class="container" x-data="checklist()" x-init="await loadTodayData()">
+<div class="container" x-data="checklist()" x-init="await loadAllTasks()">
     <header>
         <div class="header-content">
             <div>
@@ -20,33 +20,152 @@
         <div class="milestone-next" x-show="nextMilestoneMessage" x-text="nextMilestoneMessage"></div>
     </header>
 
-    <div class="checklist">
-        <template x-for="task in tasks" :key="task.id">
-            <div
-                class="task-item"
-                :class="{ 'checked': task.checked }"
-                @click="toggleTask(task)"
-            >
-                <div class="checkbox">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
+    <!-- Task Type Tabs -->
+    <div class="task-tabs">
+        <button class="tab-button"
+                :class="{ 'active': activeTab === 'daily' }"
+                @click="switchTab('daily')">
+            <span>Daily</span>
+            <span class="badge-count" x-show="dailyCount > 0" x-text="dailyCount"></span>
+        </button>
+        <button class="tab-button"
+                :class="{ 'active': activeTab === 'punch_list' }"
+                @click="switchTab('punch_list')">
+            <span>Todo List</span>
+            <span class="badge-count" x-show="punchListCount > 0" x-text="punchListCount"></span>
+        </button>
+        <button class="tab-button"
+                :class="{ 'active': activeTab === 'scheduled' }"
+                @click="switchTab('scheduled')">
+            <span>Scheduled</span>
+            <span class="badge-count" x-show="scheduledCount > 0" x-text="scheduledCount"></span>
+        </button>
+    </div>
+
+    <!-- Daily Tasks Tab -->
+    <div x-show="activeTab === 'daily'" class="tab-content">
+        <div class="checklist">
+            <template x-for="task in dailyTasks" :key="task.id">
+                <div
+                    class="task-item"
+                    :class="{ 'checked': task.checked }"
+                    @click="toggleTask(task)"
+                >
+                    <div class="checkbox">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="task-content">
+                        <div class="task-title" x-text="task.title"></div>
+                        <!-- Fitbit Progress Badge -->
+                        <div x-show="task.fitbit_metric_type && task.fitbit_current_value != null"
+                             class="fitbit-progress"
+                             :class="{ 'goal-met': task.fitbit_goal_met }">
+                            <span class="fitbit-icon">📊</span>
+                            <span x-text="formatFitbitProgress(task)"></span>
+                        </div>
+                        <!-- Per-Task Streak Badge -->
+                        <div x-show="task.task_streak && task.task_streak > 0"
+                             class="task-streak-badge"
+                             :class="getStreakBadgeClass(task.task_streak)"
+                             :title="`${task.task_streak}-day streak${task.task_streak_milestone ? ' • Next: ' + task.task_streak_milestone + ' days' : ''}`">
+                            <span class="streak-icon">🔥</span>
+                            <span x-text="task.task_streak"></span>
+                            <span class="streak-label">day<span x-show="task.task_streak !== 1">s</span></span>
+                        </div>
+                    </div>
+                    <span class="task-badge" :class="{ 'required': task.is_required }" x-show="task.is_required">
+                        Required
+                    </span>
                 </div>
-                <div class="task-content">
-                    <div class="task-title" x-text="task.title"></div>
-                    <!-- Fitbit Progress Badge -->
-                    <div x-show="task.fitbit_metric_type && task.fitbit_current_value != null"
-                         class="fitbit-progress"
-                         :class="{ 'goal-met': task.fitbit_goal_met }">
-                        <span class="fitbit-icon">📊</span>
-                        <span x-text="formatFitbitProgress(task)"></span>
+            </template>
+        </div>
+    </div>
+
+    <!-- Todo List Tab -->
+    <div x-show="activeTab === 'punch_list'" class="tab-content">
+        <!-- Active/Incomplete Todo Items -->
+        <div class="checklist">
+            <template x-for="task in activePunchListTasks" :key="task.id">
+                <div class="task-item punch-list-item"
+                     :class="{ 'overdue': isOverdue(task) }"
+                     @click="togglePunchListTask(task)">
+                    <div class="checkbox">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="task-content">
+                        <div class="task-title" x-text="task.title"></div>
+                        <div class="task-meta" x-show="task.due_date">
+                            <span x-text="formatDueDate(task.due_date)"></span>
+                        </div>
                     </div>
                 </div>
-                <span class="task-badge" :class="{ 'required': task.is_required }" x-show="task.is_required">
-                    Required
-                </span>
+            </template>
+            <div x-show="activePunchListTasks.length === 0 && completedPunchListTasks.length === 0" class="empty-state">
+                <p>No todo items yet. Add one-off tasks from the Settings page.</p>
             </div>
-        </template>
+        </div>
+
+        <!-- Completed Todo Items (Collapsible) -->
+        <div x-show="completedPunchListTasks.length > 0" style="margin-top: 16px;">
+            <button @click="showCompletedTodos = !showCompletedTodos"
+                    style="width: 100%; padding: 12px; background: none; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #666;">
+                <span>
+                    <span x-text="`Completed (${completedPunchListTasks.length})`"></span>
+                    <span style="font-size: 12px; margin-left: 8px; color: #999;">auto-archive after 7 days</span>
+                </span>
+                <svg :style="showCompletedTodos ? 'transform: rotate(180deg)' : ''" style="width: 16px; height: 16px; transition: transform 0.2s;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+
+            <div x-show="showCompletedTodos" x-collapse class="checklist" style="margin-top: 8px; opacity: 0.7;">
+                <template x-for="task in completedPunchListTasks" :key="task.id">
+                    <div class="task-item punch-list-item checked"
+                         @click="togglePunchListTask(task)">
+                        <div class="checkbox">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="task-content">
+                            <div class="task-title" x-text="task.title"></div>
+                            <div class="task-meta" x-show="task.completed_at">
+                                <span x-text="`Completed ${formatCompletedDate(task.completed_at)}`"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scheduled Tasks Tab -->
+    <div x-show="activeTab === 'scheduled'" class="tab-content">
+        <div class="checklist">
+            <template x-for="task in scheduledTasksDueToday" :key="task.id">
+                <div class="task-item scheduled-item"
+                     :class="{ 'checked': task.checked }"
+                     @click="toggleTask(task)">
+                    <div class="checkbox">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                    </div>
+                    <div class="task-content">
+                        <div class="task-title" x-text="task.title"></div>
+                        <div class="recurrence-badge" x-text="formatRecurrence(task)"></div>
+                    </div>
+                    <span class="task-badge required" x-show="task.is_required">Required</span>
+                </div>
+            </template>
+            <div x-show="scheduledTasksDueToday.length === 0" class="empty-state">
+                <p>No scheduled tasks due today. Add recurring tasks from the Settings page.</p>
+            </div>
+        </div>
     </div>
 
     <div class="milestone-toast" x-show="showToast" x-text="toastMessage"></div>
@@ -55,7 +174,9 @@
 <script>
 function checklist() {
     return {
+        // Daily tasks state
         tasks: [],
+        dailyTasks: [],
         streak: 0,
         date: null,
         todayComplete: false,
@@ -64,6 +185,33 @@ function checklist() {
         nextMilestoneMessage: '',
         showToast: false,
         toastMessage: '',
+
+        // Punch list state
+        punchListTasks: [],
+        showCompletedTodos: false,
+
+        // Scheduled tasks state
+        scheduledTasksDueToday: [],
+
+        // Tab state
+        activeTab: 'daily',
+
+        // Badge counts
+        get dailyCount() {
+            return this.dailyTasks.filter(t => !t.checked && t.is_required).length;
+        },
+        get punchListCount() {
+            return this.punchListTasks.filter(t => !t.completed_at).length;
+        },
+        get scheduledCount() {
+            return this.scheduledTasksDueToday.filter(t => !t.checked && t.is_required).length;
+        },
+        get activePunchListTasks() {
+            return this.punchListTasks.filter(t => !t.completed_at);
+        },
+        get completedPunchListTasks() {
+            return this.punchListTasks.filter(t => t.completed_at);
+        },
 
         get formattedDate() {
             if (!this.date) return '';
@@ -109,6 +257,171 @@ function checklist() {
             return Math.round((this.completedCount / this.requiredCount) * 100);
         },
 
+        // Tab switching
+        switchTab(tab) {
+            this.activeTab = tab;
+            localStorage.setItem('streaklet_last_tab', tab);
+        },
+
+        // Load all task types
+        async loadAllTasks() {
+            await this.loadDailyTasks();
+            await this.loadPunchListTasks();
+            await this.loadScheduledTasks();
+
+            // Restore last active tab
+            const lastTab = localStorage.getItem('streaklet_last_tab');
+            if (lastTab && ['daily', 'punch_list', 'scheduled'].includes(lastTab)) {
+                this.activeTab = lastTab;
+            }
+        },
+
+        async loadDailyTasks() {
+            try {
+                const response = await fetchWithProfile('/api/days/today');
+                const data = await response.json();
+                this.tasks = data.tasks;
+                this.dailyTasks = data.tasks;  // For now, all tasks from /api/days/today are daily
+                this.streak = data.streak.current_streak;
+                this.todayComplete = data.streak.today_complete;
+                this.lastCompletedDate = data.streak.last_completed_date;
+                this.date = data.date;
+                this.updateCelebration();
+            } catch (error) {
+                console.error('Error loading daily tasks:', error);
+            }
+        },
+
+        async loadPunchListTasks() {
+            try {
+                const response = await fetchWithProfile('/api/punch-list');
+                this.punchListTasks = await response.json();
+            } catch (error) {
+                console.error('Error loading punch list tasks:', error);
+            }
+        },
+
+        async loadScheduledTasks() {
+            try {
+                const response = await fetchWithProfile('/api/scheduled/due-today');
+                this.scheduledTasksDueToday = await response.json();
+            } catch (error) {
+                console.error('Error loading scheduled tasks:', error);
+            }
+        },
+
+        async toggleTask(task) {
+            const newChecked = !task.checked;
+            const previousStreak = task.task_streak || 0;
+
+            try {
+                const response = await fetchWithProfile(`/api/days/${this.date}/checks/${task.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ checked: newChecked })
+                });
+
+                if (response.ok) {
+                    task.checked = newChecked;
+                    task.checked_at = newChecked ? new Date().toISOString() : null;
+
+                    // Reload to get updated streak data
+                    await this.loadDailyTasks();
+
+                    // Find the updated task
+                    const updatedTask = this.tasks.find(t => t.id === task.id);
+                    const newStreak = updatedTask?.task_streak || 0;
+
+                    // Trigger per-task celebration if milestone reached
+                    if (newChecked && newStreak > previousStreak) {
+                        this.celebrateTaskMilestone(updatedTask, newStreak);
+                    }
+
+                    // Update overall celebration
+                    const streakResponse = await fetchWithProfile('/api/streak');
+                    const streakData = await streakResponse.json();
+                    this.streak = streakData.current_streak;
+                    this.todayComplete = streakData.today_complete;
+                    this.lastCompletedDate = streakData.last_completed_date;
+                    this.updateCelebration(true);
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+            }
+        },
+
+        async togglePunchListTask(task) {
+            try {
+                const endpoint = task.completed_at
+                    ? `/api/punch-list/${task.id}/complete`
+                    : `/api/punch-list/${task.id}/complete`;
+
+                const method = task.completed_at ? 'DELETE' : 'POST';
+
+                const response = await fetchWithProfile(endpoint, { method });
+                if (response.ok) {
+                    await this.loadPunchListTasks();
+                }
+            } catch (error) {
+                console.error('Error toggling punch list task:', error);
+            }
+        },
+
+        formatRecurrence(task) {
+            if (!task.recurrence_pattern) return '';
+
+            const pattern = task.recurrence_pattern;
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+            if (pattern.type === 'weekly') {
+                return `📅 Weekly on ${days[pattern.day_of_week]}`;
+            }
+            if (pattern.type === 'monthly') {
+                const nth = (n) => {
+                    const s = ['th', 'st', 'nd', 'rd'];
+                    const v = n % 100;
+                    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                };
+                return `📅 Monthly on ${nth(pattern.day_of_month)}`;
+            }
+            if (pattern.type === 'days') {
+                return `📅 Every ${pattern.interval} day${pattern.interval !== 1 ? 's' : ''}`;
+            }
+            return '';
+        },
+
+        isOverdue(task) {
+            if (!task.due_date || task.completed_at) return false;
+            const today = new Date().toISOString().split('T')[0];
+            return task.due_date < today;
+        },
+
+        formatDueDate(dueDate) {
+            if (!dueDate) return '';
+            const due = new Date(dueDate + 'T00:00:00');
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const diff = Math.floor((due - today) / (1000 * 60 * 60 * 24));
+
+            if (diff < 0) return `⚠️ ${Math.abs(diff)} day${Math.abs(diff) !== 1 ? 's' : ''} overdue`;
+            if (diff === 0) return '📅 Due today';
+            if (diff === 1) return '📅 Due tomorrow';
+            return `📅 Due in ${diff} day${diff !== 1 ? 's' : ''}`;
+        },
+
+        formatCompletedDate(completedAt) {
+            if (!completedAt) return '';
+            const completed = new Date(completedAt);
+            const today = new Date();
+            const diffMs = today - completed;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 0) return 'today';
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays < 7) return `${diffDays} days ago`;
+            return completed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        },
+
         formatFitbitProgress(task) {
             if (!task.fitbit_current_value || !task.fitbit_goal_value) return '';
 
@@ -145,45 +458,14 @@ function checklist() {
             return `${currentStr} / ${goalStr}`;
         },
 
-        async loadTodayData() {
-            try {
-                const response = await fetchWithProfile('/api/days/today');
-                const data = await response.json();
-                this.tasks = data.tasks;
-                this.streak = data.streak.current_streak;
-                this.todayComplete = data.streak.today_complete;
-                this.lastCompletedDate = data.streak.last_completed_date;
-                this.date = data.date;
-                this.updateCelebration();
-            } catch (error) {
-                console.error('Error loading today data:', error);
-            }
-        },
-
-        async toggleTask(task) {
-            const newChecked = !task.checked;
-
-            try {
-                const response = await fetchWithProfile(`/api/days/${this.date}/checks/${task.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ checked: newChecked })
-                });
-
-                if (response.ok) {
-                    task.checked = newChecked;
-                    task.checked_at = newChecked ? new Date().toISOString() : null;
-
-                    const streakResponse = await fetchWithProfile('/api/streak');
-                    const streakData = await streakResponse.json();
-                    this.streak = streakData.current_streak;
-                    this.todayComplete = streakData.today_complete;
-                    this.lastCompletedDate = streakData.last_completed_date;
-                    this.updateCelebration(true);
-                }
-            } catch (error) {
-                console.error('Error updating task:', error);
-            }
+        getStreakBadgeClass(streak) {
+            // Color tiers based on streak length
+            if (streak >= 100) return 'streak-legendary';  // Gold
+            if (streak >= 60) return 'streak-epic';        // Purple
+            if (streak >= 30) return 'streak-amazing';     // Blue
+            if (streak >= 14) return 'streak-great';       // Green
+            if (streak >= 7) return 'streak-good';         // Light green
+            return 'streak-building';                       // Gray
         },
 
         updateCelebration(showToast = false) {
@@ -233,213 +515,72 @@ function checklist() {
             }, 3000);
         },
 
+        celebrateTaskMilestone(task, streak) {
+            const confettiEnabled = localStorage.getItem('streaklet_confetti_enabled');
+            if (confettiEnabled === 'false') return;
+
+            // Milestone thresholds for per-task celebrations
+            const milestones = [3, 7, 14, 21, 30, 45, 60, 90, 100, 180, 365];
+
+            if (!milestones.includes(streak)) return;
+
+            // Show toast notification
+            this.toastMessage = `🔥 ${task.title}: ${streak}-day streak!`;
+            this.showToast = true;
+            setTimeout(() => {
+                this.showToast = false;
+            }, 3000);
+
+            // Trigger smaller confetti burst for task milestone
+            if (typeof confetti === 'undefined') return;
+
+            // Scale celebration based on streak tier
+            let particleCount = 50;
+            let colors = ['#52c41a', '#73d13d', '#95de64'];
+
+            if (streak >= 100) {
+                particleCount = 150;
+                colors = ['#ffd700', '#ffed4e', '#ffa940'];
+            } else if (streak >= 60) {
+                particleCount = 100;
+                colors = ['#722ed1', '#9254de', '#b37feb'];
+            } else if (streak >= 30) {
+                particleCount = 80;
+                colors = ['#1890ff', '#40a9ff', '#69c0ff'];
+            }
+
+            // Single burst from center
+            confetti({
+                particleCount: particleCount,
+                spread: 60,
+                origin: { y: 0.6 },
+                colors: colors,
+                ticks: 150
+            });
+        },
+
         triggerConfetti(streakLength) {
             if (typeof confetti === 'undefined') return;
 
             const streak = streakLength || 1;
 
-            // Level 1: Days 1-2 - Simple celebration
-            if (streak <= 2) {
+            // Simple celebration for days 1-6
+            if (streak <= 6) {
                 confetti({
-                    particleCount: 80,
-                    spread: 60,
+                    particleCount: 100,
+                    spread: 70,
                     origin: { y: 0.6 },
                     colors: ['#52c41a', '#73d13d', '#95de64']
                 });
             }
-            // Level 2: Days 3-6 - Enhanced burst
-            else if (streak <= 6) {
-                confetti({
-                    particleCount: 120,
-                    spread: 80,
-                    origin: { y: 0.6 },
-                    colors: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f'],
-                    ticks: 200
-                });
-            }
-            // Level 3: Days 7-13 - Double burst (first milestone!)
-            else if (streak <= 13) {
-                // Center burst
+            // Enhanced for 7+ days
+            else {
                 confetti({
                     particleCount: 150,
                     spread: 100,
                     origin: { y: 0.6 },
-                    colors: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f', '#d9f7be']
+                    colors: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f']
                 });
-                // Side cannons
-                setTimeout(() => {
-                    confetti({
-                        particleCount: 80,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0, y: 0.6 },
-                        colors: ['#3b82f6', '#667eea', '#764ba2']
-                    });
-                    confetti({
-                        particleCount: 80,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1, y: 0.6 },
-                        colors: ['#f5222d', '#fa541c', '#fa8c16']
-                    });
-                }, 250);
-            }
-            // Level 4: Days 14-29 - Triple burst with rainbow
-            else if (streak <= 29) {
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
-
-                // Main burst
-                confetti({
-                    particleCount: 200,
-                    spread: 120,
-                    origin: { y: 0.6 },
-                    colors: colors,
-                    ticks: 300
-                });
-
-                // Left and right cannons
-                [0, 250, 500].forEach((delay) => {
-                    setTimeout(() => {
-                        confetti({
-                            particleCount: 100,
-                            angle: 60,
-                            spread: 70,
-                            origin: { x: 0, y: 0.7 },
-                            colors: colors
-                        });
-                        confetti({
-                            particleCount: 100,
-                            angle: 120,
-                            spread: 70,
-                            origin: { x: 1, y: 0.7 },
-                            colors: colors
-                        });
-                    }, delay);
-                });
-            }
-            // Level 5: Days 30-59 - Fireworks style
-            else if (streak <= 59) {
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3'];
-
-                // Continuous bursts from different positions
-                const positions = [
-                    { x: 0.2, y: 0.5 },
-                    { x: 0.5, y: 0.4 },
-                    { x: 0.8, y: 0.5 },
-                    { x: 0.35, y: 0.6 },
-                    { x: 0.65, y: 0.6 }
-                ];
-
-                positions.forEach((pos, i) => {
-                    setTimeout(() => {
-                        confetti({
-                            particleCount: 150,
-                            spread: 360,
-                            startVelocity: 30,
-                            decay: 0.9,
-                            scalar: 1.2,
-                            origin: pos,
-                            colors: colors,
-                            shapes: ['circle', 'square']
-                        });
-                    }, i * 150);
-                });
-            }
-            // Level 6: Days 60-89 - Epic multi-wave
-            else if (streak <= 89) {
-                const duration = 3000;
-                const animationEnd = Date.now() + duration;
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3', '#ff1493'];
-
-                (function frame() {
-                    confetti({
-                        particleCount: 7,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 },
-                        colors: colors
-                    });
-                    confetti({
-                        particleCount: 7,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 },
-                        colors: colors
-                    });
-
-                    if (Date.now() < animationEnd) {
-                        requestAnimationFrame(frame);
-                    }
-                }());
-
-                // Center explosions
-                setTimeout(() => {
-                    confetti({
-                        particleCount: 200,
-                        spread: 200,
-                        origin: { y: 0.5 },
-                        colors: colors,
-                        shapes: ['circle', 'square', 'star']
-                    });
-                }, 500);
-            }
-            // Level 7: Days 90+ - ULTIMATE CELEBRATION
-            else {
-                const duration = 4000;
-                const animationEnd = Date.now() + duration;
-                const colors = ['#ff0000', '#ff7f00', '#ffff00', '#00ff00', '#0000ff', '#4b0082', '#9400d3', '#ff1493', '#ffd700'];
-
-                // Continuous side cannons
-                (function frame() {
-                    confetti({
-                        particleCount: 10,
-                        angle: 60,
-                        spread: 55,
-                        origin: { x: 0 },
-                        colors: colors,
-                        shapes: ['circle', 'square', 'star']
-                    });
-                    confetti({
-                        particleCount: 10,
-                        angle: 120,
-                        spread: 55,
-                        origin: { x: 1 },
-                        colors: colors,
-                        shapes: ['circle', 'square', 'star']
-                    });
-
-                    if (Date.now() < animationEnd) {
-                        requestAnimationFrame(frame);
-                    }
-                }());
-
-                // Multiple explosions at different times
-                [0, 500, 1000, 1500, 2000, 2500].forEach((delay) => {
-                    setTimeout(() => {
-                        confetti({
-                            particleCount: 250,
-                            spread: 360,
-                            startVelocity: 40,
-                            decay: 0.85,
-                            scalar: 1.5,
-                            origin: { x: 0.5, y: 0.4 },
-                            colors: colors,
-                            shapes: ['circle', 'square', 'star']
-                        });
-                    }, delay);
-                });
-
-                // Emoji confetti
-                setTimeout(() => {
-                    confetti({
-                        particleCount: 50,
-                        spread: 100,
-                        origin: { y: 0.6 },
-                        scalar: 2,
-                        shapes: ['circle'],
-                        colors: ['#FFD700', '#FFA500', '#FF69B4']
-                    });
-                }, 1000);
             }
         }
     }
@@ -479,6 +620,17 @@ function checklist() {
 .fitbit-icon {
     font-size: 14px;
     line-height: 1;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #999;
+}
+
+.empty-state p {
+    margin: 0;
+    font-size: 14px;
 }
 </style>
 {% endblock %}

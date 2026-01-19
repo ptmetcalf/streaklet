@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, Float, DateTime, Date, ForeignKey, JSON
 from sqlalchemy.sql import func
 from app.core.db import Base
 
@@ -12,6 +12,19 @@ class Task(Base):
     sort_order = Column(Integer, nullable=False, default=0)
     is_required = Column(Boolean, nullable=False, default=True)
     is_active = Column(Boolean, nullable=False, default=True)
+
+    # Task type discriminator
+    task_type = Column(String, nullable=False, default='daily', index=True)
+
+    # Punch list fields
+    due_date = Column(Date, nullable=True, index=True)
+    completed_at = Column(DateTime, nullable=True)
+    archived_at = Column(DateTime, nullable=True)
+
+    # Scheduled task fields
+    recurrence_pattern = Column(JSON, nullable=True)
+    last_occurrence_date = Column(Date, nullable=True)
+    next_occurrence_date = Column(Date, nullable=True, index=True)
 
     # Fitbit integration fields
     fitbit_metric_type = Column(String, nullable=True, index=True)

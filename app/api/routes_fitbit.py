@@ -23,9 +23,11 @@ from app.schemas.fitbit import (
     FitbitConnectResponse,
     FitbitSyncStatus,
     FitbitMetricResponse,
-    FitbitDailySummary
+    FitbitDailySummary,
+    FitbitPreferencesResponse,
+    FitbitPreferencesUpdate
 )
-from app.services import fitbit_oauth, fitbit_connection
+from app.services import fitbit_oauth, fitbit_connection, fitbit_preferences
 from app.models.fitbit_metric import FitbitMetric
 
 
@@ -330,3 +332,77 @@ def get_metrics_history(
         "end_date": end_date.isoformat(),
         "metrics": data_by_type
     }
+
+
+@router.get("/preferences", response_model=FitbitPreferencesResponse)
+def get_preferences(
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """
+    Get Fitbit display preferences for current profile.
+
+    Returns preferences for metric visibility, custom goals, and dashboard settings.
+    Creates default preferences if they don't exist.
+    """
+    prefs = fitbit_preferences.get_preferences(db, profile_id)
+    return prefs
+
+
+@router.put("/preferences", response_model=FitbitPreferencesResponse)
+def update_preferences(
+    preferences: FitbitPreferencesUpdate,
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """
+    Update Fitbit preferences for current profile.
+
+    Allows customization of:
+    - Which metrics to show/hide in dashboard
+    - Custom goal values (steps, sleep, etc.)
+    - Default tab preference
+    """
+    prefs = fitbit_preferences.update_preferences(db, profile_id, preferences)
+    return prefs
+
+
+@router.post("/preferences/reset", response_model=FitbitPreferencesResponse)
+def reset_preferences(
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """
+    Reset Fitbit preferences to defaults.
+
+    Resets all visibility toggles, goals, and dashboard settings.
+    """
+    prefs = fitbit_preferences.reset_preferences(db, profile_id)
+    return prefs
+
+
+@router.get("/preferences/visible-metrics")
+def get_visible_metrics(
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """
+    Get list of visible metrics for current profile.
+
+    Returns a simple map of metric names to visibility status.
+    Used by frontend to filter which metrics to display.
+    """
+    return fitbit_preferences.get_visible_metrics(db, profile_id)
+
+
+@router.get("/preferences/goals")
+def get_goals(
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """
+    Get goal values for current profile.
+
+    Returns custom goals or defaults for steps, sleep, active minutes, etc.
+    """
+    return fitbit_preferences.get_goals(db, profile_id)

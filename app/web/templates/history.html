@@ -4,24 +4,25 @@
 
 {% block content %}
 <div class="container" x-data="calendar()" x-init="await loadHistoryData()">
-    <header>
-        <div class="header-content">
-            <h1>Completion History</h1>
+    <header class="history-header">
+        <div class="history-header-top">
+            <h1>History</h1>
+            <div class="streak-summary-compact">
+                <div class="streak-stat-compact">
+                    <span class="streak-value-compact" x-text="streak.current_streak"></span>
+                    <span class="streak-label-compact">day streak</span>
+                </div>
+                <div class="streak-divider">•</div>
+                <div class="streak-stat-compact">
+                    <span class="streak-value-compact" x-text="completionRate + '%'"></span>
+                    <span class="streak-label-compact">this month</span>
+                </div>
+            </div>
         </div>
         <div class="calendar-nav">
             <a :href="`/history?year=${prevYear}&month=${prevMonth}`" class="nav-arrow">‹</a>
             <div class="calendar-month-year" x-text="monthYearDisplay"></div>
             <a :href="`/history?year=${nextYear}&month=${nextMonth}`" class="nav-arrow">›</a>
-        </div>
-        <div class="streak-summary">
-            <div class="streak-stat">
-                <div class="streak-value" x-text="streak.current_streak"></div>
-                <div class="streak-label">Current Streak</div>
-            </div>
-            <div class="streak-stat">
-                <div class="streak-value" x-text="completionRate + '%'"></div>
-                <div class="streak-label">This Month</div>
-            </div>
         </div>
     </header>
 
@@ -140,6 +141,25 @@
                         </span>
                     </div>
                 </template>
+            </div>
+
+            <!-- Task Streaks Summary -->
+            <div class="task-streaks-summary" x-show="selectedDay && selectedDay.tasks.length > 0" style="margin-top: 20px;">
+                <h4 style="font-size: 14px; color: #666; margin-bottom: 12px;">Task Streaks</h4>
+                <div style="display: grid; gap: 8px;">
+                    <template x-for="task in selectedDay.tasks" :key="task.id">
+                        <div x-show="task.task_streak && task.task_streak > 0"
+                             class="task-streak-summary-item"
+                             :class="getStreakBadgeClass(task.task_streak)">
+                            <span x-text="task.title" style="flex: 1; font-weight: 500;"></span>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="streak-icon">🔥</span>
+                                <span x-text="task.task_streak" style="font-weight: 600;"></span>
+                                <span style="font-size: 11px; opacity: 0.8;">days</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
             </div>
         </div>
     </section>
@@ -345,6 +365,16 @@ function calendar() {
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
+        },
+
+        getStreakBadgeClass(streak) {
+            // Color tiers based on streak length
+            if (streak >= 100) return 'streak-legendary';  // Gold
+            if (streak >= 60) return 'streak-epic';        // Purple
+            if (streak >= 30) return 'streak-amazing';     // Blue
+            if (streak >= 14) return 'streak-great';       // Green
+            if (streak >= 7) return 'streak-good';         // Light green
+            return 'streak-building';                       // Gray
         },
 
         selectCalendarDate(day) {

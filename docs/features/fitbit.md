@@ -31,6 +31,27 @@ Before connecting Fitbit, you need to register an application with Fitbit:
 4. Agree to terms and click **Register**
 5. Note your **Client ID** and **Client Secret**
 
+#### Required OAuth Scopes
+
+To access all metrics (including extended health metrics), ensure your Fitbit application has these OAuth scopes enabled:
+
+**Basic Metrics** (enabled by default):
+- `activity` - Steps, distance, floors, calories, active minutes
+- `heartrate` - Resting heart rate, heart rate zones
+- `sleep` - Sleep duration, sleep stages
+- `profile` - User profile information
+
+**Extended Metrics** (requires compatible devices):
+- `cardio_fitness` - VO2 Max / Cardio Fitness Score
+- `respiratory_rate` - Breathing rate during sleep
+- `oxygen_saturation` - SpO2 blood oxygen levels
+- `temperature` - Skin temperature variation
+
+**Note:** Extended metrics require:
+- Compatible Fitbit devices with the necessary sensors (e.g., Sense, Versa 3/4, Charge 5/6)
+- Some metrics may require a Fitbit Premium subscription
+- Users must disconnect and reconnect to grant new scope permissions
+
 ### 2. Configure Streaklet
 
 Add your Fitbit credentials to your environment:
@@ -107,25 +128,107 @@ Force a sync at any time:
 
 ## Available Metrics
 
-| Metric | Description | Example Use Case |
-|--------|-------------|------------------|
-| `steps` | Total steps for the day | Walk 10,000 steps |
-| `distance` | Miles traveled | Walk 5 miles |
-| `floors` | Floors climbed | Climb 10 floors |
-| `calories` | Calories burned | Burn 2,500 calories |
-| `active_minutes` | Very active + fairly active minutes | 30 active minutes |
-| `sleep_minutes` | Total sleep time | Sleep 7 hours (420 min) |
-| `resting_heart_rate` | Resting heart rate | Keep RHR under 60 BPM |
+### Basic Activity & Sleep Metrics
+
+| Metric | Description | Unit | Example Use Case |
+|--------|-------------|------|------------------|
+| `steps` | Total steps for the day | count | Walk 10,000 steps |
+| `distance` | Miles traveled | miles | Walk 5 miles |
+| `floors` | Floors climbed | count | Climb 10 floors |
+| `calories` | Calories burned | kcal | Burn 2,500 calories |
+| `active_minutes` | Very active + fairly active minutes | minutes | 30 active minutes |
+| `sleep_minutes` | Total sleep time | minutes | Sleep 7 hours (420 min) |
+| `resting_heart_rate` | Resting heart rate | BPM | Keep RHR under 60 BPM |
+
+### Extended Health Metrics
+
+These metrics are available for viewing in the Fitbit dashboard but require:
+- Compatible Fitbit devices with specific sensors
+- Additional OAuth scope permissions (disconnect/reconnect required)
+- Some may require Fitbit Premium subscription
+
+| Metric | Description | Unit | Requirements |
+|--------|-------------|------|--------------|
+| `hrv_rmssd` | Heart Rate Variability (RMSSD) - stress/recovery indicator | milliseconds | Sense, Versa 3/4, Charge 5/6 |
+| `cardio_fitness_score` | VO2 Max / Cardio Fitness Score | ml/kg/min | Premium + compatible device |
+| `spo2_avg` | Blood Oxygen Saturation (average) | percentage | Sense, Versa 3/4, Charge 5/6 |
+| `breathing_rate` | Respiratory rate during sleep | breaths/min | Sense, Versa 3/4, Charge 5/6 |
+| `temp_skin` | Skin temperature variation from baseline | °F | Sense, Luxe |
+| `sleep_deep_minutes` | Deep sleep stage duration | minutes | All sleep-tracking devices |
+| `sleep_light_minutes` | Light sleep stage duration | minutes | All sleep-tracking devices |
+| `sleep_rem_minutes` | REM sleep stage duration | minutes | All sleep-tracking devices |
+| `sleep_wake_minutes` | Awake time during sleep | minutes | All sleep-tracking devices |
+
+**Note:** Extended metrics appear in the Fitbit dashboard but are currently **view-only** and cannot be used for task auto-completion
 
 ## Viewing Metrics
 
-### Daily Summary
+Navigate to the **Fitbit** page to access comprehensive health data visualizations across 6 tabs:
 
-On the Fitbit page, view today's metrics:
+### Daily Tab
 
-- Current values
-- Progress toward goals
-- Last sync time
+View detailed metrics for a specific date:
+- **Summary Cards**: Large visual cards for key metrics (steps, sleep, heart rate, HRV, VO2 Max, SpO2, etc.)
+- **Date Navigation**: Browse historical data day-by-day
+- **Detailed Table**: Complete list of all synced metrics with timestamps
+- **Respects Preferences**: Only shows metrics you've enabled in Settings
+
+### Overview Tab
+
+High-level statistics and trends:
+- **30-Day Averages**: Steps, sleep, and active minutes
+- **Personal Records**: Best performances with dates
+- **Weekly Stats**: This week vs last week with trend indicators
+- **Multi-Metric Chart**: Combined visualization of steps, active minutes, and sleep
+- **Goal Progress**: Weekly goal tracking with progress bars
+
+### Trends Tab
+
+Line charts showing metric progression over time:
+- **Time Range Selector**: Last 7, 14, or 30 days
+- **Individual Charts**: Steps, sleep, active minutes, heart rate
+- **Smooth Animations**: Easy-to-read visualizations
+- **Goal Lines**: Visual reference for target values
+
+### Calendar Tab
+
+GitHub-style activity heatmap:
+- **365-Day View**: Full year at a glance
+- **Color-Coded**: Intensity represents metric values
+- **Metric Selector**: Switch between steps, sleep, active minutes, calories
+- **Pattern Recognition**: Identify weekly patterns and gaps
+
+### Compare Tab
+
+Side-by-side comparisons:
+- **Weekday vs Weekend**: Average activity patterns
+- **Week-Over-Week**: Last 8 weeks trend comparison
+- **Monthly Comparison**: Last 3 months daily averages
+
+### Insights Tab
+
+Data-driven analysis:
+- **Correlation Chart**: Sleep vs activity relationship
+- **Distribution Chart**: Steps histogram showing frequency
+- **Key Insights**:
+  - Most active day of week
+  - Consistency score (days meeting 5,000 steps)
+  - Sleep quality assessment
+  - Improvement opportunities
+
+### Customizing Your Dashboard
+
+Control which metrics appear:
+
+1. Go to **Settings** → **Fitbit Integration** → **Display Preferences**
+2. Toggle metrics on/off by category:
+   - **Activity**: Steps, distance, floors, calories, active minutes
+   - **Sleep**: Duration, stages (deep/light/REM/awake), score
+   - **Health**: Heart rate, HRV, cardio fitness, breathing rate, SpO2, temperature
+   - **Body**: Weight, body fat percentage, water intake
+3. Changes save automatically and apply across all tabs
+
+Hidden metrics won't appear in cards, charts, or tables.
 
 ### Historical Data
 

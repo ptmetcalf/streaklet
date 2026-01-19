@@ -56,18 +56,29 @@ You'll be redirected to the Profiles page. A "Default Profile" is automatically 
 
 Click **Settings** in the bottom navigation and:
 
-1. Edit the default tasks or create your own
+1. Click **Add New Task** and choose task type:
+   - **Daily Recurring** - Habits you do every day (meditation, exercise, reading)
+   - **One-Off (Todo List)** - Errands and reminders (call dentist, fix faucet)
+   - **Scheduled Recurring** - Periodic tasks (take out trash weekly, change filter monthly)
 2. Mark tasks as **Required** (must complete for streak) or optional
-3. Drag to reorder tasks
-4. Save changes
+3. Save changes
+
+See the [Task Types Guide](../features/task-types.md) for detailed information.
 
 ## 5. Start Tracking
 
-Click **Checklist** to return to today's view and start checking off tasks!
+Click **Today** in the bottom navigation to view your tasks organized by type:
+
+- **Daily Tab** - Your daily habits and any scheduled tasks due today
+- **Todo List Tab** - One-off errands and reminders
+- **Scheduled Tab** - View upcoming recurring tasks
+
+### Using the Today Page
 
 - Tap tasks to mark them complete
-- See your progress bar fill up
+- See your progress bar fill up (based on required daily tasks)
 - Complete all required tasks to continue your streak
+- Todo list items don't affect your streak - complete them at your own pace
 
 ## Understanding Streaks
 

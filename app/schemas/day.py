@@ -25,6 +25,11 @@ class TaskWithCheck(BaseModel):
     fitbit_goal_met: bool = False
     fitbit_unit: Optional[str] = None
 
+    # Per-task streak fields
+    task_streak: Optional[int] = None
+    task_last_completed: Optional[date] = None
+    task_streak_milestone: Optional[int] = None  # Next milestone: 7, 14, 30, 60, 100, etc.
+
 
 class StreakInfo(BaseModel):
     current_streak: int

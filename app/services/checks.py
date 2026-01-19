@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from app.models.task_check import TaskCheck
 from app.models.task import Task
 from app.models.daily_status import DailyStatus
@@ -30,16 +30,35 @@ def get_checks_for_date(db: Session, check_date: date, profile_id: int) -> List[
 
 
 def ensure_checks_exist_for_date(db: Session, check_date: date, profile_id: int) -> None:
-    """Ensure task checks exist for all active tasks on a given date for a profile."""
-    active_tasks = db.query(Task).filter(
+    """
+    Create TaskCheck records for applicable tasks on a date.
+    - Daily tasks: always
+    - Scheduled tasks: only if due on this date
+    - Punch list: never (created on completion)
+    """
+    # Get daily tasks
+    daily_tasks = db.query(Task).filter(
         and_(
             Task.is_active == True,
-            Task.user_id == profile_id
+            Task.user_id == profile_id,
+            Task.task_type == 'daily'
         )
     ).all()
+
+    # Get scheduled tasks due on this date
+    scheduled_tasks_due = db.query(Task).filter(
+        and_(
+            Task.is_active == True,
+            Task.user_id == profile_id,
+            Task.task_type == 'scheduled',
+            Task.next_occurrence_date == check_date
+        )
+    ).all()
+
+    applicable_tasks = daily_tasks + scheduled_tasks_due
     existing_checks = {check.task_id: check for check in get_checks_for_date(db, check_date, profile_id)}
 
-    for task in active_tasks:
+    for task in applicable_tasks:
         if task.id not in existing_checks:
             new_check = TaskCheck(
                 date=check_date,
@@ -55,6 +74,17 @@ def ensure_checks_exist_for_date(db: Session, check_date: date, profile_id: int)
 
 def update_task_check(db: Session, check_date: date, task_id: int, checked: bool, profile_id: int) -> Optional[TaskCheck]:
     """Update a task check and recompute daily completion status for a profile."""
+    # Get the task to check its type
+    task = db.query(Task).filter(
+        and_(
+            Task.id == task_id,
+            Task.user_id == profile_id
+        )
+    ).first()
+
+    if not task:
+        return None
+
     check = get_task_check(db, check_date, task_id, profile_id)
 
     if not check:
@@ -73,25 +103,43 @@ def update_task_check(db: Session, check_date: date, task_id: int, checked: bool
     db.commit()
     db.refresh(check)
 
-    recompute_daily_completion(db, check_date, profile_id)
+    # If scheduled task marked complete, update occurrence dates
+    if task.task_type == 'scheduled' and checked:
+        from app.services.scheduled_tasks import complete_scheduled_occurrence
+        complete_scheduled_occurrence(db, task_id, check_date, profile_id)
+
+    # Recompute daily completion (punch list tasks don't affect this)
+    if task.task_type != 'punch_list':
+        recompute_daily_completion(db, check_date, profile_id)
 
     return check
 
 
 def recompute_daily_completion(db: Session, check_date: date, profile_id: int) -> None:
     """
-    Recompute whether a day is complete based on required tasks for a profile.
-    A day is complete if all required, active tasks are checked.
+    Recompute whether a day is complete.
+    Only considers:
+    - Daily tasks (always)
+    - Scheduled tasks (if due on this date)
+    Does NOT consider punch list tasks.
     """
-    active_required_tasks = db.query(Task).filter(
+    # Get required tasks that count toward daily completion
+    required_tasks = db.query(Task).filter(
         and_(
             Task.is_active == True,
             Task.is_required == True,
-            Task.user_id == profile_id
+            Task.user_id == profile_id,
+            or_(
+                Task.task_type == 'daily',
+                and_(
+                    Task.task_type == 'scheduled',
+                    Task.next_occurrence_date == check_date
+                )
+            )
         )
     ).all()
 
-    required_task_ids = {task.id for task in active_required_tasks}
+    required_task_ids = {task.id for task in required_tasks}
 
     if not required_task_ids:
         all_complete = True

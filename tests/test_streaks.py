@@ -98,3 +98,122 @@ def test_today_incomplete_shows_previous_streak(test_db: Session, sample_profile
     assert streak_info["current_streak"] == 3
     assert streak_info["today_complete"] is False
     assert streak_info["last_completed_date"] == yesterday
+
+
+def test_task_streak_no_checks(test_db: Session, sample_tasks):
+    """Test that task streak is 0 when task has no checks."""
+    streak_count, last_date = streak_service.calculate_task_streak(test_db, task_id=1, profile_id=1)
+    assert streak_count == 0
+    assert last_date is None
+
+
+def test_task_streak_consecutive_days(test_db: Session, sample_tasks):
+    """Test per-task streak counts consecutive completions."""
+    today = date.today()
+
+    # Create checks for 5 consecutive days for task 1
+    for i in range(5):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    streak_count, last_date = streak_service.calculate_task_streak(test_db, task_id=1, profile_id=1)
+    assert streak_count == 5
+    assert last_date == today
+
+
+def test_task_streak_with_gap(test_db: Session, sample_tasks):
+    """Test streak resets after missed day."""
+    today = date.today()
+
+    # Check days 1-3
+    for i in range(3):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    # Skip day 4 (today - 3)
+
+    # Check day 5 (today - 4)
+    day5 = today - timedelta(days=4)
+    check_service.ensure_checks_exist_for_date(test_db, day5, profile_id=1)
+    check_service.update_task_check(test_db, day5, task_id=1, checked=True, profile_id=1)
+
+    # Streak should only count the most recent consecutive days (1-3)
+    streak_count, last_date = streak_service.calculate_task_streak(test_db, task_id=1, profile_id=1)
+    assert streak_count == 3
+    assert last_date == today
+
+
+def test_task_streak_different_tasks(test_db: Session, sample_tasks):
+    """Test multiple tasks have independent streaks."""
+    today = date.today()
+
+    # Task 1: 10 consecutive days
+    for i in range(10):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    # Task 2: 3 consecutive days
+    for i in range(3):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=2, checked=True, profile_id=1)
+
+    streak1, _ = streak_service.calculate_task_streak(test_db, task_id=1, profile_id=1)
+    streak2, _ = streak_service.calculate_task_streak(test_db, task_id=2, profile_id=1)
+
+    assert streak1 == 10
+    assert streak2 == 3
+
+
+def test_task_streak_broken_returns_zero(test_db: Session, sample_tasks):
+    """Test streak returns 0 when more than 1 day since last check."""
+    today = date.today()
+
+    # Check task 5 days ago (gap > 1 day)
+    old_day = today - timedelta(days=5)
+    check_service.ensure_checks_exist_for_date(test_db, old_day, profile_id=1)
+    check_service.update_task_check(test_db, old_day, task_id=1, checked=True, profile_id=1)
+
+    streak_count, last_date = streak_service.calculate_task_streak(test_db, task_id=1, profile_id=1)
+    assert streak_count == 0
+    assert last_date == old_day
+
+
+def test_task_streak_profile_isolation(test_db: Session, sample_profiles, sample_tasks):
+    """Test task streaks are isolated by profile."""
+    from app.models.task import Task
+
+    today = date.today()
+
+    # Profile 1: 5 day streak on task 1
+    for i in range(5):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
+        check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
+
+    # Create a task for profile 2
+    task_p2 = Task(
+        id=10,
+        user_id=2,
+        title="Profile 2 Task",
+        sort_order=1,
+        is_required=True,
+        is_active=True
+    )
+    test_db.add(task_p2)
+    test_db.commit()
+
+    # Profile 2: 2 day streak on task 10
+    for i in range(2):
+        day = today - timedelta(days=i)
+        check_service.ensure_checks_exist_for_date(test_db, day, profile_id=2)
+        check_service.update_task_check(test_db, day, task_id=10, checked=True, profile_id=2)
+
+    streak1 = streak_service.calculate_task_streak(test_db, task_id=1, profile_id=1)
+    streak2 = streak_service.calculate_task_streak(test_db, task_id=10, profile_id=2)
+
+    assert streak1[0] == 5
+    assert streak2[0] == 2
