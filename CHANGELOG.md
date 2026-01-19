@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/ptmetcalf/streaklet/compare/v1.0.0...v1.1.0) (2026-01-19)
+
+
+### Features
+
+* add active_since field to prevent retroactive task requirements ([f732a77](https://github.com/ptmetcalf/streaklet/commit/f732a771face99e1e735dd1557dc41ca44903659))
+* **household:** add household maintenance tracker with task management and completion history ([f929379](https://github.com/ptmetcalf/streaklet/commit/f929379fc5518d28c7435a21ff223cfe05ba157d))
+
+
+### Bug Fixes
+
+* enhance URL redirect security with multiple validation layers ([f732a77](https://github.com/ptmetcalf/streaklet/commit/f732a771face99e1e735dd1557dc41ca44903659))
+* resolve test syntax errors in active_since implementation ([10759ac](https://github.com/ptmetcalf/streaklet/commit/10759ac9f63782a5900237abfc68674d185b67b4))
+
 ## [1.0.0](https://github.com/ptmetcalf/streaklet/compare/v0.7.0...v1.0.0) (2026-01-19)
 
 
