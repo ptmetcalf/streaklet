@@ -1,13 +1,13 @@
 """Tests for Fitbit sync service."""
 import pytest
 from datetime import date, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 from sqlalchemy.orm import Session
 
 from app.models.fitbit_connection import FitbitConnection
 from app.models.fitbit_metric import FitbitMetric
 from app.core.encryption import encrypt_token
-from app.core.time import get_now, get_today
+from app.core.time import get_now
 from app.services import fitbit_sync
 
 

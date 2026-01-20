@@ -23,7 +23,7 @@ def get_active_punch_list_tasks(db: Session, profile_id: int, include_archived: 
     """
     query = db.query(Task).filter(
         Task.user_id == profile_id,
-        Task.is_active == True,
+        Task.is_active .is_(True),
         Task.task_type == 'punch_list'
     )
 

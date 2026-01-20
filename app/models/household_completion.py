@@ -4,7 +4,7 @@ Household Completion Model
 Tracks completion history for household tasks with profile attribution.
 Records WHO completed a task and WHEN.
 """
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Index
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.sql import func
 from app.core.db import Base
 

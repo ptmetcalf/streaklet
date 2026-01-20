@@ -1,12 +1,12 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from app.models.daily_status import DailyStatus
 from app.models.fitbit_metric import FitbitMetric
 from app.models.task import Task
 from app.models.task_check import TaskCheck
 from datetime import date
 from calendar import monthrange
-from typing import Dict, Any, Optional, Set
+from typing import Dict, Any, Set
 
 
 def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int) -> Dict[str, Any]:
@@ -52,8 +52,8 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
     all_required_tasks = db.query(Task).filter(
         and_(
             Task.user_id == profile_id,
-            Task.is_active == True,
-            Task.is_required == True
+            Task.is_active .is_(True),
+            Task.is_required .is_(True)
         )
     ).all()
 
@@ -63,7 +63,7 @@ def get_calendar_month_data(db: Session, year: int, month: int, profile_id: int)
             TaskCheck.user_id == profile_id,
             TaskCheck.date >= first_day,
             TaskCheck.date <= last_day,
-            TaskCheck.checked == True
+            TaskCheck.checked .is_(True)
         )
     ).all()
 

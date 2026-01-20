@@ -1,4 +1,3 @@
-import pytest
 from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 

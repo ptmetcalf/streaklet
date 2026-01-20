@@ -5,7 +5,6 @@ Handles:
 - APScheduler setup for hourly sync
 - Background sync job execution
 """
-import asyncio
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 import logging

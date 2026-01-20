@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Response, Form
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 import json
 from app.core.db import get_db
 from app.schemas.profile import ProfileCreate, ProfileUpdate, ProfileResponse

@@ -8,7 +8,7 @@ Handles fetching data from Fitbit REST API:
 """
 import httpx
 from datetime import date
-from typing import Dict, Optional
+from typing import Dict
 from sqlalchemy.orm import Session
 
 from app.models.fitbit_connection import FitbitConnection

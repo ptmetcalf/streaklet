@@ -3,7 +3,6 @@ import pytest
 from datetime import date, timedelta
 from unittest.mock import AsyncMock, patch, MagicMock
 from sqlalchemy.orm import Session
-import httpx
 
 from app.models.fitbit_connection import FitbitConnection
 from app.core.encryption import encrypt_token

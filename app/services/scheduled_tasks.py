@@ -79,7 +79,7 @@ def get_scheduled_tasks_due_on_date(db: Session, check_date: date, profile_id: i
     """
     return db.query(Task).filter(
         Task.user_id == profile_id,
-        Task.is_active == True,
+        Task.is_active .is_(True),
         Task.task_type == 'scheduled',
         Task.next_occurrence_date == check_date
     ).order_by(Task.sort_order).all()
@@ -101,7 +101,7 @@ def get_upcoming_scheduled_tasks(db: Session, profile_id: int, days_ahead: int =
 
     return db.query(Task).filter(
         Task.user_id == profile_id,
-        Task.is_active == True,
+        Task.is_active .is_(True),
         Task.task_type == 'scheduled',
         Task.next_occurrence_date.isnot(None),
         Task.next_occurrence_date >= today,
@@ -150,7 +150,7 @@ def update_scheduled_tasks_daily(db: Session):
     today = get_today()
 
     scheduled_tasks = db.query(Task).filter(
-        Task.is_active == True,
+        Task.is_active .is_(True),
         Task.task_type == 'scheduled'
     ).all()
 

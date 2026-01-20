@@ -1,6 +1,6 @@
 """Tests for Fitbit OAuth service."""
 import pytest
-from datetime import datetime, timedelta
+from datetime import timedelta
 from unittest.mock import AsyncMock, Mock, patch
 from sqlalchemy.orm import Session
 
@@ -126,7 +126,6 @@ async def test_refresh_access_token(test_db: Session, sample_profiles):
 
     # Verify token was refreshed
     # Note: SQLite doesn't preserve timezone info, so we compare naive datetimes
-    from datetime import datetime
     now_naive = get_now().replace(tzinfo=None)
     assert refreshed.token_expires_at > now_naive
     # Tokens should be different (encrypted)

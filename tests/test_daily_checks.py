@@ -1,8 +1,5 @@
-import pytest
 from sqlalchemy.orm import Session
 from app.services import checks as check_service
-from app.services import tasks as task_service
-from app.models.task import Task
 from app.models.daily_status import DailyStatus
 from app.core.time import get_today
 

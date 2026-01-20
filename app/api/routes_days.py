@@ -33,7 +33,7 @@ async def get_today_info(
     from sqlalchemy import or_
     active_tasks = db.query(Task).filter(
         and_(
-            Task.is_active == True,
+            Task.is_active .is_(True),
             Task.user_id == profile_id,
             or_(
                 Task.task_type == 'daily',

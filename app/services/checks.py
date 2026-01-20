@@ -39,7 +39,7 @@ def ensure_checks_exist_for_date(db: Session, check_date: date, profile_id: int)
     # Get daily tasks
     daily_tasks = db.query(Task).filter(
         and_(
-            Task.is_active == True,
+            Task.is_active .is_(True),
             Task.user_id == profile_id,
             Task.task_type == 'daily'
         )
@@ -48,7 +48,7 @@ def ensure_checks_exist_for_date(db: Session, check_date: date, profile_id: int)
     # Get scheduled tasks due on this date
     scheduled_tasks_due = db.query(Task).filter(
         and_(
-            Task.is_active == True,
+            Task.is_active .is_(True),
             Task.user_id == profile_id,
             Task.task_type == 'scheduled',
             Task.next_occurrence_date == check_date
@@ -128,8 +128,8 @@ def recompute_daily_completion(db: Session, check_date: date, profile_id: int) -
     # Get required tasks that count toward daily completion
     required_tasks = db.query(Task).filter(
         and_(
-            Task.is_active == True,
-            Task.is_required == True,
+            Task.is_active .is_(True),
+            Task.is_required .is_(True),
             Task.user_id == profile_id,
             # Only count tasks active on this date (NULL treated as always active for legacy data)
             or_(

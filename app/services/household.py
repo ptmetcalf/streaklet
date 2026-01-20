@@ -6,7 +6,7 @@ Unlike other services, household tasks are SHARED across all profiles (no profil
 profile_id is ONLY used for completion attribution (tracking WHO completed a task).
 """
 from typing import List, Optional, Dict
-from datetime import datetime, timedelta, date
+from datetime import date
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -139,7 +139,7 @@ def get_all_household_tasks(db: Session, include_inactive: bool = False) -> List
     """
     query = db.query(HouseholdTask)
     if not include_inactive:
-        query = query.filter(HouseholdTask.is_active == True)
+        query = query.filter(HouseholdTask.is_active .is_(True))
     return query.order_by(HouseholdTask.sort_order, HouseholdTask.id).all()
 
 
@@ -157,7 +157,7 @@ def get_household_tasks_by_frequency(db: Session, frequency: str, include_inacti
     """
     query = db.query(HouseholdTask).filter(HouseholdTask.frequency == frequency)
     if not include_inactive:
-        query = query.filter(HouseholdTask.is_active == True)
+        query = query.filter(HouseholdTask.is_active .is_(True))
     return query.order_by(HouseholdTask.sort_order, HouseholdTask.id).all()
 
 

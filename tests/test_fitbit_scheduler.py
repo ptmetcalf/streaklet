@@ -1,7 +1,6 @@
 """Tests for Fitbit scheduler service."""
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from sqlalchemy.orm import Session
+from unittest.mock import patch, MagicMock
 
 from app.services import fitbit_scheduler
 

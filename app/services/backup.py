@@ -9,8 +9,7 @@ from app.models.task import Task
 from app.models.task_check import TaskCheck
 from app.models.daily_status import DailyStatus
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-import json
+from typing import Dict, Optional, Any
 
 from app.core.time import get_now
 

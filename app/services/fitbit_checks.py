@@ -61,8 +61,8 @@ async def evaluate_and_apply_auto_checks(
     tasks = db.query(Task).filter(
         and_(
             Task.user_id == profile_id,
-            Task.is_active == True,
-            Task.fitbit_auto_check == True,
+            Task.is_active .is_(True),
+            Task.fitbit_auto_check .is_(True),
             Task.fitbit_metric_type.isnot(None)
         )
     ).all()

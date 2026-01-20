@@ -1,5 +1,4 @@
 """Tests for main app web routes."""
-import pytest
 from fastapi.testclient import TestClient
 
 

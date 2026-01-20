@@ -9,7 +9,6 @@ Key test scenarios:
 5. API endpoints work without X-Profile-Id header (except completion)
 """
 import pytest
-from datetime import datetime, timedelta
 from freezegun import freeze_time
 
 from app.models.household_task import HouseholdTask

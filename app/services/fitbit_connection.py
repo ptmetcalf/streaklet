@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.models.fitbit_connection import FitbitConnection
-from app.models.fitbit_metric import FitbitMetric
 from app.models.task import Task
 from app.services.fitbit_oauth import revoke_token
 
@@ -60,7 +59,7 @@ async def delete_connection(db: Session, profile_id: int) -> bool:
     # Reset auto-check on all tasks (keep other Fitbit fields for re-connection)
     db.query(Task).filter(
         Task.user_id == profile_id,
-        Task.fitbit_auto_check == True
+        Task.fitbit_auto_check .is_(True)
     ).update({"fitbit_auto_check": False})
 
     db.commit()

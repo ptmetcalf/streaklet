@@ -184,7 +184,7 @@ def get_active_tasks(db: Session, profile_id: int) -> List[Task]:
     """Get all active tasks for a profile ordered by sort_order."""
     return db.query(Task).filter(
         Task.user_id == profile_id,
-        Task.is_active == True
+        Task.is_active .is_(True)
     ).order_by(Task.sort_order).all()
 
 

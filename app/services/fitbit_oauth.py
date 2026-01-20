@@ -9,9 +9,8 @@ Handles:
 """
 import httpx
 import base64
-from datetime import datetime, timedelta
+from datetime import timedelta
 from sqlalchemy.orm import Session
-from typing import Optional
 
 from app.core.config import settings
 from app.core.encryption import encrypt_token, decrypt_token

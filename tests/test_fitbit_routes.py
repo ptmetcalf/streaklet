@@ -1,7 +1,6 @@
 """Tests for Fitbit API routes."""
-import pytest
-from datetime import datetime, timedelta, date
-from unittest.mock import AsyncMock, patch
+from datetime import timedelta, date
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from app.models.fitbit_connection import FitbitConnection

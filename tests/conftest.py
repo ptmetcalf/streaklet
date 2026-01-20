@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
-from datetime import date, datetime
+from datetime import date
 import os
 from freezegun import freeze_time
 
@@ -94,7 +94,6 @@ def sample_profiles(test_db: Session):
 def sample_tasks(test_db: Session, sample_profiles):
     """Create sample tasks for testing (for profile 1)."""
     from app.models.task import Task
-    from datetime import date
 
     # Set active_since to a date in the past to ensure tasks count toward completion
     # Using 2024-11-01 so tasks are active for December 2024 tests

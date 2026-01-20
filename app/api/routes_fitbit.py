@@ -23,7 +23,6 @@ from app.schemas.fitbit import (
     FitbitConnectResponse,
     FitbitSyncStatus,
     FitbitMetricResponse,
-    FitbitDailySummary,
     FitbitPreferencesResponse,
     FitbitPreferencesUpdate
 )

@@ -10,7 +10,7 @@ Handles:
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.sqlite import insert
 from datetime import date, timedelta
-from typing import Dict, List
+from typing import Dict
 
 from app.core.time import get_today, get_now, to_timezone_aware
 from app.core.config import settings

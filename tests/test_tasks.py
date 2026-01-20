@@ -1,8 +1,6 @@
-import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app.services import tasks as task_service
-from app.schemas.task import TaskCreate
 
 
 def test_seed_default_tasks(test_db: Session, sample_profiles):

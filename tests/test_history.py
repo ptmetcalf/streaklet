@@ -84,7 +84,6 @@ def test_get_calendar_month_data_different_months(test_db: Session, sample_profi
 def test_get_month_completion_stats_empty(test_db: Session, sample_profiles):
     """Test completion stats for a month with no completions."""
     from unittest.mock import patch
-    from app.core.time import get_today
 
     # Mock today as December 14, 2024
     with patch('app.core.time.get_today', return_value=date(2024, 12, 14)):
@@ -417,11 +416,10 @@ def test_completion_percentage_with_optional_tasks(test_db: Session, sample_prof
     from unittest.mock import patch
 
     # Get required and optional tasks
-    required_tasks = [t for t in sample_tasks if t.is_required and t.user_id == 1]
     optional_task = test_db.query(Task).filter(
         Task.user_id == 1,
-        Task.is_required == False,
-        Task.is_active == True
+        Task.is_required .is_(False),
+        Task.is_active .is_(True)
     ).first()
 
     # Create checks: complete optional task but not required tasks

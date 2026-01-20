@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.models.fitbit_preferences import FitbitPreferences
-from app.schemas.fitbit import FitbitPreferencesCreate, FitbitPreferencesUpdate
+from app.schemas.fitbit import FitbitPreferencesUpdate
 
 
 def get_preferences(db: Session, profile_id: int) -> Optional[FitbitPreferences]:

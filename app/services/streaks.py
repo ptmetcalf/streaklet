@@ -60,7 +60,7 @@ def calculate_task_streak(db: Session, task_id: int, profile_id: int) -> Tuple[i
         and_(
             TaskCheck.task_id == task_id,
             TaskCheck.user_id == profile_id,
-            TaskCheck.checked == True
+            TaskCheck.checked .is_(True)
         )
     ).order_by(TaskCheck.date.desc()).all()
 
