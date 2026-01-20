@@ -289,6 +289,8 @@ window.api = {
         disconnect: () => ApiClient.delete('/api/fitbit/connection'),
         preferences: () => ApiClient.get('/api/fitbit/preferences'),
         updatePreferences: (data) => ApiClient.put('/api/fitbit/preferences', data),
+        resetPreferences: () => ApiClient.post('/api/fitbit/preferences/reset'),
+        sync: () => ApiClient.post('/api/fitbit/sync'),
         dailySummary: (date) => ApiClient.get(`/api/fitbit/daily-summary?date=${date}`),
         metricsHistory: (startDate, endDate, metricTypes) => {
             const types = Array.isArray(metricTypes) ? metricTypes.join(',') : metricTypes;

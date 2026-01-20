@@ -1114,8 +1114,7 @@ function settings() {
         },
 
         async loadTasks() {
-            const response = await fetchWithProfile('/api/tasks');
-            this.tasks = await response.json();
+            this.tasks = await api.tasks.list();
         },
 
         resetNewTask() {
@@ -1242,20 +1241,10 @@ function settings() {
             }
 
             try {
-                const response = await fetchWithProfile('/api/tasks', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(this.newTask)
-                });
-
-                if (response.ok) {
-                    await this.loadTasks();
-                    this.showAddForm = false;
-                    this.resetNewTask();
-                } else {
-                    const error = await response.json();
-                    alert('Error creating task: ' + (error.detail || 'Unknown error'));
-                }
+                await api.tasks.create(this.newTask);
+                await this.loadTasks();
+                this.showAddForm = false;
+                this.resetNewTask();
             } catch (error) {
                 console.error('Error adding task:', error);
                 alert('Error creating task: ' + error.message);
@@ -1331,28 +1320,18 @@ function settings() {
             }
 
             try {
-                const response = await fetchWithProfile(`/api/tasks/${this.editingTask.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        title: this.editingTask.title,
-                        is_required: this.editingTask.is_required,
-                        is_active: this.editingTask.is_active,
-                        sort_order: this.editingTask.sort_order,
-                        fitbit_metric_type: this.editingTask.fitbit_metric_type,
-                        fitbit_goal_value: this.editingTask.fitbit_goal_value,
-                        fitbit_goal_operator: this.editingTask.fitbit_goal_operator,
-                        fitbit_auto_check: this.editingTask.fitbit_auto_check
-                    })
+                await api.tasks.update(this.editingTask.id, {
+                    title: this.editingTask.title,
+                    is_required: this.editingTask.is_required,
+                    is_active: this.editingTask.is_active,
+                    sort_order: this.editingTask.sort_order,
+                    fitbit_metric_type: this.editingTask.fitbit_metric_type,
+                    fitbit_goal_value: this.editingTask.fitbit_goal_value,
+                    fitbit_goal_operator: this.editingTask.fitbit_goal_operator,
+                    fitbit_auto_check: this.editingTask.fitbit_auto_check
                 });
-
-                if (response.ok) {
-                    await this.loadTasks();
-                    this.editingTask = null;
-                } else {
-                    const error = await response.json();
-                    alert('Error updating task: ' + (error.detail || 'Unknown error'));
-                }
+                await this.loadTasks();
+                this.editingTask = null;
             } catch (error) {
                 console.error('Error updating task:', error);
                 alert('Error updating task: ' + error.message);
@@ -1373,24 +1352,16 @@ function settings() {
             this.deleteConfirm = { show: false, taskTitle: '', taskId: null };
 
             try {
-                const response = await fetchWithProfile(`/api/tasks/${taskId}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok || response.status === 204) {
-                    // Success - reload tasks
-                    await this.loadTasks();
-                } else if (response.status === 404) {
+                await api.tasks.delete(taskId);
+                await this.loadTasks();
+            } catch (error) {
+                console.error('Error deleting task:', error);
+                if (error.status === 404) {
                     this.showAlert('Task not found. It may have already been deleted.');
                     await this.loadTasks();
                 } else {
-                    // Other error
-                    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-                    this.showAlert('Error deleting task: ' + (error.detail || 'Unknown error'));
+                    this.showAlert('Error deleting task: ' + (error.message || 'Please check your connection and try again.'));
                 }
-            } catch (error) {
-                console.error('Error deleting task:', error);
-                this.showAlert('Error deleting task: ' + (error.message || 'Please check your connection and try again.'));
             }
         },
 
@@ -1421,16 +1392,13 @@ function settings() {
         // Fitbit methods
         async loadFitbitStatus() {
             try {
-                const response = await fetchWithProfile('/api/fitbit/connection');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.fitbitConnected = data.connected;
-                    this.fitbitLastSync = data.last_sync_at;
-                    this.fitbitSyncStatus = data.last_sync_status;
+                const data = await api.fitbit.connection();
+                this.fitbitConnected = data.connected;
+                this.fitbitLastSync = data.last_sync_at;
+                this.fitbitSyncStatus = data.last_sync_status;
 
-                    if (this.fitbitConnected) {
-                        await this.loadTodayMetrics();
-                    }
+                if (this.fitbitConnected) {
+                    await this.loadTodayMetrics();
                 }
             } catch (error) {
                 console.error('Error loading Fitbit status:', error);
@@ -1439,11 +1407,8 @@ function settings() {
 
         async connectFitbit() {
             try {
-                const response = await fetchWithProfile('/api/fitbit/connect');
-                if (response.ok) {
-                    const data = await response.json();
-                    window.location.href = data.redirect_url;
-                }
+                const data = await api.fitbit.connect();
+                window.location.href = data.redirect_url;
             } catch (error) {
                 console.error('Error connecting to Fitbit:', error);
                 alert('Failed to connect to Fitbit');
@@ -1454,16 +1419,11 @@ function settings() {
             if (!confirm('Disconnect Fitbit and delete all Fitbit data?')) return;
 
             try {
-                const response = await fetchWithProfile('/api/fitbit/connection', {
-                    method: 'DELETE'
-                });
-
-                if (response.ok || response.status === 204) {
-                    this.fitbitConnected = false;
-                    this.fitbitLastSync = null;
-                    this.todayMetrics = {};
-                    alert('Fitbit disconnected successfully');
-                }
+                await api.fitbit.disconnect();
+                this.fitbitConnected = false;
+                this.fitbitLastSync = null;
+                this.todayMetrics = {};
+                alert('Fitbit disconnected successfully');
             } catch (error) {
                 console.error('Error disconnecting Fitbit:', error);
                 alert('Failed to disconnect Fitbit');
@@ -1474,29 +1434,26 @@ function settings() {
             if (!this.fitbitConnected) return;
 
             try {
-                const response = await fetchWithProfile('/api/fitbit/preferences');
-                if (response.ok) {
-                    const prefs = await response.json();
-                    // Update fitbitPrefs with loaded data
-                    Object.assign(this.fitbitPrefs, {
-                        show_steps: prefs.show_steps,
-                        show_distance: prefs.show_distance,
-                        show_floors: prefs.show_floors,
-                        show_calories: prefs.show_calories,
-                        show_active_minutes: prefs.show_active_minutes,
-                        show_sleep: prefs.show_sleep,
-                        show_sleep_stages: prefs.show_sleep_stages,
-                        show_heart_rate: prefs.show_heart_rate,
-                        show_hrv: prefs.show_hrv,
-                        show_cardio_fitness: prefs.show_cardio_fitness,
-                        show_breathing_rate: prefs.show_breathing_rate,
-                        show_spo2: prefs.show_spo2,
-                        show_temperature: prefs.show_temperature,
-                        show_weight: prefs.show_weight,
-                        show_body_fat: prefs.show_body_fat,
-                        show_water: prefs.show_water
-                    });
-                }
+                const prefs = await api.fitbit.preferences();
+                // Update fitbitPrefs with loaded data
+                Object.assign(this.fitbitPrefs, {
+                    show_steps: prefs.show_steps,
+                    show_distance: prefs.show_distance,
+                    show_floors: prefs.show_floors,
+                    show_calories: prefs.show_calories,
+                    show_active_minutes: prefs.show_active_minutes,
+                    show_sleep: prefs.show_sleep,
+                    show_sleep_stages: prefs.show_sleep_stages,
+                    show_heart_rate: prefs.show_heart_rate,
+                    show_hrv: prefs.show_hrv,
+                    show_cardio_fitness: prefs.show_cardio_fitness,
+                    show_breathing_rate: prefs.show_breathing_rate,
+                    show_spo2: prefs.show_spo2,
+                    show_temperature: prefs.show_temperature,
+                    show_weight: prefs.show_weight,
+                    show_body_fat: prefs.show_body_fat,
+                    show_water: prefs.show_water
+                });
             } catch (error) {
                 console.error('Error loading Fitbit preferences:', error);
             }
@@ -1504,19 +1461,12 @@ function settings() {
 
         async saveFitbitPreferences() {
             try {
-                const response = await fetchWithProfile('/api/fitbit/preferences', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(this.fitbitPrefs)
-                });
-
-                if (response.ok) {
-                    // Show saved indicator
-                    this.prefsSaved = true;
-                    setTimeout(() => {
-                        this.prefsSaved = false;
-                    }, 2000);
-                }
+                await api.fitbit.updatePreferences(this.fitbitPrefs);
+                // Show saved indicator
+                this.prefsSaved = true;
+                setTimeout(() => {
+                    this.prefsSaved = false;
+                }, 2000);
             } catch (error) {
                 console.error('Error saving Fitbit preferences:', error);
                 alert('Failed to save preferences');
@@ -1527,14 +1477,9 @@ function settings() {
             if (!confirm('Reset all Fitbit preferences to defaults?')) return;
 
             try {
-                const response = await fetchWithProfile('/api/fitbit/preferences/reset', {
-                    method: 'POST'
-                });
-
-                if (response.ok) {
-                    await this.loadFitbitPreferences();
-                    alert('Preferences reset to defaults');
-                }
+                await api.fitbit.resetPreferences();
+                await this.loadFitbitPreferences();
+                alert('Preferences reset to defaults');
             } catch (error) {
                 console.error('Error resetting Fitbit preferences:', error);
                 alert('Failed to reset preferences');
@@ -1544,18 +1489,13 @@ function settings() {
         async manualSync() {
             this.isSyncing = true;
             try {
-                const response = await fetchWithProfile('/api/fitbit/sync', {
-                    method: 'POST'
-                });
-
-                if (response.ok) {
-                    // Wait a moment for sync to complete
-                    setTimeout(async () => {
-                        await this.loadFitbitStatus();
-                        await this.loadTodayMetrics();
-                        this.isSyncing = false;
-                    }, 3000);
-                }
+                await api.fitbit.sync();
+                // Wait a moment for sync to complete
+                setTimeout(async () => {
+                    await this.loadFitbitStatus();
+                    await this.loadTodayMetrics();
+                    this.isSyncing = false;
+                }, 3000);
             } catch (error) {
                 console.error('Error syncing Fitbit:', error);
                 this.isSyncing = false;
@@ -1565,17 +1505,11 @@ function settings() {
         async loadTodayMetrics() {
             try {
                 // Get today's date from backend (timezone-aware)
-                const todayResponse = await fetchWithProfile('/api/days/today');
-                if (!todayResponse.ok) return;
-
-                const todayData = await todayResponse.json();
+                const todayData = await api.daily.today();
                 const today = todayData.date;
 
-                const response = await fetchWithProfile(`/api/fitbit/daily-summary?date=${today}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    this.todayMetrics = data.metrics || {};
-                }
+                const data = await api.fitbit.dailySummary(today);
+                this.todayMetrics = data.metrics || {};
             } catch (error) {
                 console.error('Error loading today metrics:', error);
             }
