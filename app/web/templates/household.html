@@ -521,7 +521,7 @@ function householdMaintenance() {
                 await this.loadTasks();
             } catch (error) {
                 console.error('Error marking task complete:', error);
-                alert('Failed to mark task complete');
+                toast.error('Failed to mark task complete');
             } finally {
                 this.completingTaskIds.delete(task.id);
             }

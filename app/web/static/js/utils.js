@@ -484,6 +484,179 @@ window.iconPickerUtils = {
 };
 
 // ============================================================================
+// TOAST NOTIFICATION SYSTEM
+// ============================================================================
+
+/**
+ * Toast notification manager
+ * Provides a modern, non-blocking alternative to alert() dialogs
+ */
+window.toast = (function() {
+    let toastCounter = 0;
+    const ICONS = {
+        success: '✓',
+        error: '✕',
+        warning: '⚠',
+        info: 'ℹ'
+    };
+
+    /**
+     * Get or create the toast container
+     * @returns {HTMLElement} Toast container element
+     */
+    function getContainer() {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
+    /**
+     * Create a toast notification
+     * @param {string} message - Toast message
+     * @param {Object} options - Toast options
+     * @returns {HTMLElement} Toast element
+     */
+    function createToast(message, options = {}) {
+        const {
+            type = 'info',
+            title = null,
+            duration = 4000,
+            dismissible = true
+        } = options;
+
+        const toastId = `toast-${++toastCounter}`;
+        const toast = document.createElement('div');
+        toast.id = toastId;
+        toast.className = `toast toast--${type}`;
+
+        // Build toast HTML
+        let html = `
+            <div class="toast__icon">${ICONS[type] || ICONS.info}</div>
+            <div class="toast__content">
+                ${title ? `<div class="toast__title">${escapeHtml(title)}</div>` : ''}
+                <div class="toast__message">${escapeHtml(message)}</div>
+            </div>
+        `;
+
+        if (dismissible) {
+            html += '<button class="toast__close" aria-label="Close">×</button>';
+        }
+
+        toast.innerHTML = html;
+
+        // Add close button handler
+        if (dismissible) {
+            const closeBtn = toast.querySelector('.toast__close');
+            closeBtn.addEventListener('click', () => dismissToast(toastId));
+        }
+
+        // Auto-dismiss
+        if (duration > 0) {
+            setTimeout(() => dismissToast(toastId), duration);
+        }
+
+        return toast;
+    }
+
+    /**
+     * Dismiss a toast notification
+     * @param {string} toastId - Toast element ID
+     */
+    function dismissToast(toastId) {
+        const toast = document.getElementById(toastId);
+        if (!toast) return;
+
+        // Add removal animation
+        toast.classList.add('toast--removing');
+
+        // Remove from DOM after animation
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+
+            // Clean up empty container
+            const container = document.getElementById('toast-container');
+            if (container && container.children.length === 0) {
+                container.remove();
+            }
+        }, 300); // Match CSS animation duration
+    }
+
+    /**
+     * Escape HTML to prevent XSS
+     * @param {string} text - Text to escape
+     * @returns {string} Escaped text
+     */
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Show a toast notification
+     * @param {string} message - Toast message
+     * @param {Object} options - Toast options
+     */
+    function show(message, options = {}) {
+        const container = getContainer();
+        const toast = createToast(message, options);
+        container.appendChild(toast);
+    }
+
+    // Public API
+    return {
+        /**
+         * Show a success toast
+         * @param {string} message - Success message
+         * @param {Object} options - Additional options
+         */
+        success(message, options = {}) {
+            show(message, { ...options, type: 'success' });
+        },
+
+        /**
+         * Show an error toast
+         * @param {string} message - Error message
+         * @param {Object} options - Additional options
+         */
+        error(message, options = {}) {
+            show(message, { ...options, type: 'error', duration: 5000 });
+        },
+
+        /**
+         * Show a warning toast
+         * @param {string} message - Warning message
+         * @param {Object} options - Additional options
+         */
+        warning(message, options = {}) {
+            show(message, { ...options, type: 'warning', duration: 4500 });
+        },
+
+        /**
+         * Show an info toast
+         * @param {string} message - Info message
+         * @param {Object} options - Additional options
+         */
+        info(message, options = {}) {
+            show(message, { ...options, type: 'info' });
+        },
+
+        /**
+         * Dismiss a specific toast
+         * @param {string} toastId - Toast element ID
+         */
+        dismiss: dismissToast
+    };
+})();
+
+// ============================================================================
 // FORM VALIDATION UTILITIES
 // ============================================================================
 
@@ -519,11 +692,11 @@ window.formValidation = {
     },
 
     /**
-     * Show error message with consistent styling
+     * Show error message with toast notification
      * @param {string} message - Error message
      */
     showError(message) {
-        alert(message); // TODO: Replace with toast notification in Phase 6b
+        window.toast.error(message);
     }
 };
 
@@ -540,6 +713,7 @@ if (typeof console !== 'undefined' && console.info) {
         'Validation': ['isTaskOverdue', 'getStreakBadgeClass'],
         'Utilities': ['clamp', 'debounce'],
         'Icon Picker': ['iconPickerUtils.filterCategories', 'iconPickerUtils.hasVisibleIcons', 'iconPickerUtils.getIconDisplayName'],
-        'Form Validation': ['formValidation.validateRequired', 'formValidation.validateRange', 'formValidation.showError']
+        'Form Validation': ['formValidation.validateRequired', 'formValidation.validateRange', 'formValidation.showError'],
+        'Toast Notifications': ['toast.success()', 'toast.error()', 'toast.warning()', 'toast.info()', 'toast.dismiss()']
     });
 }

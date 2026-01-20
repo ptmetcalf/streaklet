@@ -1110,7 +1110,7 @@ function settings() {
                 // Clean up URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else if (params.get('fitbit') === 'error') {
-                alert('Failed to connect to Fitbit: ' + (params.get('message') || 'Unknown error'));
+                toast.error('Failed to connect to Fitbit: ' + (params.get('message') || 'Unknown error'));
                 window.history.replaceState({}, document.title, window.location.pathname);
             }
         },
@@ -1196,38 +1196,38 @@ function settings() {
             if (this.newTask.task_type === 'daily') {
                 if (this.newTask.taskType === 'manual') {
                     if (!this.newTask.title.trim()) {
-                        alert('Please enter a task title');
+                        toast.warning('Pleaseenter a task title');
                         return;
                     }
                 } else if (this.newTask.taskType === 'fitbit') {
                     if (!this.newTask.fitbitTemplate) {
-                        alert('Please select a Fitbit goal template');
+                        toast.warning('Pleaseselect a Fitbit goal template');
                         return;
                     }
                     if (this.newTask.fitbitTemplate === 'custom') {
                         if (!this.newTask.fitbit_metric_type) {
-                            alert('Please select a Fitbit metric type');
+                            toast.warning('Pleaseselect a Fitbit metric type');
                             return;
                         }
                         if (!this.newTask.fitbit_goal_value) {
-                            alert('Please enter a goal value');
+                            toast.warning('Pleaseenter a goal value');
                             return;
                         }
                         this.newTask.title = this.generateFitbitTitle();
                     }
                     if (!this.newTask.title) {
-                        alert('Task title could not be generated');
+                        toast.warning('Task title could not be generated');
                         return;
                     }
                 }
             } else if (this.newTask.task_type === 'punch_list') {
                 if (!this.newTask.title.trim()) {
-                    alert('Please enter a task title');
+                    toast.warning('Pleaseenter a task title');
                     return;
                 }
             } else if (this.newTask.task_type === 'scheduled') {
                 if (!this.newTask.title.trim()) {
-                    alert('Please enter a task title');
+                    toast.warning('Pleaseenter a task title');
                     return;
                 }
                 // Build recurrence_pattern
@@ -1249,7 +1249,7 @@ function settings() {
                 this.resetNewTask();
             } catch (error) {
                 console.error('Error adding task:', error);
-                alert('Error creating task: ' + error.message);
+                toast.error('Error creating task: ' + error.message);
             }
         },
 
@@ -1305,18 +1305,18 @@ function settings() {
             if (!this.editingTask) return;
 
             if (!this.editingTask.title.trim()) {
-                alert('Please enter a task title');
+                toast.warning('Pleaseenter a task title');
                 return;
             }
 
             // Validate Fitbit fields if auto-check is enabled
             if (this.editingTask.fitbit_auto_check) {
                 if (!this.editingTask.fitbit_metric_type) {
-                    alert('Please select a Fitbit metric type');
+                    toast.warning('Pleaseselect a Fitbit metric type');
                     return;
                 }
                 if (!this.editingTask.fitbit_goal_value) {
-                    alert('Please enter a goal value');
+                    toast.warning('Pleaseenter a goal value');
                     return;
                 }
             }
@@ -1336,7 +1336,7 @@ function settings() {
                 this.editingTask = null;
             } catch (error) {
                 console.error('Error updating task:', error);
-                alert('Error updating task: ' + error.message);
+                toast.error('Error updating task: ' + error.message);
             }
         },
 
@@ -1413,7 +1413,7 @@ function settings() {
                 window.location.href = data.redirect_url;
             } catch (error) {
                 console.error('Error connecting to Fitbit:', error);
-                alert('Failed to connect to Fitbit');
+                toast.error('Failed to connect to Fitbit');
             }
         },
 
@@ -1425,10 +1425,10 @@ function settings() {
                 this.fitbitConnected = false;
                 this.fitbitLastSync = null;
                 this.todayMetrics = {};
-                alert('Fitbit disconnected successfully');
+                toast.error('Fitbit disconnected successfully');
             } catch (error) {
                 console.error('Error disconnecting Fitbit:', error);
-                alert('Failed to disconnect Fitbit');
+                toast.error('Failed to disconnect Fitbit');
             }
         },
 
@@ -1471,7 +1471,7 @@ function settings() {
                 }, 2000);
             } catch (error) {
                 console.error('Error saving Fitbit preferences:', error);
-                alert('Failed to save preferences');
+                toast.error('Failed to save preferences');
             }
         },
 
@@ -1481,10 +1481,10 @@ function settings() {
             try {
                 await api.fitbit.resetPreferences();
                 await this.loadFitbitPreferences();
-                alert('Preferences reset to defaults');
+                toast.error('Preferences reset to defaults');
             } catch (error) {
                 console.error('Error resetting Fitbit preferences:', error);
-                alert('Failed to reset preferences');
+                toast.error('Failed to reset preferences');
             }
         },
 
@@ -1629,7 +1629,7 @@ function settings() {
 
         async saveHouseholdTask() {
             if (!this.householdForm.title.trim()) {
-                alert('Please enter a task title');
+                toast.warning('Pleaseenter a task title');
                 return;
             }
 
@@ -1662,7 +1662,7 @@ function settings() {
                 this.cancelHouseholdForm();
             } catch (error) {
                 console.error('Error saving household task:', error);
-                alert('Failed to save task. Please try again.');
+                toast.error('Failed to save task. Please try again.');
             }
         },
 
@@ -1683,7 +1683,7 @@ function settings() {
                 await this.loadHouseholdTasks();
             } catch (error) {
                 console.error('Error deleting household task:', error);
-                alert('Failed to delete task. Please try again.');
+                toast.error('Failed to delete task. Please try again.');
             }
         }
     }

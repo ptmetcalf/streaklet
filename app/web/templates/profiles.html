@@ -350,7 +350,7 @@ function profileManager() {
 
                 if (!response.ok) {
                     const error = await response.json();
-                    alert(error.detail || 'Failed to delete profile');
+                    toast.error(error.detail || 'Failed to delete profile');
                     return;
                 }
 
@@ -363,7 +363,7 @@ function profileManager() {
 
                 await this.loadProfiles();
             } catch (error) {
-                alert('Failed to delete profile');
+                toast.error('Failed to delete profile');
                 console.error('Delete profile error:', error);
             }
         },
@@ -387,9 +387,9 @@ function profileManager() {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
 
-                alert(`Profile "${profile.name}" exported successfully!`);
+                toast.success(`Profile "${profile.name}" exported successfully!`);
             } catch (error) {
-                alert('Failed to export profile');
+                toast.error('Failed to export profile');
                 console.error('Export profile error:', error);
             }
         },
@@ -421,12 +421,12 @@ function profileManager() {
 
                 if (!response.ok) {
                     const error = await response.json();
-                    alert(error.detail || 'Import failed');
+                    toast.error(error.detail || 'Import failed');
                     return;
                 }
 
                 const result = await response.json();
-                alert(result.message);
+                toast.success(result.message);
                 await this.loadProfiles();
 
                 // Reload page if importing into current profile
@@ -435,7 +435,7 @@ function profileManager() {
                     window.location.reload();
                 }
             } catch (error) {
-                alert('Failed to import profile');
+                toast.error('Failed to import profile');
                 console.error('Import profile error:', error);
             } finally {
                 // Reset file input
@@ -462,9 +462,9 @@ function profileManager() {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
 
-                alert('All profiles exported successfully!');
+                toast.success('All profiles exported successfully!');
             } catch (error) {
-                alert('Failed to export profiles');
+                toast.error('Failed to export profiles');
                 console.error('Export all profiles error:', error);
             }
         },
@@ -488,18 +488,18 @@ function profileManager() {
 
                 if (!response.ok) {
                     const error = await response.json();
-                    alert(error.detail || 'Import failed');
+                    toast.error(error.detail || 'Import failed');
                     return;
                 }
 
                 const result = await response.json();
-                alert(result.message);
+                toast.success(result.message);
                 await this.loadProfiles();
 
                 // Reload page to refresh all data
                 window.location.reload();
             } catch (error) {
-                alert('Failed to import profiles');
+                toast.error('Failed to import profiles');
                 console.error('Import all profiles error:', error);
             } finally {
                 // Reset file input
