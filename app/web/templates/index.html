@@ -345,8 +345,7 @@ function checklist() {
 
         async loadDailyTasks() {
             try {
-                const response = await fetchWithProfile('/api/days/today');
-                const data = await response.json();
+                const data = await api.daily.today();
                 this.tasks = data.tasks;
                 this.dailyTasks = data.tasks;  // For now, all tasks from /api/days/today are daily
                 this.streak = data.streak.current_streak;
@@ -361,8 +360,7 @@ function checklist() {
 
         async loadPunchListTasks() {
             try {
-                const response = await fetchWithProfile('/api/punch-list');
-                this.punchListTasks = await response.json();
+                this.punchListTasks = await api.punchList.list();
             } catch (error) {
                 console.error('Error loading punch list tasks:', error);
             }
@@ -370,8 +368,7 @@ function checklist() {
 
         async loadScheduledTasks() {
             try {
-                const response = await fetchWithProfile('/api/scheduled/due-today');
-                this.scheduledTasksDueToday = await response.json();
+                this.scheduledTasksDueToday = await api.scheduled.dueToday();
             } catch (error) {
                 console.error('Error loading scheduled tasks:', error);
             }
@@ -379,17 +376,11 @@ function checklist() {
 
         async loadHouseholdTasks() {
             try {
-                // NO fetchWithProfile - household tasks are shared
-                const response = await fetch('/api/household/tasks');
-                if (response.ok) {
-                    const tasks = await response.json();
-                    // Show only tasks that need attention (never completed OR overdue)
-                    this.householdTasks = tasks.filter(t =>
-                        !t.last_completed_at || t.is_overdue
-                    );
-                } else {
-                    console.error('Error loading household tasks:', await response.text());
-                }
+                const tasks = await api.household.list();
+                // Show only tasks that need attention (never completed OR overdue)
+                this.householdTasks = tasks.filter(t =>
+                    !t.last_completed_at || t.is_overdue
+                );
             } catch (error) {
                 console.error('Error loading household tasks:', error);
             }
@@ -463,16 +454,12 @@ function checklist() {
 
         async togglePunchListTask(task) {
             try {
-                const endpoint = task.completed_at
-                    ? `/api/punch-list/${task.id}/complete`
-                    : `/api/punch-list/${task.id}/complete`;
-
-                const method = task.completed_at ? 'DELETE' : 'POST';
-
-                const response = await fetchWithProfile(endpoint, { method });
-                if (response.ok) {
-                    await this.loadPunchListTasks();
+                if (task.completed_at) {
+                    await api.punchList.uncomplete(task.id);
+                } else {
+                    await api.punchList.complete(task.id);
                 }
+                await this.loadPunchListTasks();
             } catch (error) {
                 console.error('Error toggling punch list task:', error);
             }
