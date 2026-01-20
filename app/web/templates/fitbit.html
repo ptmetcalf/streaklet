@@ -4,6 +4,7 @@
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+<script src="/static/js/chart-factory.js"></script>
 <div class="container" x-data="fitbitMetrics()">
     <header>
         <h1>Fitbit Metrics</h1>
@@ -928,21 +929,24 @@ function fitbitMetrics() {
                 if (chart) chart.destroy();
             });
 
-            const chartConfig = {
-                steps: {
+            // Chart configurations using ChartFactory
+            const chartConfigs = [
+                {
+                    key: 'steps',
                     containerId: 'stepsChart',
                     data: metricsData.steps || [],
                     label: 'Steps',
-                    color: '#3b82f6',
+                    color: CHART_COLORS.primary,
                     yAxisLabel: 'Steps',
                     formatter: (val) => Math.round(val).toLocaleString(),
                     visible: this.visibleMetrics.steps
                 },
-                sleep: {
+                {
+                    key: 'sleep',
                     containerId: 'sleepChart',
                     data: metricsData.sleep_minutes || [],
                     label: 'Sleep',
-                    color: '#8b5cf6',
+                    color: CHART_COLORS.secondary,
                     yAxisLabel: 'Hours',
                     transform: (v) => v / 60,
                     formatter: (val) => {
@@ -952,115 +956,38 @@ function fitbitMetrics() {
                     },
                     visible: this.visibleMetrics.sleep_minutes
                 },
-                activeMinutes: {
+                {
+                    key: 'activeMinutes',
                     containerId: 'activeMinutesChart',
                     data: metricsData.active_minutes || [],
                     label: 'Active Minutes',
-                    color: '#ef4444',
+                    color: CHART_COLORS.danger,
                     yAxisLabel: 'Minutes',
                     formatter: (val) => Math.round(val) + ' min',
                     visible: this.visibleMetrics.active_minutes
                 },
-                heartRate: {
+                {
+                    key: 'heartRate',
                     containerId: 'heartRateChart',
                     data: metricsData.resting_heart_rate || [],
                     label: 'Resting HR',
                     color: '#ec4899',
                     yAxisLabel: 'BPM',
-                    yAxisMin: 40, // Start at 40 bpm instead of 0 for better visualization
+                    yAxisMin: 40,
                     formatter: (val) => Math.round(val) + ' bpm',
                     visible: this.visibleMetrics.resting_heart_rate
                 }
-            };
+            ];
 
-            Object.keys(chartConfig).forEach(key => {
-                const config = chartConfig[key];
-
-                // Skip if metric is hidden
+            // Create charts using factory
+            chartConfigs.forEach(config => {
                 if (!config.visible) return;
 
-                const container = document.getElementById(config.containerId);
-                if (!container) return;
-
-                const categories = config.data.map(d => {
-                    const date = new Date(d.date + 'T00:00:00');
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                });
-
-                const values = config.data.map(d => {
-                    const val = config.transform ? config.transform(d.value) : d.value;
-                    return Math.round(val * 100) / 100; // Round to 2 decimals
-                });
-
-                const options = {
-                    series: [{
-                        name: config.label,
-                        data: values
-                    }],
-                    chart: {
-                        type: 'line',
-                        height: 240,
-                        toolbar: {
-                            show: false
-                        },
-                        zoom: {
-                            enabled: false
-                        },
-                        animations: {
-                            enabled: true,
-                            easing: 'easeinout',
-                            speed: 800
-                        }
-                    },
-                    dataLabels: {
-                        enabled: false
-                    },
-                    stroke: {
-                        curve: 'straight',
-                        width: 2
-                    },
-                    markers: {
-                        size: 3,
-                        strokeWidth: 1.5,
-                        hover: {
-                            size: 5
-                        }
-                    },
-                    colors: [config.color],
-                    xaxis: {
-                        categories: categories,
-                        labels: {
-                            style: {
-                                fontSize: '12px'
-                            }
-                        }
-                    },
-                    yaxis: {
-                        min: config.yAxisMin !== undefined ? config.yAxisMin : 0,
-                        title: {
-                            text: config.yAxisLabel,
-                            style: {
-                                fontSize: '12px',
-                                fontWeight: 500
-                            }
-                        },
-                        labels: {
-                            formatter: config.formatter || ((val) => Math.round(val).toLocaleString())
-                        }
-                    },
-                    tooltip: {
-                        y: {
-                            formatter: config.formatter || ((val) => Math.round(val).toLocaleString())
-                        }
-                    },
-                    grid: {
-                        borderColor: '#e5e7eb',
-                        strokeDashArray: 3
-                    }
-                };
-
-                this.charts[key] = new ApexCharts(container, options);
-                this.charts[key].render();
+                const chart = ChartFactory.createLineChart(config.containerId, config);
+                if (chart) {
+                    this.charts[config.key] = chart;
+                    chart.render();
+                }
             });
         },
 
@@ -1155,9 +1082,6 @@ function fitbitMetrics() {
                 this.charts.multiMetric.destroy();
             }
 
-            const container = document.getElementById('multiMetricChart');
-            if (!container) return;
-
             const steps = metricsData.steps || [];
             const sleep = metricsData.sleep_minutes || [];
             const active = metricsData.active_minutes || [];
@@ -1167,7 +1091,7 @@ function fitbitMetrics() {
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             });
 
-            const options = {
+            const chart = ChartFactory.createMultiSeriesChart('multiMetricChart', {
                 series: [
                     {
                         name: 'Steps',
@@ -1185,83 +1109,30 @@ function fitbitMetrics() {
                         data: sleep.map(d => Math.round((d.value / 60) * 10) / 10)
                     }
                 ],
-                chart: {
-                    height: 350,
-                    type: 'line',
-                    stacked: false,
-                    toolbar: {
-                        show: true,
-                        tools: {
-                            download: true,
-                            selection: true,
-                            zoom: true,
-                            zoomin: true,
-                            zoomout: true,
-                            pan: true,
-                            reset: true
-                        }
-                    },
-                    zoom: {
-                        enabled: true
-                    }
-                },
-                stroke: {
-                    width: [0, 2, 2],
-                    curve: 'smooth'
-                },
-                fill: {
-                    type: ['gradient', 'solid', 'solid'],
-                    gradient: {
-                        shade: 'light',
-                        type: 'vertical',
-                        opacityFrom: 0.6,
-                        opacityTo: 0.1
-                    }
-                },
-                colors: ['#3b82f6', '#ef4444', '#8b5cf6'],
-                xaxis: {
-                    categories: categories,
-                    labels: {
-                        rotate: -45,
-                        style: {
-                            fontSize: '11px'
-                        }
-                    }
-                },
-                yaxis: [
+                categories,
+                height: 350,
+                colors: [CHART_COLORS.primary, CHART_COLORS.danger, CHART_COLORS.secondary],
+                strokeWidth: [0, 2, 2],
+                fillType: ['gradient', 'solid', 'solid'],
+                enableToolbar: true,
+                yAxisConfig: [
                     {
-                        title: {
-                            text: 'Steps'
-                        },
-                        labels: {
-                            formatter: (val) => Math.round(val).toLocaleString()
-                        }
+                        title: { text: 'Steps' },
+                        labels: { formatter: (val) => Math.round(val).toLocaleString() }
                     },
                     {
                         opposite: true,
-                        title: {
-                            text: 'Minutes / Hours'
-                        },
-                        labels: {
-                            formatter: (val) => Math.round(val)
-                        }
+                        title: { text: 'Minutes / Hours' },
+                        labels: { formatter: (val) => Math.round(val) }
                     },
-                    {
-                        show: false
-                    }
-                ],
-                legend: {
-                    position: 'top',
-                    horizontalAlign: 'center'
-                },
-                tooltip: {
-                    shared: true,
-                    intersect: false
-                }
-            };
+                    { show: false }
+                ]
+            });
 
-            this.charts.multiMetric = new ApexCharts(container, options);
-            this.charts.multiMetric.render();
+            if (chart) {
+                this.charts.multiMetric = chart;
+                chart.render();
+            }
         },
 
         getWeekNumber(date) {
@@ -1311,9 +1182,6 @@ function fitbitMetrics() {
                 this.charts.weekdayWeekend.destroy();
             }
 
-            const container = document.getElementById('weekdayWeekendChart');
-            if (!container) return;
-
             const steps = metricsData.steps || [];
 
             // Separate weekday and weekend data
@@ -1333,63 +1201,17 @@ function fitbitMetrics() {
             const avgWeekday = weekdaySteps.length > 0 ? weekdaySteps.reduce((sum, v) => sum + v, 0) / weekdaySteps.length : 0;
             const avgWeekend = weekendSteps.length > 0 ? weekendSteps.reduce((sum, v) => sum + v, 0) / weekendSteps.length : 0;
 
-            const options = {
-                series: [{
-                    name: 'Average Steps',
-                    data: [avgWeekday, avgWeekend]
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 300,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                plotOptions: {
-                    bar: {
-                        borderRadius: 8,
-                        horizontal: false,
-                        columnWidth: '60%',
-                        dataLabels: {
-                            position: 'top'
-                        }
-                    }
-                },
-                dataLabels: {
-                    enabled: true,
-                    formatter: (val) => Math.round(val).toLocaleString(),
-                    offsetY: -20,
-                    style: {
-                        fontSize: '12px',
-                        colors: ['#333']
-                    }
-                },
-                colors: ['#3b82f6'],
-                xaxis: {
-                    categories: ['Weekdays', 'Weekends'],
-                    labels: {
-                        style: {
-                            fontSize: '14px',
-                            fontWeight: 600
-                        }
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Average Steps',
-                        style: {
-                            fontSize: '12px',
-                            fontWeight: 500
-                        }
-                    },
-                    labels: {
-                        formatter: (val) => Math.round(val).toLocaleString()
-                    }
-                }
-            };
+            const chart = ChartFactory.createBarChart('weekdayWeekendChart', {
+                series: [{ name: 'Average Steps', data: [avgWeekday, avgWeekend] }],
+                categories: ['Weekdays', 'Weekends'],
+                height: 300,
+                colors: [CHART_COLORS.primary]
+            });
 
-            this.charts.weekdayWeekend = new ApexCharts(container, options);
-            this.charts.weekdayWeekend.render();
+            if (chart) {
+                this.charts.weekdayWeekend = chart;
+                chart.render();
+            }
         },
 
         createWeekOverWeekChart(metricsData) {
@@ -1452,61 +1274,23 @@ function fitbitMetrics() {
                 return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             });
 
-            const options = {
-                series: [{
-                    name: 'Weekly Steps',
-                    data: weeklyTotals
-                }],
-                chart: {
-                    type: 'line',
-                    height: 300,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                stroke: {
-                    curve: 'smooth',
-                    width: 3
-                },
-                markers: {
-                    size: 6,
-                    strokeWidth: 2,
-                    hover: {
-                        size: 8
-                    }
-                },
-                colors: ['#3b82f6'],
-                xaxis: {
-                    categories: weekLabels,
-                    title: {
-                        text: 'Week Starting',
-                        style: {
-                            fontSize: '12px',
-                            fontWeight: 500
-                        }
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Total Weekly Steps',
-                        style: {
-                            fontSize: '12px',
-                            fontWeight: 500
-                        }
-                    },
-                    labels: {
-                        formatter: (val) => Math.round(val).toLocaleString()
-                    }
-                },
-                tooltip: {
-                    y: {
-                        formatter: (val) => Math.round(val).toLocaleString() + ' steps'
-                    }
-                }
-            };
+            // Transform data for chart factory
+            const data = weeklyTotals.map(total => ({ value: total }));
 
-            this.charts.weekOverWeek = new ApexCharts(container, options);
-            this.charts.weekOverWeek.render();
+            const chart = ChartFactory.createLineChart('weekOverWeekChart', {
+                data,
+                categories: weekLabels,
+                label: 'Weekly Steps',
+                color: CHART_COLORS.primary,
+                height: 300,
+                yAxisLabel: 'Total Weekly Steps',
+                formatter: (val) => Math.round(val).toLocaleString() + ' steps'
+            });
+
+            if (chart) {
+                this.charts.weekOverWeek = chart;
+                chart.render();
+            }
         },
 
         createMonthComparisonChart(metricsData) {
@@ -1534,56 +1318,18 @@ function fitbitMetrics() {
             const months = Object.keys(monthlyData).slice(-3);
             const monthlyAverages = months.map(month => Math.round(monthlyData[month].total / monthlyData[month].count));
 
-            const options = {
-                series: [{
-                    name: 'Daily Average',
-                    data: monthlyAverages
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 300,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                plotOptions: {
-                    bar: {
-                        borderRadius: 8,
-                        horizontal: true,
-                        dataLabels: {
-                            position: 'top'
-                        }
-                    }
-                },
-                dataLabels: {
-                    enabled: true,
-                    formatter: (val) => Math.round(val).toLocaleString(),
-                    offsetX: 30,
-                    style: {
-                        fontSize: '12px',
-                        colors: ['#333']
-                    }
-                },
-                colors: ['#10b981'],
-                xaxis: {
-                    title: {
-                        text: 'Average Daily Steps',
-                        style: {
-                            fontSize: '12px',
-                            fontWeight: 500
-                        }
-                    },
-                    labels: {
-                        formatter: (val) => Math.round(val).toLocaleString()
-                    }
-                },
-                yaxis: {
-                    categories: months
-                }
-            };
+            const chart = ChartFactory.createBarChart('monthComparisonChart', {
+                series: [{ name: 'Daily Average', data: monthlyAverages }],
+                categories: months,
+                height: 300,
+                colors: [CHART_COLORS.success],
+                horizontal: true
+            });
 
-            this.charts.monthComparison = new ApexCharts(container, options);
-            this.charts.monthComparison.render();
+            if (chart) {
+                this.charts.monthComparison = chart;
+                chart.render();
+            }
         },
 
         async loadInsightsData() {
@@ -1629,9 +1375,6 @@ function fitbitMetrics() {
                 this.charts.correlation.destroy();
             }
 
-            const container = document.getElementById('correlationChart');
-            if (!container) return;
-
             const steps = metricsData.steps || [];
             const sleep = metricsData.sleep_minutes || [];
 
@@ -1644,52 +1387,20 @@ function fitbitMetrics() {
                 }
             });
 
-            const options = {
-                series: [{
-                    name: 'Activity',
-                    data: pairs
-                }],
-                chart: {
-                    type: 'scatter',
-                    height: 300,
-                    toolbar: {
-                        show: false
-                    },
-                    zoom: {
-                        enabled: true,
-                        type: 'xy'
-                    }
-                },
-                xaxis: {
-                    title: {
-                        text: 'Steps'
-                    },
-                    labels: {
-                        formatter: (val) => Math.round(val).toLocaleString()
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Sleep (hours)'
-                    },
-                    labels: {
-                        formatter: (val) => val.toFixed(1)
-                    }
-                },
-                colors: ['#8b5cf6'],
-                tooltip: {
-                    custom: function({ seriesIndex, dataPointIndex, w }) {
-                        const point = w.config.series[0].data[dataPointIndex];
-                        return '<div style="padding: 8px;">' +
-                            '<strong>Steps:</strong> ' + Math.round(point[0]).toLocaleString() + '<br>' +
-                            '<strong>Sleep:</strong> ' + point[1].toFixed(1) + ' hours' +
-                            '</div>';
-                    }
-                }
-            };
+            const chart = ChartFactory.createScatterChart('correlationChart', {
+                series: [{ name: 'Activity', data: pairs }],
+                height: 300,
+                colors: [CHART_COLORS.secondary],
+                xAxisTitle: 'Steps',
+                yAxisTitle: 'Sleep (hours)',
+                xAxisFormatter: (val) => Math.round(val).toLocaleString(),
+                yAxisFormatter: (val) => val.toFixed(1)
+            });
 
-            this.charts.correlation = new ApexCharts(container, options);
-            this.charts.correlation.render();
+            if (chart) {
+                this.charts.correlation = chart;
+                chart.render();
+            }
         },
 
         createDistributionChart(metricsData) {
@@ -1701,9 +1412,6 @@ function fitbitMetrics() {
             if (this.charts.distribution) {
                 this.charts.distribution.destroy();
             }
-
-            const container = document.getElementById('distributionChart');
-            if (!container) return;
 
             const steps = (metricsData.steps || []).map(d => d.value);
 
@@ -1724,45 +1432,19 @@ function fitbitMetrics() {
                 `${(bin / 1000).toFixed(0)}k-${(bins[i + 1] / 1000).toFixed(0)}k`
             );
 
-            const options = {
-                series: [{
-                    name: 'Days',
-                    data: binCounts
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 300,
-                    toolbar: {
-                        show: false
-                    }
-                },
-                plotOptions: {
-                    bar: {
-                        borderRadius: 4,
-                        columnWidth: '80%'
-                    }
-                },
-                colors: ['#3b82f6'],
-                xaxis: {
-                    categories: categories,
-                    title: {
-                        text: 'Steps Range'
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Number of Days'
-                    }
-                },
-                tooltip: {
-                    y: {
-                        formatter: (val) => val + ' days'
-                    }
-                }
-            };
+            const chart = ChartFactory.createHistogram('distributionChart', {
+                data: binCounts,
+                label: 'Days',
+                categories,
+                height: 300,
+                color: CHART_COLORS.primary,
+                yAxisFormatter: (val) => val + ' days'
+            });
 
-            this.charts.distribution = new ApexCharts(container, options);
-            this.charts.distribution.render();
+            if (chart) {
+                this.charts.distribution = chart;
+                chart.render();
+            }
         },
 
         calculateInsights(metricsData) {
