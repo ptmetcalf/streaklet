@@ -82,11 +82,12 @@ Completed a comprehensive code consolidation initiative across the Streaklet cod
 - Automatic JSON parsing and error handling
 - Semantic helpers for all resources
 
-**34 API calls migrated across 3 templates:**
+**43 API calls migrated across 5 templates (100% complete):**
 
-**index.html (5 calls):**
+**index.html (8 calls):**
 - loadDailyTasks(), loadPunchListTasks(), loadScheduledTasks()
 - loadHouseholdTasks(), togglePunchListTask()
+- markHouseholdComplete(), toggleTask(), deleteScheduledTask()
 
 **fitbit.html (8 calls):**
 - loadPreferences(), loadTodayDate(), checkFitbitConnection()
@@ -98,7 +99,13 @@ Completed a comprehensive code consolidation initiative across the Streaklet cod
 - All Fitbit integration operations
 - Preferences management, sync operations
 
-**Impact:** **~114 lines removed** (48% average reduction per function)
+**history.html (4 calls):**
+- fetchCalendarData(), refreshStreak(), loadDayData(), toggleTask()
+
+**household.html (1 call):**
+- markComplete()
+
+**Impact:** **~125 lines removed** (44% average reduction per function)
 
 ---
 
@@ -120,10 +127,10 @@ Phase 1: Setup (foundation)
 Phase 2: 220 lines removed (template formatters)
 Phase 3: 106 lines removed (duplicate styles)
 Phase 4: 316 lines removed (chart boilerplate)
-Phase 5: 114+ lines removed (API boilerplate)
+Phase 5: 125 lines removed (API boilerplate - 100% complete)
 
-Total: ~782 lines removed
-Net: +1,198 lines (infrastructure - duplicates)
+Total: ~767 lines removed
+Net: +1,213 lines (infrastructure - duplicates)
 ```
 
 ### Templates Refactored
@@ -131,8 +138,8 @@ Net: +1,198 lines (infrastructure - duplicates)
 - ✅ fitbit.html - Uses all 4 libraries (utils, components, charts, API)
 - ✅ index.html - Uses utils, components, API client
 - ✅ settings.html - Uses utils, components, API client
-- ✅ household.html - Uses utils, components
-- ✅ history.html - Uses utils (API client partially)
+- ✅ household.html - Uses utils, components, API client
+- ✅ history.html - Uses utils, API client
 - ✅ profiles.html - Uses utils
 
 ---
@@ -179,7 +186,7 @@ api.fitbit.dailySummary(date)
 
 ## Git History
 
-### Commits (8 total)
+### Commits (11 total)
 ```bash
 90a70b4 docs: add comprehensive consolidation summary for phases 1-5
 b9cfbf8 feat: create chart factory and consolidate all fitbit chart functions (Phase 4)
@@ -187,6 +194,9 @@ b9cfbf8 feat: create chart factory and consolidate all fitbit chart functions (P
 18762ec refactor: migrate all fitbit.html API calls to use api-client
 c7cbd3e refactor: migrate all settings.html API calls to use api-client
 65dfa57 docs: add comprehensive Phase 5 API migration summary
+efc8bb0 refactor: migrate index.html and history.html API calls to use api-client
+21fc096 refactor: migrate household.html API call to use api-client
+b11ad0c docs: update Phase 5 summary to reflect 100% completion
 [earlier] feat: create unified component system (Phase 3)
 [earlier] feat: migrate templates to utils (Phase 2)
 [earlier] feat: create utility library (Phase 1)
@@ -282,16 +292,14 @@ All commits follow conventional commit format and are properly attributed.
 
 ## Remaining Opportunities
 
-### Immediate (Phase 5 completion)
-- **9 remaining API calls** in index.html, history.html, household.html
-- **Estimated effort:** 1-2 hours
-- **Expected savings:** ~30-40 lines
-
 ### Future Phases (6+)
+With Phase 5 complete at 100%, consider these next consolidation areas:
+
 1. **Modal Component** - Consolidate modal patterns (~100 lines)
 2. **Form Components** - Reusable form fields (~80 lines)
 3. **Loading States** - Unified loading indicators (~50 lines)
 4. **Toast Notifications** - Standardize messages (~40 lines)
+5. **State Management** - Alpine.js store consolidation
 
 **Total potential savings:** ~270+ additional lines
 
@@ -349,9 +357,9 @@ All commits follow conventional commit format and are properly attributed.
 ## Recommendations
 
 ### Short Term (Next Session)
-1. **Complete Phase 5** - Migrate remaining 9 API calls (1-2 hours)
-2. **Performance audit** - Measure page load with new libraries
-3. **User testing** - Verify no regressions in functionality
+1. **Performance audit** - Measure page load with new libraries
+2. **User testing** - Verify no regressions in functionality
+3. **Begin Phase 6** - Start modal or form consolidation
 
 ### Medium Term (Next Week)
 1. **Modal consolidation** - Create reusable modal component
@@ -370,17 +378,18 @@ All commits follow conventional commit format and are properly attributed.
 Successfully completed a comprehensive code consolidation initiative that transformed the Streaklet codebase from scattered, duplicative patterns to a well-organized system with reusable libraries and consistent patterns.
 
 **Key Achievements:**
-- ✅ **782+ lines of duplicate code eliminated**
+- ✅ **767+ lines of duplicate code eliminated**
 - ✅ **4 foundational libraries created** (1,980 lines of infrastructure)
 - ✅ **100% backward compatible** - zero breaking changes
 - ✅ **Consistent patterns** across the entire application
+- ✅ **Phase 5: 100% complete** - all 43 API calls migrated
 - ✅ **Developer productivity** improved by ~85%
 - ✅ **Code quality** significantly enhanced
 - ✅ **Mobile-first** responsive design throughout
 
 **Next Steps:**
-- Complete remaining API client migrations (9 calls)
-- Continue consolidation with modal/form components
+- Performance audit and user testing
+- Continue consolidation with modal/form components (Phase 6+)
 - Monitor for new consolidation opportunities
 
 ---
