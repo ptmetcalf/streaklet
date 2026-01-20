@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.3.0](https://github.com/ptmetcalf/streaklet/compare/v1.2.1...v1.3.0) (2026-01-20)
+
+
+### Features
+
+* add Material Design Icons infrastructure for household tasks ([b7be6d1](https://github.com/ptmetcalf/streaklet/commit/b7be6d1f17d7bf1c0e1e0cefc4d67a286b106b33))
+* add one-time to-do items to household tasks ([b181912](https://github.com/ptmetcalf/streaklet/commit/b181912fbf5d5078143401b14edc18348e725752))
+* Add shared icon categories for icon picker and refactor API calls ([e24b687](https://github.com/ptmetcalf/streaklet/commit/e24b687df411024efaa23e2a79f2adad76ea81e0))
+* consolidate form components with BEM methodology ([4b92961](https://github.com/ptmetcalf/streaklet/commit/4b92961cbad16765b208654c9c9dd058fbac3cfa))
+* create API client and standardize HTTP requests (Phase 5) ([972305e](https://github.com/ptmetcalf/streaklet/commit/972305ec3a44edad35abd8c711a2d659d91edcc7))
+* create chart factory and consolidate all fitbit chart functions (Phase 4) ([b9cfbf8](https://github.com/ptmetcalf/streaklet/commit/b9cfbf8d6e4017e518d1e9bb7b4790b94f122441))
+* create unified component system with consolidated styles (Phase 3) ([12edd24](https://github.com/ptmetcalf/streaklet/commit/12edd24132ceda55fd4b7cfdef9f7dcfcf44b448))
+* migrate inline formatters to utils.js and update templates ([5605424](https://github.com/ptmetcalf/streaklet/commit/5605424197e4c8b04577c29f9d20c298207a889c))
+* replace alert() dialogs with modern toast notification system ([c463fa2](https://github.com/ptmetcalf/streaklet/commit/c463fa2815a0711c6f96e39023472d16f0226168))
+
+
+### Bug Fixes
+
+* enhance daily metrics grid layout and improve responsive design ([1cbf1fb](https://github.com/ptmetcalf/streaklet/commit/1cbf1fbb53203f725fc5ec4beb616a1b59e84bc7))
+* respect active_since when calculating historical completion percentages ([d20b16e](https://github.com/ptmetcalf/streaklet/commit/d20b16e66a7195dc8d90a511f577ff5decaf0611))
+
+
+### Documentation
+
+* add comprehensive consolidation summary for phases 1-5 ([90a70b4](https://github.com/ptmetcalf/streaklet/commit/90a70b4462e37c5abe844da4707145d9921a0b73))
+* add comprehensive Phase 5 API migration summary ([65dfa57](https://github.com/ptmetcalf/streaklet/commit/65dfa57b3a1daab53a5f113642990461658e5a77))
+* add final consolidation session summary ([763847c](https://github.com/ptmetcalf/streaklet/commit/763847c2ee36d884054e7aaba9db6eaae0667203))
+* update consolidation summary to reflect Phase 5 completion ([9ba69b3](https://github.com/ptmetcalf/streaklet/commit/9ba69b39b80d4a63e8ef3f18dcf1ad89751c5588))
+* update Phase 5 summary to reflect 100% completion ([b11ad0c](https://github.com/ptmetcalf/streaklet/commit/b11ad0c3c9e50b8bc7fd3bf4fdf5ab99df0940c4))
+
 ## [1.2.1](https://github.com/ptmetcalf/streaklet/compare/v1.2.0...v1.2.1) (2026-01-19)
 
 
