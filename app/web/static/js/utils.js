@@ -657,6 +657,20 @@ window.toast = (function() {
 })();
 
 // ============================================================================
+// MODAL UTILITIES
+// ============================================================================
+
+/**
+ * Modal keyboard handler
+ * Handles ESC key to close modals
+ */
+window.modalKeyHandler = function(event, closeCallback) {
+    if (event.key === 'Escape' && typeof closeCallback === 'function') {
+        closeCallback();
+    }
+};
+
+// ============================================================================
 // FORM VALIDATION UTILITIES
 // ============================================================================
 
@@ -714,6 +728,7 @@ if (typeof console !== 'undefined' && console.info) {
         'Utilities': ['clamp', 'debounce'],
         'Icon Picker': ['iconPickerUtils.filterCategories', 'iconPickerUtils.hasVisibleIcons', 'iconPickerUtils.getIconDisplayName'],
         'Form Validation': ['formValidation.validateRequired', 'formValidation.validateRange', 'formValidation.showError'],
-        'Toast Notifications': ['toast.success()', 'toast.error()', 'toast.warning()', 'toast.info()', 'toast.dismiss()']
+        'Toast Notifications': ['toast.success()', 'toast.error()', 'toast.warning()', 'toast.info()', 'toast.dismiss()'],
+        'Modal Utilities': ['modalKeyHandler(event, closeCallback)']
     });
 }

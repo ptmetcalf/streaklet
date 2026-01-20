@@ -399,14 +399,14 @@
         </div>
 
         <!-- Personal Task Icon Picker Modal -->
-        <div x-show="showPersonalIconPicker" class="modal-overlay" @click.self="showPersonalIconPicker = false" style="z-index: 1000;">
-            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;" @click.stop>
+        <div x-show="showPersonalIconPicker" class="modal-overlay" @click.self="showPersonalIconPicker = false" @keydown.escape.window="showPersonalIconPicker && (showPersonalIconPicker = false)">
+            <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
                 <div class="modal-header">
                     <h2>Choose an Icon</h2>
                     <button @click="showPersonalIconPicker = false" class="btn-close">✕</button>
                 </div>
 
-                <div style="padding: 20px;">
+                <div class="modal-body">
                     <!-- Search Box -->
                     <input type="text"
                            x-model="personalIconSearch"
@@ -583,14 +583,14 @@
         </div>
 
         <!-- Icon Picker Modal -->
-        <div x-show="showIconPicker" class="modal-overlay" @click.self="showIconPicker = false" style="z-index: 1000;">
-            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;" @click.stop>
+        <div x-show="showIconPicker" class="modal-overlay" @click.self="showIconPicker = false" @keydown.escape.window="showIconPicker && (showIconPicker = false)">
+            <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
                 <div class="modal-header">
                     <h2>Choose an Icon</h2>
                     <button @click="showIconPicker = false" class="btn-close">✕</button>
                 </div>
 
-                <div style="padding: 20px;">
+                <div class="modal-body">
                     <!-- Search Box -->
                     <input type="text"
                            x-model="iconSearch"
@@ -831,45 +831,23 @@
     <div x-show="deleteConfirm.show"
          x-cloak
          @click.self="cancelDelete()"
+         @keydown.escape.window="deleteConfirm.show && cancelDelete()"
          class="modal-overlay">
         <div class="modal-content">
-            <h3 style="margin: 0 0 16px; font-size: 20px; color: var(--text-color);">Delete Task?</h3>
-            <p style="margin: 0 0 24px; color: #666; line-height: 1.5;">
-                Are you sure you want to delete <strong x-text="deleteConfirm.taskTitle"></strong>?
-                <br><br>
-                This action cannot be undone.
-            </p>
-            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <div class="modal-body">
+                <h3 style="margin: 0 0 16px; font-size: 20px; color: var(--text-color);">Delete Task?</h3>
+                <p style="margin: 0 0 24px; color: #666; line-height: 1.5;">
+                    Are you sure you want to delete <strong x-text="deleteConfirm.taskTitle"></strong>?
+                    <br><br>
+                    This action cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer">
                 <button class="btn-secondary" @click="cancelDelete()">Cancel</button>
                 <button class="btn-danger" @click="confirmDelete()">Delete</button>
             </div>
         </div>
     </div>
-
-    <style>
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 28px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-            margin: 0 16px;
-        }
-    </style>
 
     <!-- Alert Message -->
     <div x-show="alertMessage"

@@ -406,7 +406,7 @@
     </div>
 
     <!-- History Modal -->
-    <div x-show="historyModal.show" class="modal-overlay" @click.self="closeHistory()">
+    <div x-show="historyModal.show" class="modal-overlay" @click.self="closeHistory()" @keydown.escape.window="historyModal.show && closeHistory()">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Completion History</h2>
@@ -838,75 +838,9 @@ function householdMaintenance() {
 
 /* Button and empty state styles now in components.css */
 
-/* Modal Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
+/* Modal and button styles now in components.css */
 
-.modal-content {
-    background: white;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 80vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-.modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 20px;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 20px;
-}
-
-.btn-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #999;
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.2s;
-}
-
-.btn-close:hover {
-    background: #f0f0f0;
-    color: #333;
-}
-
-.modal-body {
-    padding: 20px;
-    overflow-y: auto;
-}
-
-.modal-body h3 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
-}
-
+/* History-specific styles */
 .history-list {
     margin-top: 20px;
 }
@@ -950,11 +884,6 @@ function householdMaintenance() {
 
     .btn-complete {
         flex: none;
-    }
-
-    .modal-content {
-        width: 95%;
-        max-height: 90vh;
     }
 }
 

@@ -1027,6 +1027,172 @@
     color: var(--primary-color);
 }
 
+/* ============================================================================
+   MODAL DIALOGS
+   ============================================================================ */
+
+/* Modal Overlay - Full-screen backdrop */
+.modal,
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+@media (max-width: 480px) {
+    .modal,
+    .modal-overlay {
+        padding: 10px;
+        align-items: flex-start;
+    }
+}
+
+/* Modal Content Container */
+.modal-content,
+.modal__content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Modal Header */
+.modal-header,
+.modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2,
+.modal__header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+@media (max-width: 480px) {
+    .modal-header,
+    .modal__header {
+        padding: 16px;
+    }
+
+    .modal-header h2,
+    .modal__header h2 {
+        font-size: 16px;
+    }
+}
+
+/* Modal Body */
+.modal-body,
+.modal__body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+@media (max-width: 480px) {
+    .modal-body,
+    .modal__body {
+        padding: 16px;
+    }
+}
+
+/* Modal Footer */
+.modal-footer,
+.modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 480px) {
+    .modal-footer,
+    .modal__footer {
+        padding: 12px 16px;
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+
+    .modal-footer button,
+    .modal__footer button {
+        width: 100%;
+    }
+}
+
+/* Modal Size Modifiers */
+.modal-content--sm {
+    max-width: 400px;
+}
+
+.modal-content--md {
+    max-width: 600px;
+}
+
+.modal-content--lg {
+    max-width: 800px;
+}
+
+.modal-content--xl {
+    max-width: 1000px;
+}
+
+.modal-content--full {
+    max-width: 95%;
+    max-height: 95vh;
+}
+
+/* Modal with scrollable content */
+.modal-content--scrollable .modal-body,
+.modal-content--scrollable .modal__body {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Legacy support - profiles.html uses these */
+.modal .modal-content h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.modal .form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
 .u-flex {
     display: flex;
 }

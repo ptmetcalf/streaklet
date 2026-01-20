@@ -65,8 +65,8 @@
     </div>
 
     <!-- Create Profile Modal -->
-    <div class="modal" x-show="showCreateModal" @click.self="showCreateModal = false">
-        <div class="modal-content">
+    <div class="modal" x-show="showCreateModal" @click.self="showCreateModal = false" @keydown.escape.window="showCreateModal && (showCreateModal = false)">
+        <div class="modal-content" style="padding: 24px;">
             <h2>Create New Profile</h2>
             <form @submit.prevent="createProfile">
                 <div class="form-field">
@@ -100,8 +100,8 @@
     </div>
 
     <!-- Edit Profile Modal -->
-    <div class="modal" x-show="showEditModal" @click.self="showEditModal = false">
-        <div class="modal-content">
+    <div class="modal" x-show="showEditModal" @click.self="showEditModal = false" @keydown.escape.window="showEditModal && (showEditModal = false)">
+        <div class="modal-content" style="padding: 24px;">
             <h2>Edit Profile</h2>
             <form @submit.prevent="updateProfile">
                 <div class="form-field">
