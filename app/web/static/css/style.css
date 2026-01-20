@@ -575,20 +575,7 @@ button:active {
     opacity: 0.7;
 }
 
-.btn-primary {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.btn-danger {
-    background-color: var(--danger-color);
-    color: white;
-}
-
-.btn-secondary {
-    background-color: var(--border-color);
-    color: var(--text-color);
-}
+/* Button styles moved to components.css for better organization */
 
 .form-group {
     margin-bottom: 16px;
@@ -1517,51 +1504,11 @@ button:active {
     margin-top: 12px;
 }
 
-/* Action Buttons */
-.btn-task-action {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-}
+/* Task button styles moved to components.css */
 
-.btn-task-complete {
-    background: #52c41a;
-    color: white;
-    flex: 1;
-}
+/* Task badge styles moved to components.css */
 
-.btn-task-complete:hover {
-    background: #45a617;
-}
-
-.btn-task-complete:disabled {
-    background: #d9d9d9;
-    color: #999;
-    cursor: not-allowed;
-}
-
-.btn-task-secondary {
-    background: #f0f0f0;
-    color: #666;
-}
-
-.btn-task-secondary:hover {
-    background: #e0e0e0;
-}
-
-/* Badges */
-.task-badge {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
+/* Badge variants (task-specific) */
 .badge-required {
     background: #fff7e6;
     color: #d46b08;
@@ -1661,11 +1608,7 @@ button:active {
         flex-direction: column;
     }
 
-    .btn-task-action {
-        width: 100%;
-        min-height: 48px; /* Touch-friendly */
-        padding: 12px 20px;
-    }
+    /* Mobile button styles moved to components.css */
 
     .task-card-metadata {
         font-size: 12px;
