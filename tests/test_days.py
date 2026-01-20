@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, date
 from app.models.daily_status import DailyStatus
 from app.models.task_check import TaskCheck
 from app.services import checks as check_service

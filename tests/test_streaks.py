@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, date
 from app.services import streaks as streak_service
 from app.services import checks as check_service
 from app.models.daily_status import DailyStatus
