@@ -805,11 +805,7 @@ function fitbitMetrics() {
 
         async loadPreferences() {
             try {
-                const response = await fetchWithProfile('/api/fitbit/preferences/visible-metrics');
-                if (response.ok) {
-                    const prefs = await response.json();
-                    this.visibleMetrics = prefs;
-                }
+                this.visibleMetrics = await api.fitbit.visibleMetrics();
             } catch (error) {
                 console.error('Error loading preferences:', error);
             }
@@ -817,12 +813,9 @@ function fitbitMetrics() {
 
         async loadTodayDate() {
             try {
-                const response = await fetchWithProfile('/api/days/today');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.today = data.date;
-                    this.selectedDate = data.date;
-                }
+                const data = await api.daily.today();
+                this.today = data.date;
+                this.selectedDate = data.date;
             } catch (error) {
                 console.error('Error loading today date:', error);
                 // Fallback to local date (but this will have the timezone issue)
@@ -834,11 +827,8 @@ function fitbitMetrics() {
 
         async checkFitbitConnection() {
             try {
-                const response = await fetchWithProfile('/api/fitbit/connection');
-                if (response.ok) {
-                    const data = await response.json();
-                    this.fitbitConnected = data.connected;
-                }
+                const data = await api.fitbit.connection();
+                this.fitbitConnected = data.connected;
             } catch (error) {
                 console.error('Error checking Fitbit connection:', error);
             }
@@ -847,13 +837,8 @@ function fitbitMetrics() {
         async loadMetricsForDate() {
             this.loading = true;
             try {
-                const response = await fetchWithProfile(`/api/fitbit/daily-summary?date=${this.selectedDate}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    this.metrics = data.metrics || {};
-                } else {
-                    this.metrics = {};
-                }
+                const data = await api.fitbit.dailySummary(this.selectedDate);
+                this.metrics = data.metrics || {};
             } catch (error) {
                 console.error('Error loading metrics:', error);
                 this.metrics = {};
@@ -901,21 +886,13 @@ function fitbitMetrics() {
                 const endStr = formatDateLocal(endDate);
 
                 // Fetch historical data
-                const response = await fetchWithProfile(
-                    `/api/fitbit/metrics/history?start_date=${startStr}&end_date=${endStr}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`
-                );
+                const data = await api.fitbit.metricsHistory(startStr, endStr, 'steps,sleep_minutes,active_minutes,resting_heart_rate');
 
-                if (response.ok) {
-                    const data = await response.json();
+                // Wait for DOM to be ready
+                await this.$nextTick();
 
-                    // Wait for DOM to be ready
-                    await this.$nextTick();
-
-                    // Create charts
-                    this.createCharts(data.metrics);
-                } else {
-                    console.error('Failed to load trend data');
-                }
+                // Create charts
+                this.createCharts(data.metrics);
             } catch (error) {
                 console.error('Error loading trend data:', error);
             } finally {
@@ -1012,64 +989,62 @@ function fitbitMetrics() {
                 startDatePrevWeek.setDate(startDatePrevWeek.getDate() - 15); // Previous 7 complete days
 
                 // Fetch 30-day data
-                const response30 = await fetchWithProfile(
-                    `/api/fitbit/metrics/history?start_date=${formatDateLocal(startDate30)}&end_date=${formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
+                const data30 = await api.fitbit.metricsHistory(
+                    formatDateLocal(startDate30),
+                    formatDateLocal(endDate),
+                    'steps,sleep_minutes,active_minutes'
                 );
 
-                if (response30.ok) {
-                    const data30 = await response30.json();
+                // Calculate averages
+                const steps = data30.metrics.steps || [];
+                const sleep = data30.metrics.sleep_minutes || [];
+                const active = data30.metrics.active_minutes || [];
 
-                    // Calculate averages
-                    const steps = data30.metrics.steps || [];
-                    const sleep = data30.metrics.sleep_minutes || [];
-                    const active = data30.metrics.active_minutes || [];
+                this.stats.avg_steps = steps.length > 0 ? steps.reduce((sum, d) => sum + d.value, 0) / steps.length : 0;
+                this.stats.avg_sleep = sleep.length > 0 ? sleep.reduce((sum, d) => sum + d.value, 0) / sleep.length : 0;
+                this.stats.avg_active = active.length > 0 ? active.reduce((sum, d) => sum + d.value, 0) / active.length : 0;
 
-                    this.stats.avg_steps = steps.length > 0 ? steps.reduce((sum, d) => sum + d.value, 0) / steps.length : 0;
-                    this.stats.avg_sleep = sleep.length > 0 ? sleep.reduce((sum, d) => sum + d.value, 0) / sleep.length : 0;
-                    this.stats.avg_active = active.length > 0 ? active.reduce((sum, d) => sum + d.value, 0) / active.length : 0;
-
-                    // Find max values
-                    if (steps.length > 0) {
-                        const maxSteps = steps.reduce((max, d) => d.value > max.value ? d : max);
-                        this.stats.max_steps = maxSteps.value;
-                        this.stats.max_steps_date = new Date(maxSteps.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    }
-
-                    if (sleep.length > 0) {
-                        const maxSleep = sleep.reduce((max, d) => d.value > max.value ? d : max);
-                        this.stats.max_sleep = maxSleep.value;
-                        this.stats.max_sleep_date = new Date(maxSleep.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                    }
-
-                    // Calculate this week's data
-                    const weekSteps = steps.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
-                    const weekSleep = sleep.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
-                    const weekActive = active.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
-
-                    this.stats.week_steps = weekSteps.reduce((sum, d) => sum + d.value, 0);
-                    this.stats.week_sleep_avg = weekSleep.length > 0 ? weekSleep.reduce((sum, d) => sum + d.value, 0) / weekSleep.length : 0;
-                    this.stats.week_active = weekActive.reduce((sum, d) => sum + d.value, 0);
-
-                    // Calculate previous week for trend
-                    const prevWeekSteps = steps.filter(d => {
-                        const date = new Date(d.date + 'T00:00:00');
-                        return date >= startDatePrevWeek && date < startDateWeek;
-                    });
-                    const prevWeekSleep = sleep.filter(d => {
-                        const date = new Date(d.date + 'T00:00:00');
-                        return date >= startDatePrevWeek && date < startDateWeek;
-                    });
-
-                    const prevWeekStepsTotal = prevWeekSteps.reduce((sum, d) => sum + d.value, 0);
-                    const prevWeekSleepAvg = prevWeekSleep.length > 0 ? prevWeekSleep.reduce((sum, d) => sum + d.value, 0) / prevWeekSleep.length : 0;
-
-                    this.stats.week_steps_trend = prevWeekStepsTotal > 0 ? ((this.stats.week_steps - prevWeekStepsTotal) / prevWeekStepsTotal) * 100 : 0;
-                    this.stats.week_sleep_trend = prevWeekSleepAvg > 0 ? ((this.stats.week_sleep_avg - prevWeekSleepAvg) / prevWeekSleepAvg) * 100 : 0;
-
-                    // Create multi-metric chart
-                    await this.$nextTick();
-                    this.createMultiMetricChart(data30.metrics);
+                // Find max values
+                if (steps.length > 0) {
+                    const maxSteps = steps.reduce((max, d) => d.value > max.value ? d : max);
+                    this.stats.max_steps = maxSteps.value;
+                    this.stats.max_steps_date = new Date(maxSteps.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                 }
+
+                if (sleep.length > 0) {
+                    const maxSleep = sleep.reduce((max, d) => d.value > max.value ? d : max);
+                    this.stats.max_sleep = maxSleep.value;
+                    this.stats.max_sleep_date = new Date(maxSleep.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                }
+
+                // Calculate this week's data
+                const weekSteps = steps.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
+                const weekSleep = sleep.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
+                const weekActive = active.filter(d => new Date(d.date + 'T00:00:00') >= startDateWeek);
+
+                this.stats.week_steps = weekSteps.reduce((sum, d) => sum + d.value, 0);
+                this.stats.week_sleep_avg = weekSleep.length > 0 ? weekSleep.reduce((sum, d) => sum + d.value, 0) / weekSleep.length : 0;
+                this.stats.week_active = weekActive.reduce((sum, d) => sum + d.value, 0);
+
+                // Calculate previous week for trend
+                const prevWeekSteps = steps.filter(d => {
+                    const date = new Date(d.date + 'T00:00:00');
+                    return date >= startDatePrevWeek && date < startDateWeek;
+                });
+                const prevWeekSleep = sleep.filter(d => {
+                    const date = new Date(d.date + 'T00:00:00');
+                    return date >= startDatePrevWeek && date < startDateWeek;
+                });
+
+                const prevWeekStepsTotal = prevWeekSteps.reduce((sum, d) => sum + d.value, 0);
+                const prevWeekSleepAvg = prevWeekSleep.length > 0 ? prevWeekSleep.reduce((sum, d) => sum + d.value, 0) / prevWeekSleep.length : 0;
+
+                this.stats.week_steps_trend = prevWeekStepsTotal > 0 ? ((this.stats.week_steps - prevWeekStepsTotal) / prevWeekStepsTotal) * 100 : 0;
+                this.stats.week_sleep_trend = prevWeekSleepAvg > 0 ? ((this.stats.week_sleep_avg - prevWeekSleepAvg) / prevWeekSleepAvg) * 100 : 0;
+
+                // Create multi-metric chart
+                await this.$nextTick();
+                this.createMultiMetricChart(data30.metrics);
             } catch (error) {
                 console.error('Error loading overview data:', error);
             } finally {
@@ -1153,17 +1128,15 @@ function fitbitMetrics() {
                 const startDate = parseDateOnly(this.today);
                 startDate.setDate(startDate.getDate() - 61); // Adjust to get 60 complete days
 
-                const response = await fetchWithProfile(
-                    `/api/fitbit/metrics/history?start_date=${formatDateLocal(startDate)}&end_date=${formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
+                const data = await api.fitbit.metricsHistory(
+                    formatDateLocal(startDate),
+                    formatDateLocal(endDate),
+                    'steps,sleep_minutes,active_minutes'
                 );
+                this.compareData = data.metrics;
 
-                if (response.ok) {
-                    const data = await response.json();
-                    this.compareData = data.metrics;
-
-                    await this.$nextTick();
-                    this.createComparisonCharts(data.metrics);
-                }
+                await this.$nextTick();
+                this.createComparisonCharts(data.metrics);
             } catch (error) {
                 console.error('Error loading comparison data:', error);
             } finally {
@@ -1342,17 +1315,15 @@ function fitbitMetrics() {
                 const startDate = parseDateOnly(this.today);
                 startDate.setDate(startDate.getDate() - 91); // Adjust to get 90 complete days
 
-                const response = await fetchWithProfile(
-                    `/api/fitbit/metrics/history?start_date=${formatDateLocal(startDate)}&end_date=${formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`
+                const data = await api.fitbit.metricsHistory(
+                    formatDateLocal(startDate),
+                    formatDateLocal(endDate),
+                    'steps,sleep_minutes,active_minutes,resting_heart_rate'
                 );
 
-                if (response.ok) {
-                    const data = await response.json();
-
-                    await this.$nextTick();
-                    this.createInsightsCharts(data.metrics);
-                    this.calculateInsights(data.metrics);
-                }
+                await this.$nextTick();
+                this.createInsightsCharts(data.metrics);
+                this.calculateInsights(data.metrics);
             } catch (error) {
                 console.error('Error loading insights data:', error);
             } finally {
