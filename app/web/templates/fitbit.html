@@ -258,7 +258,7 @@
                         <template x-for="[key, data] in Object.entries(metrics).filter(([k]) => visibleMetrics[k] !== false)" :key="key">
                             <tr style="border-bottom: 1px solid var(--border-color);">
                                 <td style="padding: 12px;" x-text="formatMetricName(key)"></td>
-                                <td style="text-align: right; padding: 12px; font-weight: 600;" x-text="formatValue(data.value, key)"></td>
+                                <td style="text-align: right; padding: 12px; font-weight: 600;" x-text="formatMetricValue(data.value, key)"></td>
                                 <td style="text-align: right; padding: 12px; color: #666;" x-text="data.unit || '-'"></td>
                                 <td style="text-align: right; padding: 12px; color: #666; font-size: 12px;" x-text="formatSyncTime(data.synced_at)"></td>
                             </tr>
@@ -861,18 +861,12 @@ function fitbitMetrics() {
             }
         },
 
-        // Helper to format date as YYYY-MM-DD without UTC conversion
-        formatDateLocal(date) {
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const day = String(date.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        },
+        // Note: formatDateLocal and other formatters now use global utils.js
 
         previousDay() {
             const date = parseDateOnly(this.selectedDate);
             date.setDate(date.getDate() - 1);
-            this.selectedDate = this.formatDateLocal(date);
+            this.selectedDate = formatDateLocal(date);
             this.loadMetricsForDate();
         },
 
@@ -882,7 +876,7 @@ function fitbitMetrics() {
             const todayDate = parseDateOnly(this.today);
             // Don't go beyond today
             if (date <= todayDate) {
-                this.selectedDate = this.formatDateLocal(date);
+                this.selectedDate = formatDateLocal(date);
                 this.loadMetricsForDate();
             }
         },
@@ -902,8 +896,8 @@ function fitbitMetrics() {
                 const startDate = parseDateOnly(this.today);
                 startDate.setDate(startDate.getDate() - this.trendRange);
 
-                const startStr = this.formatDateLocal(startDate);
-                const endStr = this.formatDateLocal(endDate);
+                const startStr = formatDateLocal(startDate);
+                const endStr = formatDateLocal(endDate);
 
                 // Fetch historical data
                 const response = await fetchWithProfile(
@@ -1070,90 +1064,9 @@ function fitbitMetrics() {
             });
         },
 
-        formatNumber(value) {
-            if (value == null) return '-';
-            return Math.round(value).toLocaleString('en-US');
-        },
-
-        formatDecimal(value) {
-            if (value == null) return '-';
-            return value.toFixed(2);
-        },
-
-        formatSleepHours(minutes) {
-            if (!minutes) return '-';
-            const hours = Math.floor(minutes / 60);
-            const mins = Math.round(minutes % 60);
-            return `${hours}h ${mins}m`;
-        },
-
-        formatValue(value, metricType) {
-            if (value == null) return '-';
-
-            if (metricType === 'sleep_minutes') {
-                return this.formatSleepHours(value);
-            }
-
-            if (metricType === 'distance') {
-                return this.formatDecimal(value);
-            }
-
-            return this.formatNumber(value);
-        },
-
-        formatMetricName(key) {
-            const names = {
-                'steps': 'Steps',
-                'sleep_minutes': 'Sleep Duration',
-                'sleep_score': 'Sleep Score',
-                'active_minutes': 'Active Minutes',
-                'calories_burned': 'Calories Burned',
-                'distance': 'Distance',
-                'floors': 'Floors Climbed',
-                'resting_heart_rate': 'Resting Heart Rate',
-                'hrv_rmssd': 'Heart Rate Variability (RMSSD)',
-                'hrv_deep_rmssd': 'HRV Deep Sleep (RMSSD)',
-                'cardio_fitness_score': 'VO2 Max / Cardio Fitness',
-                'spo2_avg': 'Blood Oxygen (SpO2) Average',
-                'spo2_min': 'Blood Oxygen (SpO2) Minimum',
-                'spo2_max': 'Blood Oxygen (SpO2) Maximum',
-                'breathing_rate': 'Breathing Rate',
-                'temp_skin': 'Skin Temperature Variation',
-                'sleep_deep_minutes': 'Deep Sleep',
-                'sleep_light_minutes': 'Light Sleep',
-                'sleep_rem_minutes': 'REM Sleep',
-                'sleep_wake_minutes': 'Awake Time'
-            };
-            return names[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        },
-
-        formatDateDisplay(dateStr) {
-            const date = new Date(dateStr + 'T00:00:00');
-            return date.toLocaleDateString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        },
-
-        formatSyncTime(timestamp) {
-            if (!timestamp) return '-';
-            const date = new Date(timestamp);
-            return date.toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
-        },
-
-        formatTrend(value) {
-            if (value == null || value === 0) return '—';
-            const sign = value >= 0 ? '↑' : '↓';
-            return `${sign} ${Math.abs(Math.round(value))}%`;
-        },
+        // All formatters now use global utils.js functions:
+        // formatNumber, formatDecimal, formatSleepHours, formatMetricValue,
+        // formatMetricName, formatDateDisplay, formatSyncTime, formatTrend
 
         async loadOverviewData() {
             this.overviewLoading = true;
@@ -1173,7 +1086,7 @@ function fitbitMetrics() {
 
                 // Fetch 30-day data
                 const response30 = await fetchWithProfile(
-                    `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate30)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
+                    `/api/fitbit/metrics/history?start_date=${formatDateLocal(startDate30)}&end_date=${formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
                 );
 
                 if (response30.ok) {
@@ -1370,7 +1283,7 @@ function fitbitMetrics() {
                 startDate.setDate(startDate.getDate() - 61); // Adjust to get 60 complete days
 
                 const response = await fetchWithProfile(
-                    `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
+                    `/api/fitbit/metrics/history?start_date=${formatDateLocal(startDate)}&end_date=${formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes`
                 );
 
                 if (response.ok) {
@@ -1684,7 +1597,7 @@ function fitbitMetrics() {
                 startDate.setDate(startDate.getDate() - 91); // Adjust to get 90 complete days
 
                 const response = await fetchWithProfile(
-                    `/api/fitbit/metrics/history?start_date=${this.formatDateLocal(startDate)}&end_date=${this.formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`
+                    `/api/fitbit/metrics/history?start_date=${formatDateLocal(startDate)}&end_date=${formatDateLocal(endDate)}&metric_types=steps,sleep_minutes,active_minutes,resting_heart_rate`
                 );
 
                 if (response.ok) {
@@ -1885,11 +1798,11 @@ function fitbitMetrics() {
             if (this.visibleMetrics.sleep_minutes && sleep.length > 0) {
                 const avgSleep = sleep.reduce((sum, d) => sum + d.value, 0) / sleep.length;
                 if (avgSleep >= 420) {
-                    this.insights.sleep_quality = 'Your sleep duration is excellent (averaging ' + this.formatSleepHours(avgSleep) + ')';
+                    this.insights.sleep_quality = 'Your sleep duration is excellent (averaging ' + formatSleepHours(avgSleep) + ')';
                 } else if (avgSleep >= 360) {
-                    this.insights.sleep_quality = 'Your sleep duration is good (averaging ' + this.formatSleepHours(avgSleep) + ')';
+                    this.insights.sleep_quality = 'Your sleep duration is good (averaging ' + formatSleepHours(avgSleep) + ')';
                 } else {
-                    this.insights.sleep_quality = 'Consider improving sleep duration (averaging ' + this.formatSleepHours(avgSleep) + ')';
+                    this.insights.sleep_quality = 'Consider improving sleep duration (averaging ' + formatSleepHours(avgSleep) + ')';
                 }
             } else {
                 this.insights.sleep_quality = '';

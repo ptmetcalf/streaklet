@@ -1581,29 +1581,7 @@ function settings() {
             }
         },
 
-        formatSyncTime(timestamp) {
-            if (!timestamp) return '';
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-
-            if (diffMins < 1) return 'just now';
-            if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
-
-            const diffHours = Math.floor(diffMins / 60);
-            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-
-            const diffDays = Math.floor(diffHours / 24);
-            return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-        },
-
-        formatHours(minutes) {
-            if (!minutes) return '-';
-            const hours = Math.floor(minutes / 60);
-            const mins = minutes % 60;
-            return `${hours}h ${mins}m`;
-        },
+        // formatSyncTime and formatHours now use global utils.js (formatSyncTime, formatSleepHours)
 
         saveConfettiPreference() {
             localStorage.setItem('streaklet_confetti_enabled', this.confettiEnabled);
@@ -1691,16 +1669,7 @@ function settings() {
             return this.householdTasks.filter(t => t.frequency === type).length;
         },
 
-        formatFrequency(frequency) {
-            const labels = {
-                'todo': 'To-Do',
-                'weekly': 'Weekly',
-                'monthly': 'Monthly',
-                'quarterly': 'Quarterly',
-                'annual': 'Annual'
-            };
-            return labels[frequency] || frequency;
-        },
+        // formatFrequency now uses global utils.js
 
         editHouseholdTask(task) {
             this.editingHouseholdTask = task;

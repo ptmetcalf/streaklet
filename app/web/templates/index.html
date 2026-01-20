@@ -507,77 +507,8 @@ function checklist() {
             return task.due_date < today;
         },
 
-        formatDueDate(dueDate) {
-            if (!dueDate) return '';
-            const due = new Date(dueDate + 'T00:00:00');
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const diff = Math.floor((due - today) / (1000 * 60 * 60 * 24));
-
-            if (diff < 0) return `⚠️ ${Math.abs(diff)} day${Math.abs(diff) !== 1 ? 's' : ''} overdue`;
-            if (diff === 0) return '📅 Due today';
-            if (diff === 1) return '📅 Due tomorrow';
-            return `📅 Due in ${diff} day${diff !== 1 ? 's' : ''}`;
-        },
-
-        formatCompletedDate(completedAt) {
-            if (!completedAt) return '';
-            const completed = new Date(completedAt);
-            const today = new Date();
-            const diffMs = today - completed;
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-            if (diffDays === 0) return 'today';
-            if (diffDays === 1) return 'yesterday';
-            if (diffDays < 7) return `${diffDays} days ago`;
-            return completed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        },
-
-        formatFitbitProgress(task) {
-            if (!task.fitbit_current_value || !task.fitbit_goal_value) return '';
-
-            const current = task.fitbit_current_value;
-            const goal = task.fitbit_goal_value;
-            const unit = task.fitbit_unit || '';
-
-            // Format based on metric type
-            if (task.fitbit_metric_type === 'sleep_minutes') {
-                const formatMinutes = (mins) => {
-                    const hours = Math.floor(mins / 60);
-                    const minutes = Math.round(mins % 60);
-                    return `${hours}h ${minutes}m`;
-                };
-                return `${formatMinutes(current)} / ${formatMinutes(goal)}`;
-            }
-
-            // Format numbers with commas for readability
-            const formatNumber = (num) => {
-                if (num >= 1000) {
-                    return num.toLocaleString('en-US');
-                }
-                return Math.round(num).toString();
-            };
-
-            const currentStr = formatNumber(current);
-            const goalStr = formatNumber(goal);
-
-            // Add unit if available
-            if (unit) {
-                return `${currentStr} / ${goalStr} ${unit}`;
-            }
-
-            return `${currentStr} / ${goalStr}`;
-        },
-
-        getStreakBadgeClass(streak) {
-            // Color tiers based on streak length
-            if (streak >= 100) return 'streak-legendary';  // Gold
-            if (streak >= 60) return 'streak-epic';        // Purple
-            if (streak >= 30) return 'streak-amazing';     // Blue
-            if (streak >= 14) return 'streak-great';       // Green
-            if (streak >= 7) return 'streak-good';         // Light green
-            return 'streak-building';                       // Gray
-        },
+        // All formatters now use global utils.js functions:
+        // formatDueDate, formatCompletedDate, formatFitbitProgress, getStreakBadgeClass
 
         updateCelebration(showToast = false) {
             const milestones = [3, 7, 14, 21, 30, 45, 60, 90, 120, 180, 365];
