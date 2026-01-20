@@ -368,6 +368,155 @@ Then include router in `app/main.py`: `app.include_router(routes_something.route
 - **HTMX** available but not heavily used
 - **Mobile-first** CSS design
 
+## Form Component Patterns
+
+Streaklet uses a standardized BEM-based form component system (introduced in Phase 6) for consistent styling and behavior across all forms.
+
+### Basic Form Field
+
+```html
+<div class="form-field">
+    <label class="form-field__label">Title</label>
+    <input type="text" class="form-field__input"
+           x-model="newTask.title"
+           placeholder="Task title">
+</div>
+```
+
+### Required Field
+
+Add the `form-field__label--required` modifier to show an asterisk:
+
+```html
+<div class="form-field">
+    <label class="form-field__label form-field__label--required">Title</label>
+    <input type="text" class="form-field__input"
+           x-model="newTask.title"
+           required>
+</div>
+```
+
+### Select Dropdown
+
+```html
+<div class="form-field">
+    <label class="form-field__label">Frequency</label>
+    <select class="form-field__select" x-model="task.frequency">
+        <option value="daily">Daily</option>
+        <option value="weekly">Weekly</option>
+    </select>
+</div>
+```
+
+### Checkbox
+
+```html
+<div class="form-field">
+    <label class="form-field__checkbox-label">
+        <input type="checkbox" class="form-field__checkbox"
+               x-model="task.is_required">
+        <span>Required for daily completion</span>
+    </label>
+</div>
+```
+
+### Radio Group
+
+```html
+<div class="form-field">
+    <label class="form-field__label">Task Type</label>
+    <div class="form-field__radio-group">
+        <label class="form-field__radio-label">
+            <input type="radio" class="form-field__radio"
+                   name="taskType" value="manual"
+                   x-model="task.type">
+            <span>Manual</span>
+        </label>
+        <label class="form-field__radio-label">
+            <input type="radio" class="form-field__radio"
+                   name="taskType" value="fitbit"
+                   x-model="task.type">
+            <span>Fitbit Goal</span>
+        </label>
+    </div>
+</div>
+```
+
+### Textarea
+
+```html
+<div class="form-field">
+    <label class="form-field__label">Description</label>
+    <textarea class="form-field__textarea"
+              x-model="task.description"
+              rows="3"
+              placeholder="Additional details"></textarea>
+</div>
+```
+
+### Error State
+
+Use Alpine.js to conditionally apply error states:
+
+```html
+<div class="form-field" :class="{ 'form-field--error': errors.title }">
+    <label class="form-field__label">Title</label>
+    <input type="text" class="form-field__input"
+           x-model="task.title">
+    <span class="form-field__error" x-show="errors.title"
+          x-text="errors.title"></span>
+</div>
+```
+
+### Narrow Input (for numbers/dates)
+
+Use `form-field__input--narrow` for compact number inputs:
+
+```html
+<div class="form-field">
+    <label class="form-field__label">Day of Month</label>
+    <input type="number" class="form-field__input form-field__input--narrow"
+           x-model.number="task.day"
+           min="1" max="31"
+           placeholder="1-31">
+</div>
+```
+
+### Icon Picker Utilities
+
+Use shared `iconPickerUtils` from `utils.js` for icon filtering:
+
+```javascript
+// In Alpine.js component
+{
+    iconSearch: '',
+    iconCategories: { /* categories */ },
+
+    // Use shared utility for filtering
+    get filteredIcons() {
+        return window.iconPickerUtils.filterCategories(
+            this.iconCategories,
+            this.iconSearch
+        );
+    },
+
+    // Check if search has results
+    get hasResults() {
+        return window.iconPickerUtils.hasVisibleIcons(
+            this.iconCategories,
+            this.iconSearch
+        );
+    }
+}
+```
+
+### Mobile Considerations
+
+All form components are mobile-optimized with:
+- 48px minimum touch targets on mobile
+- 16px font size to prevent iOS zoom
+- Responsive layouts that stack on small screens
+
 ## Fitbit Integration Architecture
 
 Streaklet includes optional Fitbit integration to auto-complete tasks based on fitness metrics.

@@ -423,6 +423,111 @@ window.debounce = function(func, wait) {
 };
 
 // ============================================================================
+// ICON PICKER UTILITIES
+// ============================================================================
+
+/**
+ * Shared icon picker utilities for filtering and selection
+ * Used by both personal task and household task icon pickers
+ */
+window.iconPickerUtils = {
+    /**
+     * Filter icons by search term
+     * @param {Object} categories - Icon categories object
+     * @param {string} searchTerm - Search query
+     * @returns {Object} Filtered categories
+     */
+    filterCategories(categories, searchTerm) {
+        if (!searchTerm || searchTerm.trim() === '') {
+            return categories;
+        }
+
+        const search = searchTerm.toLowerCase().trim();
+        const filtered = {};
+
+        for (const [category, icons] of Object.entries(categories)) {
+            const matchingIcons = icons.filter(icon =>
+                icon.toLowerCase().includes(search) ||
+                category.toLowerCase().includes(search)
+            );
+
+            if (matchingIcons.length > 0) {
+                filtered[category] = matchingIcons;
+            }
+        }
+
+        return filtered;
+    },
+
+    /**
+     * Check if any icons match the search term
+     * @param {Object} categories - Icon categories
+     * @param {string} searchTerm - Search query
+     * @returns {boolean}
+     */
+    hasVisibleIcons(categories, searchTerm) {
+        const filtered = this.filterCategories(categories, searchTerm);
+        return Object.keys(filtered).length > 0;
+    },
+
+    /**
+     * Get icon display name (converts snake_case to Title Case)
+     * @param {string} iconName - Icon name in snake_case
+     * @returns {string} Display name
+     */
+    getIconDisplayName(iconName) {
+        return iconName
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+};
+
+// ============================================================================
+// FORM VALIDATION UTILITIES
+// ============================================================================
+
+/**
+ * Common form validation helpers
+ */
+window.formValidation = {
+    /**
+     * Validate required field
+     * @param {string} value - Field value
+     * @param {string} fieldName - Field name for error message
+     * @returns {string|null} Error message or null if valid
+     */
+    validateRequired(value, fieldName = 'This field') {
+        if (!value || value.trim() === '') {
+            return `${fieldName} is required`;
+        }
+        return null;
+    },
+
+    /**
+     * Validate number range
+     * @param {number} value - Number value
+     * @param {number} min - Minimum value
+     * @param {number} max - Maximum value
+     * @returns {string|null} Error message or null if valid
+     */
+    validateRange(value, min, max) {
+        if (value < min || value > max) {
+            return `Value must be between ${min} and ${max}`;
+        }
+        return null;
+    },
+
+    /**
+     * Show error message with consistent styling
+     * @param {string} message - Error message
+     */
+    showError(message) {
+        alert(message); // TODO: Replace with toast notification in Phase 6b
+    }
+};
+
+// ============================================================================
 // CONSOLE INFO (Development Only)
 // ============================================================================
 
@@ -433,6 +538,8 @@ if (typeof console !== 'undefined' && console.info) {
         'Metrics': ['formatNumber', 'formatDecimal', 'formatSleepHours', 'formatFitbitProgress', 'formatMetricValue', 'formatMetricName', 'formatTrend'],
         'Tasks': ['formatRecurrence', 'formatFrequency', 'getTaskTypeLabel', 'getTaskTypeBadgeClass'],
         'Validation': ['isTaskOverdue', 'getStreakBadgeClass'],
-        'Utilities': ['clamp', 'debounce']
+        'Utilities': ['clamp', 'debounce'],
+        'Icon Picker': ['iconPickerUtils.filterCategories', 'iconPickerUtils.hasVisibleIcons', 'iconPickerUtils.getIconDisplayName'],
+        'Form Validation': ['formValidation.validateRequired', 'formValidation.validateRange', 'formValidation.showError']
     });
 }

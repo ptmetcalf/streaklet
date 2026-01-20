@@ -289,6 +289,236 @@
 }
 
 /* ============================================================================
+   FORM COMPONENTS
+   ============================================================================ */
+
+/* Form Field Base */
+.form-field {
+    margin-bottom: 16px;
+}
+
+.form-field__label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.form-field__label--required::after {
+    content: " *";
+    color: var(--danger-color);
+}
+
+/* Text Inputs */
+.form-field__input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--text-color);
+    background: var(--card-bg);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-field__input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.form-field__input::placeholder {
+    color: #999;
+}
+
+/* Select Dropdowns */
+.form-field__select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--text-color);
+    background: var(--card-bg);
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.form-field__select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* Textarea */
+.form-field__textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--text-color);
+    background: var(--card-bg);
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.2s ease;
+}
+
+.form-field__textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* Checkboxes and Radios */
+.form-field__checkbox,
+.form-field__radio {
+    margin-right: 8px;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.form-field__checkbox-label,
+.form-field__radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+/* Radio Group */
+.form-field__radio-group {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+/* Help Text */
+.form-field__help {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #666;
+}
+
+/* Error State */
+.form-field--error .form-field__input,
+.form-field--error .form-field__select,
+.form-field--error .form-field__textarea {
+    border-color: var(--danger-color);
+    background: #fff2f0;
+}
+
+.form-field__error {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--danger-color);
+}
+
+/* Disabled State */
+.form-field__input:disabled,
+.form-field__select:disabled,
+.form-field__textarea:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: #f5f5f5;
+}
+
+/* Success State */
+.form-field--success .form-field__input {
+    border-color: var(--success-color);
+}
+
+/* Size Modifiers */
+.form-field__input--sm {
+    padding: 6px 8px;
+    font-size: 12px;
+}
+
+.form-field__input--narrow {
+    max-width: 120px;
+}
+
+/* Layout Modifiers */
+.form-field--inline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.form-field--inline .form-field__label {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.form-field--horizontal {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+.form-field--horizontal .form-field__label {
+    margin-bottom: 0;
+    padding-top: 10px;
+}
+
+/* Legacy form-group support - Backward compatibility */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--text-color);
+}
+
+.form-group input[type="text"],
+.form-group input[type="email"],
+.form-group input[type="password"],
+.form-group input[type="number"],
+.form-group input[type="date"],
+.form-group input[type="time"],
+.form-group input[type="color"],
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--text-color);
+    background: var(--card-bg);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .form-field__input,
+    .form-field__select,
+    .form-field__textarea {
+        font-size: 16px; /* Prevent iOS zoom */
+        min-height: 48px; /* Touch-friendly */
+    }
+
+    .form-field__checkbox,
+    .form-field__radio {
+        width: 24px;
+        height: 24px;
+    }
+
+    .form-field--horizontal {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ============================================================================
    METRIC CARDS
    ============================================================================ */
 

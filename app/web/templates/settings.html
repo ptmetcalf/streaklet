@@ -73,34 +73,34 @@
             <h3 style="margin-bottom: 16px;">Add New Task</h3>
 
             <!-- Task Category Selector -->
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Task Category</label>
-                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="radio" name="taskCategory" value="daily" x-model="newTask.task_type" @change="onTaskCategoryChange">
+            <div class="form-field" style="margin-bottom: 20px;">
+                <label class="form-field__label">Task Category</label>
+                <div class="form-field__radio-group">
+                    <label class="form-field__radio-label">
+                        <input type="radio" class="form-field__radio" name="taskCategory" value="daily" x-model="newTask.task_type" @change="onTaskCategoryChange">
                         <span>Daily Recurring</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="radio" name="taskCategory" value="punch_list" x-model="newTask.task_type" @change="onTaskCategoryChange">
+                    <label class="form-field__radio-label">
+                        <input type="radio" class="form-field__radio" name="taskCategory" value="punch_list" x-model="newTask.task_type" @change="onTaskCategoryChange">
                         <span>One-Off (Todo List)</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="radio" name="taskCategory" value="scheduled" x-model="newTask.task_type" @change="onTaskCategoryChange">
+                    <label class="form-field__radio-label">
+                        <input type="radio" class="form-field__radio" name="taskCategory" value="scheduled" x-model="newTask.task_type" @change="onTaskCategoryChange">
                         <span>Scheduled Recurring</span>
                     </label>
                 </div>
             </div>
 
             <!-- Task Type Selector (Fitbit/Manual) - only for daily tasks -->
-            <div x-show="fitbitConnected && newTask.task_type === 'daily'" class="form-group" style="margin-bottom: 20px;">
-                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Task Type</label>
-                <div style="display: flex; gap: 24px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="radio" name="taskType" value="manual" x-model="newTask.taskType" @change="onTaskTypeChange">
+            <div x-show="fitbitConnected && newTask.task_type === 'daily'" class="form-field" style="margin-bottom: 20px;">
+                <label class="form-field__label">Task Type</label>
+                <div class="form-field__radio-group">
+                    <label class="form-field__radio-label">
+                        <input type="radio" class="form-field__radio" name="taskType" value="manual" x-model="newTask.taskType" @change="onTaskTypeChange">
                         <span>Manual</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="radio" name="taskType" value="fitbit" x-model="newTask.taskType" @change="onTaskTypeChange">
+                    <label class="form-field__radio-label">
+                        <input type="radio" class="form-field__radio" name="taskType" value="fitbit" x-model="newTask.taskType" @change="onTaskTypeChange">
                         <span>Fitbit Goal</span>
                     </label>
                 </div>
@@ -108,12 +108,12 @@
 
             <!-- Daily Manual Task Fields -->
             <div x-show="newTask.task_type === 'daily' && newTask.taskType === 'manual'">
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" x-model="newTask.title" placeholder="Task title">
+                <div class="form-field">
+                    <label class="form-field__label form-field__label--required">Title</label>
+                    <input type="text" class="form-field__input" x-model="newTask.title" placeholder="Task title">
                 </div>
-                <div class="form-group">
-                    <label>Icon (optional - auto-assigned from title if not selected)</label>
+                <div class="form-field">
+                    <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
                             <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
@@ -124,28 +124,28 @@
                         </template>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.is_required">
-                        Required for daily completion
+                <div class="form-field">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_required">
+                        <span>Required for daily completion</span>
                     </label>
                 </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.is_active">
-                        Enabled
+                <div class="form-field">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
+                        <span>Enabled</span>
                     </label>
                 </div>
             </div>
 
             <!-- Todo List Task Fields -->
             <div x-show="newTask.task_type === 'punch_list'">
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" x-model="newTask.title" placeholder="e.g., Call dentist, Fix faucet">
+                <div class="form-field">
+                    <label class="form-field__label form-field__label--required">Title</label>
+                    <input type="text" class="form-field__input" x-model="newTask.title" placeholder="e.g., Call dentist, Fix faucet">
                 </div>
-                <div class="form-group">
-                    <label>Icon (optional - auto-assigned from title if not selected)</label>
+                <div class="form-field">
+                    <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
                             <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
@@ -156,26 +156,26 @@
                         </template>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Due Date (optional)</label>
-                    <input type="date" x-model="newTask.due_date">
+                <div class="form-field">
+                    <label class="form-field__label">Due Date (optional)</label>
+                    <input type="date" class="form-field__input" x-model="newTask.due_date">
                 </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.is_active">
-                        Enabled
+                <div class="form-field">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
+                        <span>Enabled</span>
                     </label>
                 </div>
             </div>
 
             <!-- Scheduled Task Fields -->
             <div x-show="newTask.task_type === 'scheduled'">
-                <div class="form-group">
-                    <label>Title</label>
-                    <input type="text" x-model="newTask.title" placeholder="e.g., Give dog medicine, Change air filter">
+                <div class="form-field">
+                    <label class="form-field__label form-field__label--required">Title</label>
+                    <input type="text" class="form-field__input" x-model="newTask.title" placeholder="e.g., Give dog medicine, Change air filter">
                 </div>
-                <div class="form-group">
-                    <label>Icon (optional - auto-assigned from title if not selected)</label>
+                <div class="form-field">
+                    <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
                             <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
@@ -187,26 +187,26 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Recurrence Pattern</label>
-                    <select x-model="newTask.recurrence_type" @change="onRecurrenceTypeChange">
+                <div class="form-field">
+                    <label class="form-field__label">Recurrence Pattern</label>
+                    <select class="form-field__select" x-model="newTask.recurrence_type" @change="onRecurrenceTypeChange">
                         <option value="days">Every N days</option>
                         <option value="weekly">Weekly (specific day)</option>
                         <option value="monthly">Monthly (specific date)</option>
                     </select>
                 </div>
 
-                <div x-show="newTask.recurrence_type === 'days'" class="form-group">
-                    <label>Repeat every</label>
+                <div x-show="newTask.recurrence_type === 'days'" class="form-field">
+                    <label class="form-field__label">Repeat every</label>
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="number" x-model.number="newTask.interval" min="1" style="width: 80px;">
+                        <input type="number" class="form-field__input form-field__input--narrow" x-model.number="newTask.interval" min="1">
                         <span>day(s)</span>
                     </div>
                 </div>
 
-                <div x-show="newTask.recurrence_type === 'weekly'" class="form-group">
-                    <label>Day of Week</label>
-                    <select x-model.number="newTask.day_of_week">
+                <div x-show="newTask.recurrence_type === 'weekly'" class="form-field">
+                    <label class="form-field__label">Day of Week</label>
+                    <select class="form-field__select" x-model.number="newTask.day_of_week">
                         <option value="0">Monday</option>
                         <option value="1">Tuesday</option>
                         <option value="2">Wednesday</option>
@@ -217,30 +217,30 @@
                     </select>
                 </div>
 
-                <div x-show="newTask.recurrence_type === 'monthly'" class="form-group">
-                    <label>Day of Month</label>
-                    <input type="number" x-model.number="newTask.day_of_month" min="1" max="31" placeholder="1-31">
+                <div x-show="newTask.recurrence_type === 'monthly'" class="form-field">
+                    <label class="form-field__label">Day of Month</label>
+                    <input type="number" class="form-field__input form-field__input--narrow" x-model.number="newTask.day_of_month" min="1" max="31" placeholder="1-31">
                 </div>
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.is_required">
-                        Required for daily completion when due
+                <div class="form-field">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_required">
+                        <span>Required for daily completion when due</span>
                     </label>
                 </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.is_active">
-                        Enabled
+                <div class="form-field">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
+                        <span>Enabled</span>
                     </label>
                 </div>
             </div>
 
             <!-- Fitbit Task Fields -->
             <div x-show="newTask.taskType === 'fitbit'">
-                <div class="form-group">
-                    <label>Select Goal Template</label>
-                    <select x-model="newTask.fitbitTemplate" @change="applyFitbitTemplate" style="font-size: 14px;">
+                <div class="form-field">
+                    <label class="form-field__label">Select Goal Template</label>
+                    <select class="form-field__select" x-model="newTask.fitbitTemplate" @change="applyFitbitTemplate">
                         <option value="">-- Choose a goal --</option>
                         <option value="steps_10k">Walk 10,000 steps</option>
                         <option value="steps_8k">Walk 8,000 steps</option>
@@ -259,9 +259,9 @@
 
                 <!-- Custom Fitbit Goal (shown when "Custom goal..." selected) -->
                 <div x-show="newTask.fitbitTemplate === 'custom'" style="margin-top: 16px; padding: 16px; background: #f9f9f9; border-radius: 4px;">
-                    <div class="form-group">
-                        <label>Metric Type</label>
-                        <select x-model="newTask.fitbit_metric_type">
+                    <div class="form-field">
+                        <label class="form-field__label">Metric Type</label>
+                        <select class="form-field__select" x-model="newTask.fitbit_metric_type">
                             <option value="">Select metric...</option>
                             <option value="steps">Steps</option>
                             <option value="active_minutes">Active Minutes</option>
@@ -274,17 +274,18 @@
                         </select>
                     </div>
                     <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
-                        <div class="form-group">
-                            <label>Operator</label>
-                            <select x-model="newTask.fitbit_goal_operator">
+                        <div class="form-field">
+                            <label class="form-field__label">Operator</label>
+                            <select class="form-field__select" x-model="newTask.fitbit_goal_operator">
                                 <option value="gte">At least (≥)</option>
                                 <option value="lte">At most (≤)</option>
                                 <option value="eq">Exactly (=)</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>Goal Value</label>
+                        <div class="form-field">
+                            <label class="form-field__label">Goal Value</label>
                             <input type="number"
+                                   class="form-field__input"
                                    x-model="newTask.fitbit_goal_value"
                                    placeholder="e.g., 10000"
                                    step="any">
@@ -297,22 +298,22 @@
                     <strong>Task will be created as:</strong> <span x-text="newTask.title"></span>
                 </div>
 
-                <div class="form-group" style="margin-top: 16px;">
-                    <label>
-                        <input type="checkbox" x-model="newTask.is_required">
-                        Required
+                <div class="form-field" style="margin-top: 16px;">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_required">
+                        <span>Required</span>
                     </label>
                 </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.is_active">
-                        Enabled
+                <div class="form-field">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
+                        <span>Enabled</span>
                     </label>
                 </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" x-model="newTask.fitbit_auto_check">
-                        Auto-complete when goal met
+                <div class="form-field">
+                    <label class="form-field__checkbox-label">
+                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.fitbit_auto_check">
+                        <span>Auto-complete when goal met</span>
                     </label>
                 </div>
             </div>
@@ -327,36 +328,36 @@
             <h3 style="margin-bottom: 12px;">Edit Task</h3>
             <template x-if="editingTask">
                 <div>
-                    <div class="form-group">
-                        <label>Title</label>
-                        <input type="text" x-model="editingTask.title" placeholder="Task title">
+                    <div class="form-field">
+                        <label class="form-field__label form-field__label--required">Title</label>
+                        <input type="text" class="form-field__input" x-model="editingTask.title" placeholder="Task title">
                     </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" x-model="editingTask.is_required">
-                            Required
+                    <div class="form-field">
+                        <label class="form-field__checkbox-label">
+                            <input type="checkbox" class="form-field__checkbox" x-model="editingTask.is_required">
+                            <span>Required</span>
                         </label>
                     </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" x-model="editingTask.is_active">
-                            Enabled
+                    <div class="form-field">
+                        <label class="form-field__checkbox-label">
+                            <input type="checkbox" class="form-field__checkbox" x-model="editingTask.is_active">
+                            <span>Enabled</span>
                         </label>
                     </div>
 
                     <!-- Fitbit Goal Configuration -->
                     <div x-show="fitbitConnected" style="margin-top: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9;">
                         <h4 style="margin-bottom: 12px; font-size: 14px;">Fitbit Goal (Optional)</h4>
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" x-model="editingTask.fitbit_auto_check">
-                                Auto-complete when goal met
+                        <div class="form-field">
+                            <label class="form-field__checkbox-label">
+                                <input type="checkbox" class="form-field__checkbox" x-model="editingTask.fitbit_auto_check">
+                                <span>Auto-complete when goal met</span>
                             </label>
                         </div>
                         <div x-show="editingTask.fitbit_auto_check">
-                            <div class="form-group">
-                                <label>Metric Type</label>
-                                <select x-model="editingTask.fitbit_metric_type">
+                            <div class="form-field">
+                                <label class="form-field__label">Metric Type</label>
+                                <select class="form-field__select" x-model="editingTask.fitbit_metric_type">
                                     <option value="">Select metric...</option>
                                     <option value="steps">Steps</option>
                                     <option value="active_minutes">Active Minutes</option>
@@ -369,17 +370,18 @@
                                 </select>
                             </div>
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
-                                <div class="form-group">
-                                    <label>Operator</label>
-                                    <select x-model="editingTask.fitbit_goal_operator">
+                                <div class="form-field">
+                                    <label class="form-field__label">Operator</label>
+                                    <select class="form-field__select" x-model="editingTask.fitbit_goal_operator">
                                         <option value="gte">At least (≥)</option>
                                         <option value="lte">At most (≤)</option>
                                         <option value="eq">Exactly (=)</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label>Goal Value</label>
+                                <div class="form-field">
+                                    <label class="form-field__label">Goal Value</label>
                                     <input type="number"
+                                           class="form-field__input"
                                            x-model="editingTask.fitbit_goal_value"
                                            placeholder="e.g., 10000"
                                            step="any">
@@ -521,19 +523,19 @@
         <div x-show="showAddHouseholdForm || editingHouseholdTask" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
             <h3 style="margin-bottom: 16px;" x-text="editingHouseholdTask ? 'Edit Household Task' : 'Add Household Task'"></h3>
 
-            <div class="form-group">
-                <label>Title</label>
-                <input type="text" x-model="householdForm.title" placeholder="e.g., Clean gutters">
+            <div class="form-field">
+                <label class="form-field__label form-field__label--required">Title</label>
+                <input type="text" class="form-field__input" x-model="householdForm.title" placeholder="e.g., Clean gutters">
             </div>
 
-            <div class="form-group">
-                <label>Description (optional)</label>
-                <textarea x-model="householdForm.description" rows="2" placeholder="Additional details about this task"></textarea>
+            <div class="form-field">
+                <label class="form-field__label">Description (optional)</label>
+                <textarea class="form-field__textarea" x-model="householdForm.description" rows="2" placeholder="Additional details about this task"></textarea>
             </div>
 
-            <div class="form-group">
-                <label>Frequency</label>
-                <select x-model="householdForm.frequency">
+            <div class="form-field">
+                <label class="form-field__label">Frequency</label>
+                <select class="form-field__select" x-model="householdForm.frequency">
                     <option value="todo">One-Time To-Do</option>
                     <option value="weekly">Weekly (every 7 days)</option>
                     <option value="monthly">Monthly (every 30 days)</option>
@@ -542,13 +544,13 @@
                 </select>
             </div>
 
-            <div class="form-group" x-show="householdForm.frequency === 'todo'">
-                <label>Due Date (optional)</label>
-                <input type="date" x-model="householdForm.due_date">
+            <div class="form-field" x-show="householdForm.frequency === 'todo'">
+                <label class="form-field__label">Due Date (optional)</label>
+                <input type="date" class="form-field__input" x-model="householdForm.due_date">
             </div>
 
-            <div class="form-group">
-                <label>Icon (optional - auto-assigned from title if not selected)</label>
+            <div class="form-field">
+                <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                 <div style="display: flex; align-items: center; gap: 12px;">
                     <button type="button" class="btn-secondary" @click="showIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
                         <i :class="'mdi mdi-' + (householdForm.icon || 'checkbox-marked-circle')" style="font-size: 20px;"></i>
@@ -560,14 +562,14 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Sort Order</label>
-                <input type="number" x-model.number="householdForm.sort_order" placeholder="0">
+            <div class="form-field">
+                <label class="form-field__label">Sort Order</label>
+                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.sort_order" placeholder="0">
             </div>
 
-            <div class="form-group" x-show="editingHouseholdTask">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" x-model="householdForm.is_active">
+            <div class="form-field" x-show="editingHouseholdTask">
+                <label class="form-field__checkbox-label">
+                    <input type="checkbox" class="form-field__checkbox" x-model="householdForm.is_active">
                     <span>Active</span>
                 </label>
             </div>
@@ -1546,8 +1548,13 @@ function settings() {
             };
         },
 
-        // Icon picker methods
+        // Icon picker methods (using shared iconPickerUtils)
+        get filteredIconCategories() {
+            return window.iconPickerUtils.filterCategories(this.iconCategories, this.iconSearch);
+        },
+
         filterIcons(icons) {
+            // For backward compatibility with template - filter individual icon arrays
             if (!this.iconSearch) return icons;
             const search = this.iconSearch.toLowerCase();
             return icons.filter(icon => icon.toLowerCase().includes(search));
@@ -1560,16 +1567,16 @@ function settings() {
         },
 
         get hasVisibleIcons() {
-            for (const icons of Object.values(this.iconCategories)) {
-                if (this.filterIcons(icons).length > 0) {
-                    return true;
-                }
-            }
-            return false;
+            return window.iconPickerUtils.hasVisibleIcons(this.iconCategories, this.iconSearch);
         },
 
-        // Personal task icon picker methods
+        // Personal task icon picker methods (using shared iconPickerUtils)
+        get filteredPersonalIconCategories() {
+            return window.iconPickerUtils.filterCategories(this.personalIconCategories, this.personalIconSearch);
+        },
+
         filterPersonalIcons(icons) {
+            // For backward compatibility with template - filter individual icon arrays
             if (!this.personalIconSearch) return icons;
             const search = this.personalIconSearch.toLowerCase();
             return icons.filter(icon => icon.toLowerCase().includes(search));
@@ -1582,12 +1589,7 @@ function settings() {
         },
 
         get hasVisiblePersonalIcons() {
-            for (const icons of Object.values(this.personalIconCategories)) {
-                if (this.filterPersonalIcons(icons).length > 0) {
-                    return true;
-                }
-            }
-            return false;
+            return window.iconPickerUtils.hasVisibleIcons(this.personalIconCategories, this.personalIconSearch);
         },
 
         // Household task filtering
