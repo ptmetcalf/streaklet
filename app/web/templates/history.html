@@ -181,16 +181,11 @@ function calendar() {
 
         async fetchCalendarData() {
             try {
-                const response = await fetchWithProfile(`/api/history/${this.year}/${this.month}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    this.calendarData = data.calendar_data;
-                    this.stats = data.stats;
-                    this.year = data.year;
-                    this.month = data.month;
-                } else {
-                    console.error('Error loading history data:', await response.text());
-                }
+                const data = await api.history.getMonth(this.year, this.month);
+                this.calendarData = data.calendar_data;
+                this.stats = data.stats;
+                this.year = data.year;
+                this.month = data.month;
             } catch (error) {
                 console.error('Error loading history data:', error);
             }
@@ -198,12 +193,7 @@ function calendar() {
 
         async refreshStreak() {
             try {
-                const streakResponse = await fetchWithProfile('/api/streak');
-                if (streakResponse.ok) {
-                    this.streak = await streakResponse.json();
-                } else {
-                    console.error('Error loading streak data:', await streakResponse.text());
-                }
+                this.streak = await api.streak.get();
             } catch (error) {
                 console.error('Error loading streak data:', error);
             }
@@ -339,13 +329,7 @@ function calendar() {
 
             this.loadingDay = true;
             try {
-                const response = await fetchWithProfile(`/api/days/${dateStr}`);
-                if (response.ok) {
-                    this.selectedDay = await response.json();
-                } else {
-                    this.selectedDay = null;
-                    console.error('Error loading day data:', await response.text());
-                }
+                this.selectedDay = await api.daily.get(dateStr);
             } catch (error) {
                 this.selectedDay = null;
                 console.error('Error loading day data:', error);
@@ -361,20 +345,7 @@ function calendar() {
 
             const nextChecked = !task.checked;
             try {
-                const response = await fetchWithProfile(
-                    `/api/days/${this.selectedDate}/checks/${task.id}`,
-                    {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ checked: nextChecked })
-                    }
-                );
-
-                if (!response.ok) {
-                    console.error('Error updating task check:', await response.text());
-                    return;
-                }
-
+                await api.daily.toggleTask(this.selectedDate, task.id, nextChecked);
                 await this.loadDayData(this.selectedDate);
                 await this.fetchCalendarData();
                 await this.refreshStreak();

@@ -393,17 +393,8 @@ function checklist() {
 
             this.completingHouseholdId = task.id;
             try {
-                const response = await fetchWithProfile(`/api/household/tasks/${task.id}/complete`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                if (response.ok) {
-                    await this.loadHouseholdTasks();
-                } else {
-                    console.error('Error marking household task complete:', await response.text());
-                    alert('Failed to mark task complete');
-                }
+                await api.household.complete(task.id);
+                await this.loadHouseholdTasks();
             } catch (error) {
                 console.error('Error marking household task complete:', error);
                 alert('Failed to mark task complete');
@@ -417,36 +408,28 @@ function checklist() {
             const previousStreak = task.task_streak || 0;
 
             try {
-                const response = await fetchWithProfile(`/api/days/${this.date}/checks/${task.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ checked: newChecked })
-                });
+                await api.daily.toggleTask(this.date, task.id, newChecked);
+                task.checked = newChecked;
+                task.checked_at = newChecked ? new Date().toISOString() : null;
 
-                if (response.ok) {
-                    task.checked = newChecked;
-                    task.checked_at = newChecked ? new Date().toISOString() : null;
+                // Reload to get updated streak data
+                await this.loadDailyTasks();
 
-                    // Reload to get updated streak data
-                    await this.loadDailyTasks();
+                // Find the updated task
+                const updatedTask = this.tasks.find(t => t.id === task.id);
+                const newStreak = updatedTask?.task_streak || 0;
 
-                    // Find the updated task
-                    const updatedTask = this.tasks.find(t => t.id === task.id);
-                    const newStreak = updatedTask?.task_streak || 0;
-
-                    // Trigger per-task celebration if milestone reached
-                    if (newChecked && newStreak > previousStreak) {
-                        this.celebrateTaskMilestone(updatedTask, newStreak);
-                    }
-
-                    // Update overall celebration
-                    const streakResponse = await fetchWithProfile('/api/streak');
-                    const streakData = await streakResponse.json();
-                    this.streak = streakData.current_streak;
-                    this.todayComplete = streakData.today_complete;
-                    this.lastCompletedDate = streakData.last_completed_date;
-                    this.updateCelebration(true);
+                // Trigger per-task celebration if milestone reached
+                if (newChecked && newStreak > previousStreak) {
+                    this.celebrateTaskMilestone(updatedTask, newStreak);
                 }
+
+                // Update overall celebration
+                const streakData = await api.streak.get();
+                this.streak = streakData.current_streak;
+                this.todayComplete = streakData.today_complete;
+                this.lastCompletedDate = streakData.last_completed_date;
+                this.updateCelebration(true);
             } catch (error) {
                 console.error('Error updating task:', error);
             }
