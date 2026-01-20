@@ -1,15 +1,15 @@
 import pytest
 from sqlalchemy.orm import Session
-from datetime import date
 from app.services import checks as check_service
 from app.services import tasks as task_service
 from app.models.task import Task
 from app.models.daily_status import DailyStatus
+from app.core.time import get_today
 
 
 def test_ensure_checks_exist(test_db: Session, sample_tasks):
     """Test that checks are created for all active tasks."""
-    today = date.today()
+    today = get_today()
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
 
     checks = check_service.get_checks_for_date(test_db, today, profile_id=1)
@@ -18,7 +18,7 @@ def test_ensure_checks_exist(test_db: Session, sample_tasks):
 
 def test_update_task_check(test_db: Session, sample_tasks):
     """Test checking a task."""
-    today = date.today()
+    today = get_today()
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
 
     check = check_service.update_task_check(test_db, today, 1, True, profile_id=1)
@@ -29,7 +29,7 @@ def test_update_task_check(test_db: Session, sample_tasks):
 
 def test_uncheck_task(test_db: Session, sample_tasks):
     """Test unchecking a task."""
-    today = date.today()
+    today = get_today()
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
 
     check_service.update_task_check(test_db, today, 1, True, profile_id=1)
@@ -41,7 +41,7 @@ def test_uncheck_task(test_db: Session, sample_tasks):
 
 def test_day_completion_all_required(test_db: Session, sample_tasks):
     """Test that completing all required tasks marks day as complete."""
-    today = date.today()
+    today = get_today()
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
 
     check_service.update_task_check(test_db, today, 1, True, profile_id=1)
@@ -60,7 +60,7 @@ def test_day_completion_all_required(test_db: Session, sample_tasks):
 
 def test_unchecking_clears_completion(test_db: Session, sample_tasks):
     """Test that unchecking a required task clears completion."""
-    today = date.today()
+    today = get_today()
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
 
     check_service.update_task_check(test_db, today, 1, True, profile_id=1)
@@ -79,7 +79,7 @@ def test_unchecking_clears_completion(test_db: Session, sample_tasks):
 
 def test_optional_tasks_not_required(test_db: Session, sample_tasks):
     """Test that optional tasks don't affect completion."""
-    today = date.today()
+    today = get_today()
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
 
     check_service.update_task_check(test_db, today, 1, True, profile_id=1)

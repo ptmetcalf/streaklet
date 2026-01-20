@@ -460,25 +460,20 @@ function householdMaintenance() {
             this.loading = true;
             try {
                 // NO fetchWithProfile - household tasks are shared!
-                const response = await fetch('/api/household/tasks');
-                if (response.ok) {
-                    const tasks = await response.json();
+                const tasks = await api.household.list();
 
-                    // Store ALL tasks for calendar view
-                    this.allTasksForCalendar = tasks;
+                // Store ALL tasks for calendar view
+                this.allTasksForCalendar = tasks;
 
-                    // Only show tasks that need attention in list view:
-                    // 1. Never completed (last_completed_at is null)
-                    // 2. Overdue (is_overdue is true)
-                    const needsAttention = tasks.filter(t =>
-                        !t.last_completed_at || t.is_overdue
-                    );
+                // Only show tasks that need attention in list view:
+                // 1. Never completed (last_completed_at is null)
+                // 2. Overdue (is_overdue is true)
+                const needsAttention = tasks.filter(t =>
+                    !t.last_completed_at || t.is_overdue
+                );
 
-                    this.allTasks = needsAttention.filter(t => !t.is_overdue);
-                    this.overdueTasks = needsAttention.filter(t => t.is_overdue);
-                } else {
-                    console.error('Error loading household tasks:', await response.text());
-                }
+                this.allTasks = needsAttention.filter(t => !t.is_overdue);
+                this.overdueTasks = needsAttention.filter(t => t.is_overdue);
             } catch (error) {
                 console.error('Error loading household tasks:', error);
             } finally {
@@ -533,12 +528,9 @@ function householdMaintenance() {
             this.historyModal.history = [];
 
             try {
-                const response = await fetch(`/api/household/tasks/${task.id}/history`);
-                if (response.ok) {
-                    this.historyModal.history = await response.json();
-                } else {
-                    console.error('Error loading history:', await response.text());
-                }
+                this.historyModal.history = await api.get(`/api/household/tasks/${task.id}/history`, {
+                    useProfile: false
+                });
             } catch (error) {
                 console.error('Error loading history:', error);
             }

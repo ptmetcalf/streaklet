@@ -414,11 +414,11 @@
                            style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
 
                     <!-- Icon Categories -->
-                    <template x-for="(icons, category) in personalIconCategories" :key="category">
-                        <div x-show="filterPersonalIcons(icons).length > 0" style="margin-bottom: 24px;">
+                    <template x-for="(icons, category) in filteredPersonalIconCategories" :key="category">
+                        <div x-show="icons.length > 0" style="margin-bottom: 24px;">
                             <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px;" x-text="category"></h3>
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
-                                <template x-for="icon in filterPersonalIcons(icons)" :key="icon">
+                                <template x-for="icon in icons" :key="icon">
                                     <button type="button"
                                             @click="selectPersonalIcon(icon)"
                                             :class="{'icon-selected': newTask.icon === icon}"
@@ -598,11 +598,11 @@
                            style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
 
                     <!-- Icon Categories -->
-                    <template x-for="(icons, category) in iconCategories" :key="category">
-                        <div x-show="filterIcons(icons).length > 0" style="margin-bottom: 24px;">
+                    <template x-for="(icons, category) in filteredIconCategories" :key="category">
+                        <div x-show="icons.length > 0" style="margin-bottom: 24px;">
                             <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px;" x-text="category"></h3>
                             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
-                                <template x-for="icon in filterIcons(icons)" :key="icon">
+                                <template x-for="icon in icons" :key="icon">
                                     <button type="button"
                                             @click="selectIcon(icon)"
                                             :class="{'icon-selected': householdForm.icon === icon}"
@@ -1007,36 +1007,12 @@ function settings() {
         // Icon picker state (household tasks)
         showIconPicker: false,
         iconSearch: '',
-        iconCategories: {
-            'Cleaning': ['broom', 'spray-bottle', 'robot-vacuum', 'water', 'dishwasher', 'paper-roll', 'weather-dust'],
-            'Bathroom': ['toilet', 'shower', 'bathtub', 'pump-soap'],
-            'Kitchen': ['silverware-fork-knife', 'fridge', 'stove', 'microwave', 'bottle-wine', 'coffee'],
-            'Laundry': ['washing-machine', 'tshirt-crew', 'tumble-dryer', 'iron', 'hanger'],
-            'Outdoor': ['grass', 'lawnmower', 'flower', 'sprout', 'leaf', 'tree', 'shovel', 'watering-can'],
-            'Maintenance': ['wrench', 'tools', 'hammer', 'screwdriver', 'air-filter', 'air-conditioner', 'lightbulb'],
-            'Inspection': ['clipboard-check', 'magnify', 'test-tube', 'gauge', 'home-analytics'],
-            'Trash': ['delete', 'recycle', 'trash-can'],
-            'Pets': ['paw', 'dog', 'cat', 'bone', 'bowl-mix', 'food-drumstick'],
-            'Vehicles': ['car', 'car-wash', 'oil', 'tire', 'engine', 'gas-station'],
-            'Home': ['home', 'home-roof', 'door', 'window-closed', 'lock', 'key', 'garage'],
-            'General': ['checkbox-marked-circle', 'check', 'calendar', 'clock', 'bell', 'package', 'gift']
-        },
+        iconCategories: window.iconPickerCategories.household,
 
         // Icon picker state (personal tasks)
         showPersonalIconPicker: false,
         personalIconSearch: '',
-        personalIconCategories: {
-            'Fitness': ['walk', 'run', 'bike', 'swim', 'dumbbell', 'weight-lifter', 'yoga', 'shoe-print', 'run-fast'],
-            'Health': ['sleep', 'bed', 'meditation', 'pill', 'water', 'cup-water', 'heart-pulse', 'hospital'],
-            'Food': ['food-apple', 'silverware-fork-knife', 'coffee', 'food', 'food-turkey', 'chef-hat', 'carrot'],
-            'Learning': ['book-open-variant', 'book', 'school', 'head-lightbulb', 'pencil', 'notebook'],
-            'Creative': ['palette', 'brush', 'music', 'gamepad-variant', 'music-note', 'guitar-acoustic', 'piano'],
-            'Social': ['phone', 'message', 'account-group', 'account-multiple', 'email', 'video'],
-            'Work': ['briefcase', 'laptop', 'calendar-account', 'folder-multiple', 'clipboard-text'],
-            'Self-care': ['shower', 'face-woman', 'tooth', 'toothbrush', 'spa'],
-            'Time & Goals': ['clock-outline', 'clock', 'calendar-today', 'flag-checkered', 'timer', 'alarm'],
-            'General': ['check-circle', 'check', 'star', 'plus-circle', 'circle-outline']
-        },
+        personalIconCategories: window.iconPickerCategories.personal,
 
         // Computed property: filtered tasks
         get filteredTasks() {
@@ -1505,10 +1481,9 @@ function settings() {
         async loadHouseholdTasks() {
             try {
                 // NO fetchWithProfile - household tasks are shared
-                const response = await fetch('/api/household/tasks?include_inactive=true');
-                if (response.ok) {
-                    this.householdTasks = await response.json();
-                }
+                this.householdTasks = await api.get('/api/household/tasks?include_inactive=true', {
+                    useProfile: false
+                });
             } catch (error) {
                 console.error('Error loading household tasks:', error);
             }
@@ -1531,13 +1506,6 @@ function settings() {
             return window.iconPickerUtils.filterCategories(this.iconCategories, this.iconSearch);
         },
 
-        filterIcons(icons) {
-            // For backward compatibility with template - filter individual icon arrays
-            if (!this.iconSearch) return icons;
-            const search = this.iconSearch.toLowerCase();
-            return icons.filter(icon => icon.toLowerCase().includes(search));
-        },
-
         selectIcon(icon) {
             this.householdForm.icon = icon;
             this.showIconPicker = false;
@@ -1551,13 +1519,6 @@ function settings() {
         // Personal task icon picker methods (using shared iconPickerUtils)
         get filteredPersonalIconCategories() {
             return window.iconPickerUtils.filterCategories(this.personalIconCategories, this.personalIconSearch);
-        },
-
-        filterPersonalIcons(icons) {
-            // For backward compatibility with template - filter individual icon arrays
-            if (!this.personalIconSearch) return icons;
-            const search = this.personalIconSearch.toLowerCase();
-            return icons.filter(icon => icon.toLowerCase().includes(search));
         },
 
         selectPersonalIcon(icon) {
@@ -1614,26 +1575,10 @@ function settings() {
             try {
                 if (this.editingHouseholdTask) {
                     // Update existing task
-                    const response = await fetch(`/api/household/tasks/${this.editingHouseholdTask.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(this.householdForm)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to update task');
-                    }
+                    await api.household.update(this.editingHouseholdTask.id, this.householdForm);
                 } else {
                     // Create new task
-                    const response = await fetch('/api/household/tasks', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(this.householdForm)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to create task');
-                    }
+                    await api.household.create(this.householdForm);
                 }
 
                 await this.loadHouseholdTasks();
@@ -1650,13 +1595,7 @@ function settings() {
             }
 
             try {
-                const response = await fetch(`/api/household/tasks/${task.id}`, {
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to delete task');
-                }
+                await api.household.delete(task.id);
 
                 await this.loadHouseholdTasks();
             } catch (error) {

@@ -7,6 +7,7 @@ from app.services import fitbit_checks
 from app.models.task import Task
 from app.models.fitbit_metric import FitbitMetric
 from app.services import checks as check_service
+from app.core.time import get_today
 
 
 def test_evaluate_goal_gte():
@@ -38,7 +39,7 @@ def test_evaluate_goal_invalid_operator():
 @pytest.mark.asyncio
 async def test_evaluate_and_apply_auto_checks_goal_met(test_db: Session, sample_profiles):
     """Test that tasks are auto-checked when Fitbit goals are met."""
-    today = date.today()
+    today = get_today()
 
     # Create task with Fitbit goal
     task = Task(
@@ -86,7 +87,7 @@ async def test_evaluate_and_apply_auto_checks_goal_met(test_db: Session, sample_
 @pytest.mark.asyncio
 async def test_evaluate_and_apply_auto_checks_goal_not_met(test_db: Session, sample_profiles):
     """Test that tasks are not checked when Fitbit goals are not met."""
-    today = date.today()
+    today = get_today()
 
     # Create task with Fitbit goal
     task = Task(
@@ -134,7 +135,7 @@ async def test_evaluate_and_apply_auto_checks_goal_not_met(test_db: Session, sam
 @pytest.mark.asyncio
 async def test_evaluate_and_apply_auto_checks_unchecks_when_goal_lost(test_db: Session, sample_profiles):
     """Test that tasks are unchecked when previously met goals are no longer met."""
-    today = date.today()
+    today = get_today()
 
     # Create task with Fitbit goal
     task = Task(
@@ -184,7 +185,7 @@ async def test_evaluate_and_apply_auto_checks_unchecks_when_goal_lost(test_db: S
 @pytest.mark.asyncio
 async def test_evaluate_and_apply_auto_checks_skips_disabled_tasks(test_db: Session, sample_profiles):
     """Test that tasks with auto-check disabled are not evaluated."""
-    today = date.today()
+    today = get_today()
 
     # Create task with Fitbit goal but auto-check disabled
     task = Task(
@@ -223,7 +224,7 @@ async def test_evaluate_and_apply_auto_checks_skips_disabled_tasks(test_db: Sess
 @pytest.mark.asyncio
 async def test_evaluate_and_apply_auto_checks_no_metric_data(test_db: Session, sample_profiles):
     """Test behavior when no Fitbit metric data exists for the date."""
-    today = date.today()
+    today = get_today()
 
     # Create task with Fitbit goal
     task = Task(
@@ -253,7 +254,7 @@ async def test_evaluate_and_apply_auto_checks_no_metric_data(test_db: Session, s
 @pytest.mark.asyncio
 async def test_get_task_fitbit_progress(test_db: Session, sample_profiles):
     """Test getting Fitbit progress for a task."""
-    today = date.today()
+    today = get_today()
 
     # Create task with Fitbit goal
     task = Task(
@@ -293,7 +294,7 @@ async def test_get_task_fitbit_progress(test_db: Session, sample_profiles):
 @pytest.mark.asyncio
 async def test_get_task_fitbit_progress_goal_met(test_db: Session, sample_profiles):
     """Test getting Fitbit progress when goal is met."""
-    today = date.today()
+    today = get_today()
 
     task = Task(
         user_id=1,
@@ -329,7 +330,7 @@ async def test_get_task_fitbit_progress_goal_met(test_db: Session, sample_profil
 @pytest.mark.asyncio
 async def test_get_task_fitbit_progress_no_data(test_db: Session, sample_profiles):
     """Test getting Fitbit progress when no metric data exists."""
-    today = date.today()
+    today = get_today()
 
     task = Task(
         user_id=1,

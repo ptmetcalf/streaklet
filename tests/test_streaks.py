@@ -1,9 +1,10 @@
 import pytest
 from sqlalchemy.orm import Session
-from datetime import date, timedelta, datetime
+from datetime import timedelta
 from app.services import streaks as streak_service
 from app.services import checks as check_service
 from app.models.daily_status import DailyStatus
+from app.core.time import get_today, get_now
 
 
 def test_no_streak_on_empty_db(test_db: Session, sample_profiles):
@@ -15,8 +16,8 @@ def test_no_streak_on_empty_db(test_db: Session, sample_profiles):
 
 def test_single_day_streak(test_db: Session, sample_profiles):
     """Test streak of 1 for a single completed day."""
-    today = date.today()
-    status = DailyStatus(date=today, user_id=1, completed_at=datetime.now())
+    today = get_today()
+    status = DailyStatus(date=today, user_id=1, completed_at=get_now())
     test_db.add(status)
     test_db.commit()
 
@@ -27,11 +28,11 @@ def test_single_day_streak(test_db: Session, sample_profiles):
 
 def test_consecutive_days_streak(test_db: Session, sample_profiles):
     """Test streak increments for consecutive days."""
-    today = date.today()
+    today = get_today()
 
     for i in range(5):
         day = today - timedelta(days=i)
-        status = DailyStatus(date=day, user_id=1, completed_at=datetime.now())
+        status = DailyStatus(date=day, user_id=1, completed_at=get_now())
         test_db.add(status)
     test_db.commit()
 
@@ -42,10 +43,10 @@ def test_consecutive_days_streak(test_db: Session, sample_profiles):
 
 def test_streak_resets_on_missed_day(test_db: Session, sample_profiles):
     """Test streak resets when a day is missed."""
-    today = date.today()
+    today = get_today()
 
-    status1 = DailyStatus(date=today, user_id=1, completed_at=datetime.now())
-    status2 = DailyStatus(date=today - timedelta(days=1), user_id=1, completed_at=datetime.now())
+    status1 = DailyStatus(date=today, user_id=1, completed_at=get_now())
+    status2 = DailyStatus(date=today - timedelta(days=1), user_id=1, completed_at=get_now())
     test_db.add(status1)
     test_db.add(status2)
     test_db.commit()
@@ -53,7 +54,7 @@ def test_streak_resets_on_missed_day(test_db: Session, sample_profiles):
     streak_count, last_date = streak_service.calculate_current_streak(test_db, profile_id=1)
     assert streak_count == 2
 
-    status3 = DailyStatus(date=today - timedelta(days=4), user_id=1, completed_at=datetime.now())
+    status3 = DailyStatus(date=today - timedelta(days=4), user_id=1, completed_at=get_now())
     test_db.add(status3)
     test_db.commit()
 
@@ -63,10 +64,10 @@ def test_streak_resets_on_missed_day(test_db: Session, sample_profiles):
 
 def test_get_streak_info(test_db: Session, sample_tasks):
     """Test getting comprehensive streak information."""
-    today = date.today()
+    today = get_today()
 
     yesterday = today - timedelta(days=1)
-    status = DailyStatus(date=yesterday, user_id=1, completed_at=datetime.now())
+    status = DailyStatus(date=yesterday, user_id=1, completed_at=get_now())
     test_db.add(status)
     test_db.commit()
 
@@ -84,12 +85,12 @@ def test_get_streak_info(test_db: Session, sample_tasks):
 
 def test_today_incomplete_shows_previous_streak(test_db: Session, sample_profiles):
     """Test that incomplete today still shows previous streak."""
-    today = date.today()
+    today = get_today()
     yesterday = today - timedelta(days=1)
 
     for i in range(3):
         day = yesterday - timedelta(days=i)
-        status = DailyStatus(date=day, user_id=1, completed_at=datetime.now())
+        status = DailyStatus(date=day, user_id=1, completed_at=get_now())
         test_db.add(status)
     test_db.commit()
 
@@ -109,7 +110,7 @@ def test_task_streak_no_checks(test_db: Session, sample_tasks):
 
 def test_task_streak_consecutive_days(test_db: Session, sample_tasks):
     """Test per-task streak counts consecutive completions."""
-    today = date.today()
+    today = get_today()
 
     # Create checks for 5 consecutive days for task 1
     for i in range(5):
@@ -124,7 +125,7 @@ def test_task_streak_consecutive_days(test_db: Session, sample_tasks):
 
 def test_task_streak_with_gap(test_db: Session, sample_tasks):
     """Test streak resets after missed day."""
-    today = date.today()
+    today = get_today()
 
     # Check days 1-3
     for i in range(3):
@@ -147,7 +148,7 @@ def test_task_streak_with_gap(test_db: Session, sample_tasks):
 
 def test_task_streak_different_tasks(test_db: Session, sample_tasks):
     """Test multiple tasks have independent streaks."""
-    today = date.today()
+    today = get_today()
 
     # Task 1: 10 consecutive days
     for i in range(10):
@@ -170,7 +171,7 @@ def test_task_streak_different_tasks(test_db: Session, sample_tasks):
 
 def test_task_streak_broken_returns_zero(test_db: Session, sample_tasks):
     """Test streak returns 0 when more than 1 day since last check."""
-    today = date.today()
+    today = get_today()
 
     # Check task 5 days ago (gap > 1 day)
     old_day = today - timedelta(days=5)
@@ -186,7 +187,7 @@ def test_task_streak_profile_isolation(test_db: Session, sample_profiles, sample
     """Test task streaks are isolated by profile."""
     from app.models.task import Task
 
-    today = date.today()
+    today = get_today()
 
     # Profile 1: 5 day streak on task 1
     for i in range(5):

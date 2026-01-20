@@ -12,6 +12,7 @@
 
     <!-- Apple iOS Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Streaklet">
     <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
@@ -24,6 +25,7 @@
     <!-- Material Design Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/@alpinejs/collapse@3.13.3/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
@@ -84,16 +86,17 @@
             // If profile is selected, validate it still exists in database
             if (currentPath !== '/profiles' && profileId) {
                 try {
-                    const response = await fetch(`/api/profiles/${profileId}`);
-                    if (!response.ok) {
+                    await api.profiles.get(profileId);
+                } catch (error) {
+                    if (error && error.status === 404) {
                         // Profile doesn't exist anymore - clear and redirect
                         console.warn(`Profile ${profileId} not found, redirecting to profile selection`);
                         localStorage.removeItem('streaklet_profile_id');
                         localStorage.removeItem('streaklet_profile_name');
                         window.location.href = '/profiles';
+                    } else {
+                        console.error('Error validating profile:', error);
                     }
-                } catch (error) {
-                    console.error('Error validating profile:', error);
                 }
             }
         });
@@ -161,13 +164,10 @@
          x-init="async () => {
             if ($store.profile.id) {
                 try {
-                    const response = await fetch(`/api/profiles/${$store.profile.id}`);
-                    if (response.ok) {
-                        const profile = await response.json();
-                        profileName = profile.name;
-                        profileColor = profile.color;
-                        $el.style.setProperty('--profile-color', profileColor);
-                    }
+                    const profile = await api.profiles.get($store.profile.id);
+                    profileName = profile.name;
+                    profileColor = profile.color;
+                    $el.style.setProperty('--profile-color', profileColor);
                 } catch (e) {}
             }
          }">
@@ -183,11 +183,8 @@
         const profileId = localStorage.getItem('streaklet_profile_id');
         if (profileId) {
             try {
-                const response = await fetch('/api/fitbit/connection', { headers: { 'X-Profile-Id': profileId } });
-                if (response.ok) {
-                    const data = await response.json();
-                    fitbitConnected = data.connected;
-                }
+                const data = await api.fitbit.connection();
+                fitbitConnected = data.connected;
             } catch (e) {}
         }
     }">

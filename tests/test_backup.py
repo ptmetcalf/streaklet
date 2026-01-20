@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from datetime import date, datetime, timedelta
+from datetime import timedelta
 import json
 import io
 
@@ -10,14 +10,15 @@ from app.models.profile import Profile
 from app.models.task import Task
 from app.models.task_check import TaskCheck
 from app.models.daily_status import DailyStatus
+from app.core.time import get_today, get_now
 
 
 def test_export_profile_data(test_db: Session, sample_tasks, sample_profiles):
     """Test exporting a single profile's data."""
     # Add some checks and daily status
-    today = date.today()
-    check = TaskCheck(date=today, task_id=1, user_id=1, checked=True, checked_at=datetime.now())
-    status = DailyStatus(date=today, user_id=1, completed_at=datetime.now())
+    today = get_today()
+    check = TaskCheck(date=today, task_id=1, user_id=1, checked=True, checked_at=get_now())
+    status = DailyStatus(date=today, user_id=1, completed_at=get_now())
     test_db.add(check)
     test_db.add(status)
     test_db.commit()
@@ -129,8 +130,8 @@ def test_import_profile_data_replace_mode(test_db: Session, sample_tasks, sample
 def test_import_profile_data_merge_mode(test_db: Session, sample_tasks, sample_profiles):
     """Test importing profile data in merge mode."""
     # Create initial data
-    today = date.today()
-    check = TaskCheck(date=today, task_id=1, user_id=1, checked=True, checked_at=datetime.now())
+    today = get_today()
+    check = TaskCheck(date=today, task_id=1, user_id=1, checked=True, checked_at=get_now())
     test_db.add(check)
     test_db.commit()
 
@@ -166,7 +167,7 @@ def test_import_profile_data_create_new_profile(test_db: Session, sample_profile
     """Test importing creates a new profile if it doesn't exist."""
     export_data = {
         "version": "1.0",
-        "export_date": datetime.now().isoformat(),
+        "export_date": get_now().isoformat(),
         "profile": {
             "id": 10,
             "name": "New Profile",
@@ -204,7 +205,7 @@ def test_import_profile_data_invalid_mode(test_db: Session, sample_profiles):
     """Test importing with invalid mode."""
     export_data = {
         "version": "1.0",
-        "export_date": datetime.now().isoformat(),
+        "export_date": get_now().isoformat(),
         "profile": {"id": 1, "name": "Test", "color": "#ff0000"},
         "tasks": [],
         "task_checks": [],
@@ -221,11 +222,11 @@ def test_import_all_profiles(test_db: Session, sample_profiles):
     """Test importing all profiles."""
     export_data = {
         "version": "1.0",
-        "export_date": datetime.now().isoformat(),
+        "export_date": get_now().isoformat(),
         "profiles": [
             {
                 "version": "1.0",
-                "export_date": datetime.now().isoformat(),
+                "export_date": get_now().isoformat(),
                 "profile": {"id": 20, "name": "Profile A", "color": "#ff0000"},
                 "tasks": [],
                 "task_checks": [],
@@ -233,7 +234,7 @@ def test_import_all_profiles(test_db: Session, sample_profiles):
             },
             {
                 "version": "1.0",
-                "export_date": datetime.now().isoformat(),
+                "export_date": get_now().isoformat(),
                 "profile": {"id": 21, "name": "Profile B", "color": "#00ff00"},
                 "tasks": [],
                 "task_checks": [],
@@ -388,11 +389,11 @@ def test_api_import_all_profiles(client: TestClient, test_db: Session, sample_pr
     # Create export data
     export_data = {
         "version": "1.0",
-        "export_date": datetime.now().isoformat(),
+        "export_date": get_now().isoformat(),
         "profiles": [
             {
                 "version": "1.0",
-                "export_date": datetime.now().isoformat(),
+                "export_date": get_now().isoformat(),
                 "profile": {"id": 30, "name": "Bulk Profile A", "color": "#ff0000"},
                 "tasks": [],
                 "task_checks": [],
@@ -419,12 +420,12 @@ def test_api_import_all_profiles(client: TestClient, test_db: Session, sample_pr
 
 def test_import_with_task_checks_and_daily_status(test_db: Session, sample_profiles):
     """Test importing profile with task checks and daily status."""
-    today = date.today()
+    today = get_today()
     yesterday = today - timedelta(days=1)
 
     export_data = {
         "version": "1.0",
-        "export_date": datetime.now().isoformat(),
+        "export_date": get_now().isoformat(),
         "profile": {"id": 40, "name": "Test Profile", "color": "#ff0000"},
         "tasks": [
             {"id": 50, "title": "Task 1", "sort_order": 1, "is_required": True, "is_active": True}
@@ -434,23 +435,23 @@ def test_import_with_task_checks_and_daily_status(test_db: Session, sample_profi
                 "date": today.isoformat(),
                 "task_id": 50,
                 "checked": True,
-                "checked_at": datetime.now().isoformat()
+                "checked_at": get_now().isoformat()
             },
             {
                 "date": yesterday.isoformat(),
                 "task_id": 50,
                 "checked": True,
-                "checked_at": (datetime.now() - timedelta(days=1)).isoformat()
+                "checked_at": (get_now() - timedelta(days=1)).isoformat()
             }
         ],
         "daily_status": [
             {
                 "date": today.isoformat(),
-                "completed_at": datetime.now().isoformat()
+                "completed_at": get_now().isoformat()
             },
             {
                 "date": yesterday.isoformat(),
-                "completed_at": (datetime.now() - timedelta(days=1)).isoformat()
+                "completed_at": (get_now() - timedelta(days=1)).isoformat()
             }
         ]
     }
@@ -471,10 +472,10 @@ def test_import_with_task_checks_and_daily_status(test_db: Session, sample_profi
 
 def test_import_merge_skips_duplicates(test_db: Session, sample_tasks, sample_profiles):
     """Test that merge mode skips duplicate task checks."""
-    today = date.today()
+    today = get_today()
 
     # Create existing check
-    check = TaskCheck(date=today, task_id=1, user_id=1, checked=True, checked_at=datetime.now())
+    check = TaskCheck(date=today, task_id=1, user_id=1, checked=True, checked_at=get_now())
     test_db.add(check)
     test_db.commit()
 

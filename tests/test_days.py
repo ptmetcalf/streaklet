@@ -1,10 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 from app.models.daily_status import DailyStatus
 from app.models.task_check import TaskCheck
 from app.services import checks as check_service
+from app.core.time import get_today
 
 
 def test_get_today_info_basic(client: TestClient, sample_tasks):
@@ -36,7 +37,7 @@ def test_get_today_info_basic(client: TestClient, sample_tasks):
 
 def test_get_today_info_with_checks(client: TestClient, test_db: Session, sample_tasks):
     """Test getting today's info when some tasks are checked."""
-    today = date.today()
+    today = get_today()
 
     # Check one task
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
@@ -62,7 +63,7 @@ def test_get_today_info_with_checks(client: TestClient, test_db: Session, sample
 
 def test_get_today_info_all_complete(client: TestClient, test_db: Session, sample_tasks):
     """Test getting today's info when all required tasks are complete."""
-    today = date.today()
+    today = get_today()
 
     # Check both required tasks
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
@@ -85,7 +86,7 @@ def test_get_today_info_all_complete(client: TestClient, test_db: Session, sampl
 
 def test_get_today_info_with_streak(client: TestClient, test_db: Session, sample_tasks):
     """Test getting today's info with an existing streak."""
-    today = date.today()
+    today = get_today()
     yesterday = today - timedelta(days=1)
 
     # Complete yesterday
@@ -146,7 +147,7 @@ def test_get_today_info_different_profile(client: TestClient, test_db: Session, 
 
 def test_update_check_toggle_on(client: TestClient, sample_tasks):
     """Test checking a task."""
-    today = date.today()
+    today = get_today()
 
     response = client.put(
         f"/api/days/{today}/checks/1",
@@ -165,7 +166,7 @@ def test_update_check_toggle_on(client: TestClient, sample_tasks):
 
 def test_update_check_toggle_off(client: TestClient, test_db: Session, sample_tasks):
     """Test unchecking a task."""
-    today = date.today()
+    today = get_today()
 
     # First check it
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
@@ -187,7 +188,7 @@ def test_update_check_toggle_off(client: TestClient, test_db: Session, sample_ta
 
 def test_update_check_task_not_found(client: TestClient, sample_tasks):
     """Test checking a task that doesn't exist."""
-    today = date.today()
+    today = get_today()
 
     response = client.put(
         f"/api/days/{today}/checks/999",
@@ -201,7 +202,7 @@ def test_update_check_task_not_found(client: TestClient, sample_tasks):
 
 def test_update_check_wrong_profile(client: TestClient, sample_tasks, sample_profiles):
     """Test that you can't check another profile's task."""
-    today = date.today()
+    today = get_today()
 
     # Try to check task 1 (belongs to profile 1) as profile 2
     response = client.put(
@@ -216,7 +217,7 @@ def test_update_check_wrong_profile(client: TestClient, sample_tasks, sample_pro
 
 def test_update_check_past_date(client: TestClient, sample_tasks):
     """Test checking a task on a past date."""
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = get_today() - timedelta(days=1)
 
     response = client.put(
         f"/api/days/{yesterday}/checks/1",
@@ -233,7 +234,7 @@ def test_update_check_past_date(client: TestClient, sample_tasks):
 
 def test_update_check_triggers_completion(client: TestClient, test_db: Session, sample_tasks):
     """Test that checking all required tasks marks day as complete."""
-    today = date.today()
+    today = get_today()
 
     # Check first required task
     response1 = client.put(
@@ -263,7 +264,7 @@ def test_update_check_triggers_completion(client: TestClient, test_db: Session, 
 
 def test_update_check_default_profile(client: TestClient, sample_tasks):
     """Test that omitting X-Profile-Id defaults to profile 1."""
-    today = date.today()
+    today = get_today()
 
     # Make request without X-Profile-Id header
     response = client.put(
@@ -298,7 +299,7 @@ def test_get_today_info_no_active_tasks(client: TestClient, test_db: Session, sa
 
 def test_today_endpoint_includes_task_streaks(client: TestClient, test_db: Session, sample_tasks):
     """Test /api/days/today returns task_streak fields."""
-    today = date.today()
+    today = get_today()
 
     # Create a 3-day streak for task 1
     for i in range(3):
@@ -327,7 +328,7 @@ def test_today_endpoint_includes_task_streaks(client: TestClient, test_db: Sessi
 
 def test_task_streak_different_values_per_task(client: TestClient, test_db: Session, sample_tasks):
     """Test that different tasks can have different streak values."""
-    today = date.today()
+    today = get_today()
 
     # Task 1: 5-day streak
     for i in range(5):
@@ -357,7 +358,7 @@ def test_task_streak_different_values_per_task(client: TestClient, test_db: Sess
 
 def test_task_streak_milestone_calculation(client: TestClient, test_db: Session, sample_tasks):
     """Test that milestone calculation works correctly."""
-    today = date.today()
+    today = get_today()
 
     # Create a 10-day streak for task 1
     for i in range(10):
@@ -390,7 +391,7 @@ def test_task_streak_zero_for_no_checks(client: TestClient, sample_tasks):
 
 def test_get_specific_day_includes_task_streaks(client: TestClient, test_db: Session, sample_tasks):
     """Test /api/days/{date} endpoint also includes task streak fields."""
-    today = date.today()
+    today = get_today()
     yesterday = today - timedelta(days=1)
 
     # Create a streak for task 1

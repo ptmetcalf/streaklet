@@ -483,6 +483,36 @@ window.iconPickerUtils = {
     }
 };
 
+// Shared icon categories for icon picker UIs
+window.iconPickerCategories = {
+    household: {
+        'Cleaning': ['broom', 'spray-bottle', 'robot-vacuum', 'water', 'dishwasher', 'paper-roll', 'weather-dust'],
+        'Bathroom': ['toilet', 'shower', 'bathtub', 'pump-soap'],
+        'Kitchen': ['silverware-fork-knife', 'fridge', 'stove', 'microwave', 'bottle-wine', 'coffee'],
+        'Laundry': ['washing-machine', 'tshirt-crew', 'tumble-dryer', 'iron', 'hanger'],
+        'Outdoor': ['grass', 'lawnmower', 'flower', 'sprout', 'leaf', 'tree', 'shovel', 'watering-can'],
+        'Maintenance': ['wrench', 'tools', 'hammer', 'screwdriver', 'air-filter', 'air-conditioner', 'lightbulb'],
+        'Inspection': ['clipboard-check', 'magnify', 'test-tube', 'gauge', 'home-analytics'],
+        'Trash': ['delete', 'recycle', 'trash-can'],
+        'Pets': ['paw', 'dog', 'cat', 'bone', 'bowl-mix', 'food-drumstick'],
+        'Vehicles': ['car', 'car-wash', 'oil', 'tire', 'engine', 'gas-station'],
+        'Home': ['home', 'home-roof', 'door', 'window-closed', 'lock', 'key', 'garage'],
+        'General': ['checkbox-marked-circle', 'check', 'calendar', 'clock', 'bell', 'package', 'gift']
+    },
+    personal: {
+        'Fitness': ['walk', 'run', 'bike', 'swim', 'dumbbell', 'weight-lifter', 'yoga', 'shoe-print', 'run-fast'],
+        'Health': ['sleep', 'bed', 'meditation', 'pill', 'water', 'cup-water', 'heart-pulse', 'hospital'],
+        'Food': ['food-apple', 'silverware-fork-knife', 'coffee', 'food', 'food-turkey', 'chef-hat', 'carrot'],
+        'Learning': ['book-open-variant', 'book', 'school', 'head-lightbulb', 'pencil', 'notebook'],
+        'Creative': ['palette', 'brush', 'music', 'gamepad-variant', 'music-note', 'guitar-acoustic', 'piano'],
+        'Social': ['phone', 'message', 'account-group', 'account-multiple', 'email', 'video'],
+        'Work': ['briefcase', 'laptop', 'calendar-account', 'folder-multiple', 'clipboard-text'],
+        'Self-care': ['shower', 'face-woman', 'tooth', 'toothbrush', 'spa'],
+        'Time & Goals': ['clock-outline', 'clock', 'calendar-today', 'flag-checkered', 'timer', 'alarm'],
+        'General': ['check-circle', 'check', 'star', 'plus-circle', 'circle-outline']
+    }
+};
+
 // ============================================================================
 // TOAST NOTIFICATION SYSTEM
 // ============================================================================

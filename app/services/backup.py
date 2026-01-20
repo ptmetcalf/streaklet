@@ -12,6 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 import json
 
+from app.core.time import get_now
 
 BACKUP_VERSION = "1.0"
 
@@ -45,7 +46,7 @@ def export_profile_data(db: Session, profile_id: int) -> Optional[Dict[str, Any]
     # Build export data
     export_data = {
         "version": BACKUP_VERSION,
-        "export_date": datetime.now().astimezone().isoformat(),
+        "export_date": get_now().isoformat(),
         "profile": {
             "id": profile.id,
             "name": profile.name,
@@ -97,7 +98,7 @@ def export_all_profiles(db: Session) -> Dict[str, Any]:
 
     export_data = {
         "version": BACKUP_VERSION,
-        "export_date": datetime.now().astimezone().isoformat(),
+        "export_date": get_now().isoformat(),
         "profiles": []
     }
 

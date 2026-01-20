@@ -261,8 +261,7 @@ function profileManager() {
 
         async loadProfiles() {
             try {
-                const response = await fetch('/api/profiles');
-                this.profiles = await response.json();
+                this.profiles = await api.profiles.list();
             } catch (error) {
                 console.error('Failed to load profiles:', error);
             }
@@ -277,25 +276,13 @@ function profileManager() {
         async createProfile() {
             this.createError = '';
             try {
-                const response = await fetch('/api/profiles', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(this.newProfile)
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    this.createError = error.detail || 'Failed to create profile';
-                    return;
-                }
-
-                const profile = await response.json();
+                const profile = await api.profiles.create(this.newProfile);
                 await this.loadProfiles();
                 this.showCreateModal = false;
                 this.newProfile = { name: '', color: '#3b82f6' };
                 this.selectProfile(profile);
             } catch (error) {
-                this.createError = 'Failed to create profile';
+                this.createError = error?.message || 'Failed to create profile';
                 console.error('Create profile error:', error);
             }
         },
@@ -309,20 +296,10 @@ function profileManager() {
         async updateProfile() {
             this.editError = '';
             try {
-                const response = await fetch(`/api/profiles/${this.editingProfile.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: this.editingProfile.name,
-                        color: this.editingProfile.color
-                    })
+                await api.profiles.update(this.editingProfile.id, {
+                    name: this.editingProfile.name,
+                    color: this.editingProfile.color
                 });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    this.editError = error.detail || 'Failed to update profile';
-                    return;
-                }
 
                 await this.loadProfiles();
                 this.showEditModal = false;
@@ -344,15 +321,7 @@ function profileManager() {
             }
 
             try {
-                const response = await fetch(`/api/profiles/${profile.id}`, {
-                    method: 'DELETE'
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    toast.error(error.detail || 'Failed to delete profile');
-                    return;
-                }
+                await api.profiles.delete(profile.id);
 
                 // Clear localStorage if deleting current profile
                 const currentProfileId = parseInt(localStorage.getItem('streaklet_profile_id'));
@@ -371,10 +340,10 @@ function profileManager() {
         // Export single profile
         async exportProfile(profile) {
             try {
-                const response = await fetch(`/api/profiles/${profile.id}/export`);
-                if (!response.ok) {
-                    throw new Error('Export failed');
-                }
+                const response = await ApiClient.request(`/api/profiles/${profile.id}/export`, {
+                    useProfile: false,
+                    skipJsonParse: true
+                });
 
                 // Trigger download
                 const blob = await response.blob();
@@ -414,18 +383,9 @@ function profileManager() {
             formData.append('mode', mode);
 
             try {
-                const response = await fetch(`/api/profiles/${profile.id}/import`, {
-                    method: 'POST',
-                    body: formData
+                const result = await ApiClient.upload(`/api/profiles/${profile.id}/import`, formData, {
+                    useProfile: false
                 });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    toast.error(error.detail || 'Import failed');
-                    return;
-                }
-
-                const result = await response.json();
                 toast.success(result.message);
                 await this.loadProfiles();
 
@@ -446,10 +406,10 @@ function profileManager() {
         // Export all profiles
         async exportAllProfiles() {
             try {
-                const response = await fetch('/api/profiles/export/all');
-                if (!response.ok) {
-                    throw new Error('Export failed');
-                }
+                const response = await ApiClient.request('/api/profiles/export/all', {
+                    useProfile: false,
+                    skipJsonParse: true
+                });
 
                 // Trigger download
                 const blob = await response.blob();
@@ -481,18 +441,9 @@ function profileManager() {
             formData.append('mode', mode);
 
             try {
-                const response = await fetch('/api/profiles/import/all', {
-                    method: 'POST',
-                    body: formData
+                const result = await ApiClient.upload('/api/profiles/import/all', formData, {
+                    useProfile: false
                 });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    toast.error(error.detail || 'Import failed');
-                    return;
-                }
-
-                const result = await response.json();
                 toast.success(result.message);
                 await this.loadProfiles();
 

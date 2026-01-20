@@ -1,13 +1,13 @@
 """Tests for Fitbit connection management service."""
 import pytest
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 from sqlalchemy.orm import Session
 
 from app.services import fitbit_connection
 from app.models.fitbit_connection import FitbitConnection
 from app.models.fitbit_metric import FitbitMetric
 from app.models.task import Task
-from app.core.time import get_now
+from app.core.time import get_now, get_today
 from app.core.encryption import encrypt_token
 
 
@@ -95,7 +95,6 @@ async def test_delete_connection_not_exists(test_db: Session, sample_profiles):
 @pytest.mark.skip(reason="CASCADE delete requires PRAGMA foreign_keys=ON before table creation in SQLite. Works in production but hard to test due to fixture timing.")
 async def test_delete_connection_cascades_to_metrics(test_db: Session, sample_profiles):
     """Test that deleting connection cascades to Fitbit metrics."""
-    from datetime import date
 
     # Create connection
     connection = FitbitConnection(
@@ -113,14 +112,14 @@ async def test_delete_connection_cascades_to_metrics(test_db: Session, sample_pr
     # Create some metrics
     metric1 = FitbitMetric(
         user_id=1,
-        date=date.today(),
+        date=get_today(),
         metric_type="steps",
         value=10000,
         unit="steps"
     )
     metric2 = FitbitMetric(
         user_id=1,
-        date=date.today(),
+        date=get_today(),
         metric_type="sleep_minutes",
         value=450,
         unit="minutes"
