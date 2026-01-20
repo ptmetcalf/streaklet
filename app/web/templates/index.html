@@ -52,38 +52,43 @@
     <div x-show="activeTab === 'daily'" class="tab-content">
         <div class="checklist">
             <template x-for="task in dailyTasks" :key="task.id">
-                <div
-                    class="task-item"
-                    :class="{ 'checked': task.checked }"
-                    @click="toggleTask(task)"
-                >
-                    <div class="checkbox">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
+                <div class="unified-task-card task-card-daily" :class="{ 'task-card-checked': task.checked }">
+                    <div class="task-card-header">
+                        <i :class="'mdi mdi-' + (task.icon || 'check-circle')" class="task-card-icon"></i>
+                        <div class="task-card-title" x-text="task.title"></div>
                     </div>
-                    <div class="task-content">
-                        <div class="task-title" x-text="task.title"></div>
-                        <!-- Fitbit Progress Badge -->
-                        <div x-show="task.fitbit_metric_type && task.fitbit_current_value != null"
-                             class="fitbit-progress"
-                             :class="{ 'goal-met': task.fitbit_goal_met }">
-                            <span class="fitbit-icon">📊</span>
-                            <span x-text="formatFitbitProgress(task)"></span>
-                        </div>
-                        <!-- Per-Task Streak Badge -->
-                        <div x-show="task.task_streak && task.task_streak > 0"
-                             class="task-streak-badge"
-                             :class="getStreakBadgeClass(task.task_streak)"
-                             :title="`${task.task_streak}-day streak${task.task_streak_milestone ? ' • Next: ' + task.task_streak_milestone + ' days' : ''}`">
-                            <span class="streak-icon">🔥</span>
-                            <span x-text="task.task_streak"></span>
-                            <span class="streak-label">day<span x-show="task.task_streak !== 1">s</span></span>
-                        </div>
+
+                    <!-- Metadata badges -->
+                    <div class="task-card-metadata">
+                        <span class="task-badge badge-required" x-show="task.is_required">Required</span>
+
+                        <!-- Fitbit Progress -->
+                        <template x-if="task.fitbit_metric_type && task.fitbit_current_value != null">
+                            <div class="fitbit-progress" :class="{ 'goal-met': task.fitbit_goal_met }">
+                                <span class="fitbit-icon">📊</span>
+                                <span x-text="formatFitbitProgress(task)"></span>
+                            </div>
+                        </template>
+
+                        <!-- Per-Task Streak -->
+                        <template x-if="task.task_streak && task.task_streak > 0">
+                            <div class="task-streak-badge" :class="getStreakBadgeClass(task.task_streak)"
+                                 :title="`${task.task_streak}-day streak${task.task_streak_milestone ? ' • Next: ' + task.task_streak_milestone + ' days' : ''}`">
+                                <span class="streak-icon">🔥</span>
+                                <span x-text="task.task_streak"></span>
+                            </div>
+                        </template>
                     </div>
-                    <span class="task-badge" :class="{ 'required': task.is_required }" x-show="task.is_required">
-                        Required
-                    </span>
+
+                    <!-- Action buttons -->
+                    <div class="task-card-actions">
+                        <button @click="toggleTask(task)"
+                                class="btn-task-action btn-task-complete"
+                                :class="{ 'task-card-checked': task.checked }">
+                            <span x-show="!task.checked">✓ Mark Complete</span>
+                            <span x-show="task.checked">↶ Undo</span>
+                        </button>
+                    </div>
                 </div>
             </template>
         </div>
@@ -94,54 +99,57 @@
         <!-- Active/Incomplete Todo Items -->
         <div class="checklist">
             <template x-for="task in activePunchListTasks" :key="task.id">
-                <div class="task-item punch-list-item"
-                     :class="{ 'overdue': isOverdue(task) }"
-                     @click="togglePunchListTask(task)">
-                    <div class="checkbox">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
+                <div class="unified-task-card task-card-punch-list" :class="{ 'task-card-overdue': isOverdue(task) }">
+                    <div class="task-card-header">
+                        <i :class="'mdi mdi-' + (task.icon || 'check-circle')" class="task-card-icon"></i>
+                        <div class="task-card-title" x-text="task.title"></div>
                     </div>
-                    <div class="task-content">
-                        <div class="task-title" x-text="task.title"></div>
-                        <div class="task-meta" x-show="task.due_date">
-                            <span x-text="formatDueDate(task.due_date)"></span>
-                        </div>
+
+                    <div class="task-card-metadata" x-show="task.due_date">
+                        <span class="task-badge" x-text="formatDueDate(task.due_date)"
+                              :class="{ 'badge-overdue': isOverdue(task) }"></span>
+                    </div>
+
+                    <div class="task-card-actions">
+                        <button @click="togglePunchListTask(task)" class="btn-task-action btn-task-complete">
+                            ✓ Mark Complete
+                        </button>
                     </div>
                 </div>
             </template>
+
+            <!-- Empty state -->
             <div x-show="activePunchListTasks.length === 0 && completedPunchListTasks.length === 0" class="empty-state">
                 <p>No todo items yet. Add one-off tasks from the Settings page.</p>
             </div>
         </div>
 
-        <!-- Completed Todo Items (Collapsible) -->
+        <!-- Completed section (collapsible) -->
         <div x-show="completedPunchListTasks.length > 0" style="margin-top: 16px;">
-            <button @click="showCompletedTodos = !showCompletedTodos"
-                    style="width: 100%; padding: 12px; background: none; border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #666;">
+            <button @click="showCompletedTodos = !showCompletedTodos" class="btn-secondary" style="width: 100%;">
                 <span>
                     <span x-text="`Completed (${completedPunchListTasks.length})`"></span>
-                    <span style="font-size: 12px; margin-left: 8px; color: #999;">auto-archive after 7 days</span>
+                    <span style="font-size: 12px; margin-left: 8px; opacity: 0.7;">auto-archive after 7 days</span>
                 </span>
                 <svg :style="showCompletedTodos ? 'transform: rotate(180deg)' : ''" style="width: 16px; height: 16px; transition: transform 0.2s;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="6 9 12 15 18 9"></polyline>
                 </svg>
             </button>
 
-            <div x-show="showCompletedTodos" x-collapse class="checklist" style="margin-top: 8px; opacity: 0.7;">
+            <div x-show="showCompletedTodos" x-collapse style="margin-top: 8px;">
                 <template x-for="task in completedPunchListTasks" :key="task.id">
-                    <div class="task-item punch-list-item checked"
-                         @click="togglePunchListTask(task)">
-                        <div class="checkbox">
-                            <svg viewBox="0 0 24 24" fill="none">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
+                    <div class="unified-task-card task-card-punch-list task-card-checked">
+                        <div class="task-card-header">
+                            <i :class="'mdi mdi-' + (task.icon || 'check-circle')" class="task-card-icon"></i>
+                            <div class="task-card-title" x-text="task.title"></div>
                         </div>
-                        <div class="task-content">
-                            <div class="task-title" x-text="task.title"></div>
-                            <div class="task-meta" x-show="task.completed_at">
-                                <span x-text="`Completed ${formatCompletedDate(task.completed_at)}`"></span>
-                            </div>
+                        <div class="task-card-metadata" x-show="task.completed_at">
+                            <span x-text="`Completed ${formatCompletedDate(task.completed_at)}`"></span>
+                        </div>
+                        <div class="task-card-actions">
+                            <button @click="togglePunchListTask(task)" class="btn-task-action btn-task-secondary">
+                                ↶ Restore
+                            </button>
                         </div>
                     </div>
                 </template>
@@ -153,21 +161,26 @@
     <div x-show="activeTab === 'scheduled'" class="tab-content">
         <div class="checklist">
             <template x-for="task in scheduledTasksDueToday" :key="task.id">
-                <div class="task-item scheduled-item"
-                     :class="{ 'checked': task.checked }"
-                     @click="toggleTask(task)">
-                    <div class="checkbox">
-                        <svg viewBox="0 0 24 24" fill="none">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
+                <div class="unified-task-card task-card-scheduled" :class="{ 'task-card-checked': task.checked }">
+                    <div class="task-card-header">
+                        <i :class="'mdi mdi-' + (task.icon || 'check-circle')" class="task-card-icon"></i>
+                        <div class="task-card-title" x-text="task.title"></div>
                     </div>
-                    <div class="task-content">
-                        <div class="task-title" x-text="task.title"></div>
+
+                    <div class="task-card-metadata">
+                        <span class="task-badge badge-required" x-show="task.is_required">Required</span>
                         <div class="recurrence-badge" x-text="formatRecurrence(task)"></div>
                     </div>
-                    <span class="task-badge required" x-show="task.is_required">Required</span>
+
+                    <div class="task-card-actions">
+                        <button @click="toggleTask(task)" class="btn-task-action btn-task-complete">
+                            <span x-show="!task.checked">✓ Mark Complete</span>
+                            <span x-show="task.checked">↶ Undo</span>
+                        </button>
+                    </div>
                 </div>
             </template>
+
             <div x-show="scheduledTasksDueToday.length === 0" class="empty-state">
                 <p>No scheduled tasks due today. Add recurring tasks from the Settings page.</p>
             </div>
@@ -176,32 +189,39 @@
 
     <!-- Household Tasks Tab -->
     <div x-show="activeTab === 'household'" class="tab-content">
-        <div x-show="householdTasks.length > 0" style="margin-bottom: 20px;">
+        <div x-show="householdTasks.length > 0">
             <template x-for="task in householdTasks" :key="task.id">
-                <div class="household-task-item" :class="{ 'overdue': task.is_overdue }">
-                    <div class="task-info">
-                        <div class="task-title" x-text="task.title"></div>
-                        <div class="task-meta" style="display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap;">
-                            <span class="frequency-badge" :class="task.frequency" x-text="task.frequency"></span>
-                            <template x-if="task.last_completed_at">
-                                <span class="task-status" x-text="`Last: ${task.days_since_completion}d ago by ${task.last_completed_by_profile_name}`"></span>
-                            </template>
-                            <template x-if="!task.last_completed_at">
-                                <span class="task-status">Never completed</span>
-                            </template>
-                        </div>
+                <div class="unified-task-card task-card-household" :class="{ 'task-card-overdue': task.is_overdue }">
+                    <div class="task-card-header">
+                        <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" class="task-card-icon"></i>
+                        <div class="task-card-title" x-text="task.title"></div>
                     </div>
-                    <button
-                        @click="markHouseholdComplete(task)"
-                        :disabled="completingHouseholdId === task.id"
-                        class="btn-household-complete"
-                        :class="{ 'disabled': completingHouseholdId === task.id }">
-                        <span x-show="completingHouseholdId !== task.id">✓ Complete</span>
-                        <span x-show="completingHouseholdId === task.id">⏳</span>
-                    </button>
+
+                    <p class="task-description" x-show="task.description" x-text="task.description"></p>
+
+                    <div class="task-card-metadata">
+                        <span class="task-badge badge-frequency" :class="task.frequency" x-text="task.frequency"></span>
+                        <template x-if="task.last_completed_at">
+                            <span style="font-size: 13px; color: #666;"
+                                  x-text="`Last: ${task.days_since_completion}d ago by ${task.last_completed_by_profile_name}`"></span>
+                        </template>
+                        <template x-if="!task.last_completed_at">
+                            <span style="font-size: 13px; color: #666;">Never completed</span>
+                        </template>
+                    </div>
+
+                    <div class="task-card-actions">
+                        <button @click="markHouseholdComplete(task)"
+                                :disabled="completingHouseholdId === task.id"
+                                class="btn-task-action btn-task-complete">
+                            <span x-show="completingHouseholdId !== task.id">✓ Mark Complete</span>
+                            <span x-show="completingHouseholdId === task.id">⏳ Completing...</span>
+                        </button>
+                    </div>
                 </div>
             </template>
         </div>
+
         <div x-show="householdTasks.length === 0" class="empty-state">
             <p>✨ All household tasks are up to date!</p>
         </div>

@@ -1430,3 +1430,255 @@ button:active {
 .task-streak-summary-item:hover {
     transform: translateX(4px);
 }
+
+/* ============================================
+   UNIFIED TASK CARD COMPONENT SYSTEM
+   ============================================ */
+
+/* Base Card */
+.unified-task-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+}
+
+.unified-task-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Task Type Variants */
+.task-card-daily {
+    border-left: 4px solid #52c41a;
+}
+
+.task-card-punch-list {
+    border-left: 4px solid #fa8c16;
+}
+
+.task-card-scheduled {
+    border-left: 4px solid #722ed1;
+}
+
+.task-card-household {
+    border: 2px solid #52c41a;
+}
+
+/* State Variants */
+.task-card-checked {
+    background: #f5f5f5;
+    opacity: 0.7;
+}
+
+.task-card-checked .task-card-title {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.task-card-overdue {
+    border-color: #ff4d4f;
+    background: #fff2f0;
+}
+
+/* Card Structure */
+.task-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.task-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+}
+
+.task-card-icon {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.task-card-metadata {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.task-card-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+/* Action Buttons */
+.btn-task-action {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-task-complete {
+    background: #52c41a;
+    color: white;
+    flex: 1;
+}
+
+.btn-task-complete:hover {
+    background: #45a617;
+}
+
+.btn-task-complete:disabled {
+    background: #d9d9d9;
+    color: #999;
+    cursor: not-allowed;
+}
+
+.btn-task-secondary {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.btn-task-secondary:hover {
+    background: #e0e0e0;
+}
+
+/* Badges */
+.task-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-required {
+    background: #fff7e6;
+    color: #d46b08;
+}
+
+.badge-overdue {
+    background: #fff2f0;
+    color: #ff4d4f;
+}
+
+.badge-frequency {
+    text-transform: capitalize;
+}
+
+.badge-frequency.weekly {
+    background: #e6f7ff;
+    color: #0066cc;
+}
+
+.badge-frequency.monthly {
+    background: #f0f5ff;
+    color: #5b21b6;
+}
+
+.badge-frequency.quarterly {
+    background: #fff7e6;
+    color: #d46b08;
+}
+
+.badge-frequency.annual {
+    background: #fcffe6;
+    color: #7cb305;
+}
+
+.badge-frequency.todo {
+    background: #f0f0f0;
+    color: #595959;
+}
+
+/* Task Description */
+.task-description {
+    color: #666;
+    font-size: 14px;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+/* Fitbit Progress in Cards */
+.unified-task-card .fitbit-progress {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    background: #e6f7ff;
+    color: #0066cc;
+}
+
+.unified-task-card .fitbit-progress.goal-met {
+    background: #f6ffed;
+    color: #52c41a;
+}
+
+.unified-task-card .fitbit-icon {
+    margin-right: 4px;
+}
+
+/* Per-Task Streak Badge in Cards */
+.unified-task-card .task-streak-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.unified-task-card .streak-icon {
+    font-size: 14px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .unified-task-card {
+        padding: 16px;
+    }
+
+    .task-card-title {
+        font-size: 16px;
+    }
+
+    .task-card-icon {
+        font-size: 20px;
+    }
+
+    .task-card-actions {
+        flex-direction: column;
+    }
+
+    .btn-task-action {
+        width: 100%;
+        min-height: 48px; /* Touch-friendly */
+        padding: 12px 20px;
+    }
+
+    .task-card-metadata {
+        font-size: 12px;
+    }
+
+    .task-description {
+        font-size: 13px;
+    }
+}
+
+/* Tablet and up */
+@media (min-width: 769px) {
+    .unified-task-card:active {
+        transform: translateY(-1px);
+    }
+}

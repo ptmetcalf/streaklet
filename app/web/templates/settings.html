@@ -113,6 +113,18 @@
                     <input type="text" x-model="newTask.title" placeholder="Task title">
                 </div>
                 <div class="form-group">
+                    <label>Icon (optional - auto-assigned from title if not selected)</label>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                            <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
+                            <span>Choose Icon</span>
+                        </button>
+                        <template x-if="newTask.icon">
+                            <button type="button" class="btn-secondary" @click="newTask.icon = null" style="padding: 8px 12px;">Clear</button>
+                        </template>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>
                         <input type="checkbox" x-model="newTask.is_required">
                         Required for daily completion
@@ -133,6 +145,18 @@
                     <input type="text" x-model="newTask.title" placeholder="e.g., Call dentist, Fix faucet">
                 </div>
                 <div class="form-group">
+                    <label>Icon (optional - auto-assigned from title if not selected)</label>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                            <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
+                            <span>Choose Icon</span>
+                        </button>
+                        <template x-if="newTask.icon">
+                            <button type="button" class="btn-secondary" @click="newTask.icon = null" style="padding: 8px 12px;">Clear</button>
+                        </template>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label>Due Date (optional)</label>
                     <input type="date" x-model="newTask.due_date">
                 </div>
@@ -149,6 +173,18 @@
                 <div class="form-group">
                     <label>Title</label>
                     <input type="text" x-model="newTask.title" placeholder="e.g., Give dog medicine, Change air filter">
+                </div>
+                <div class="form-group">
+                    <label>Icon (optional - auto-assigned from title if not selected)</label>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                            <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
+                            <span>Choose Icon</span>
+                        </button>
+                        <template x-if="newTask.icon">
+                            <button type="button" class="btn-secondary" @click="newTask.icon = null" style="padding: 8px 12px;">Clear</button>
+                        </template>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -359,13 +395,56 @@
                 </div>
             </template>
         </div>
+
+        <!-- Personal Task Icon Picker Modal -->
+        <div x-show="showPersonalIconPicker" class="modal-overlay" @click.self="showPersonalIconPicker = false" style="z-index: 1000;">
+            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;" @click.stop>
+                <div class="modal-header">
+                    <h2>Choose an Icon</h2>
+                    <button @click="showPersonalIconPicker = false" class="btn-close">✕</button>
+                </div>
+
+                <div style="padding: 20px;">
+                    <!-- Search Box -->
+                    <input type="text"
+                           x-model="personalIconSearch"
+                           placeholder="Search icons..."
+                           style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+
+                    <!-- Icon Categories -->
+                    <template x-for="(icons, category) in personalIconCategories" :key="category">
+                        <div x-show="filterPersonalIcons(icons).length > 0" style="margin-bottom: 24px;">
+                            <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px;" x-text="category"></h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
+                                <template x-for="icon in filterPersonalIcons(icons)" :key="icon">
+                                    <button type="button"
+                                            @click="selectPersonalIcon(icon)"
+                                            :class="{'icon-selected': newTask.icon === icon}"
+                                            style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s; padding: 8px;"
+                                            :style="newTask.icon === icon ? 'border-color: var(--primary-color); background: #e6f7ff;' : ''"
+                                            @mouseenter="$el.style.borderColor = 'var(--primary-color)'"
+                                            @mouseleave="$el.style.borderColor = newTask.icon === icon ? 'var(--primary-color)' : 'var(--border-color)'">
+                                        <i :class="'mdi mdi-' + icon" style="font-size: 28px; color: #333;"></i>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- No Results Message -->
+                    <div x-show="personalIconSearch && !hasVisiblePersonalIcons" style="text-align: center; padding: 40px; color: #999;">
+                        No icons found for "<span x-text="personalIconSearch"></span>"
+                    </div>
+                </div>
+            </div>
+        </div>
         </div>
     </div>
 
     <!-- Household Maintenance Tasks Section -->
     <div class="settings-section" style="margin-top: 32px;">
         <h2 @click="sectionsCollapsed.household = !sectionsCollapsed.household" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
-            <span>Household Maintenance Tasks</span>
+            <span>Household Tasks</span>
             <span x-text="sectionsCollapsed.household ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
 
@@ -374,23 +453,52 @@
             Manage shared household maintenance tasks. These tasks are visible to all profiles.
         </p>
 
+        <!-- Task Type Filters -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+            <button @click="householdFilter = 'all'"
+                    :class="{ 'btn-primary': householdFilter === 'all', 'btn-secondary': householdFilter !== 'all' }">
+                All <span x-text="`(${filteredHouseholdCount('all')})`"></span>
+            </button>
+            <button @click="householdFilter = 'todo'"
+                    :class="{ 'btn-primary': householdFilter === 'todo', 'btn-secondary': householdFilter !== 'todo' }">
+                To-Do <span x-text="`(${filteredHouseholdCount('todo')})`"></span>
+            </button>
+            <button @click="householdFilter = 'weekly'"
+                    :class="{ 'btn-primary': householdFilter === 'weekly', 'btn-secondary': householdFilter !== 'weekly' }">
+                Weekly <span x-text="`(${filteredHouseholdCount('weekly')})`"></span>
+            </button>
+            <button @click="householdFilter = 'monthly'"
+                    :class="{ 'btn-primary': householdFilter === 'monthly', 'btn-secondary': householdFilter !== 'monthly' }">
+                Monthly <span x-text="`(${filteredHouseholdCount('monthly')})`"></span>
+            </button>
+            <button @click="householdFilter = 'quarterly'"
+                    :class="{ 'btn-primary': householdFilter === 'quarterly', 'btn-secondary': householdFilter !== 'quarterly' }">
+                Quarterly <span x-text="`(${filteredHouseholdCount('quarterly')})`"></span>
+            </button>
+            <button @click="householdFilter = 'annual'"
+                    :class="{ 'btn-primary': householdFilter === 'annual', 'btn-secondary': householdFilter !== 'annual' }">
+                Annual <span x-text="`(${filteredHouseholdCount('annual')})`"></span>
+            </button>
+        </div>
+
         <!-- Household Task List -->
         <div x-show="!showAddHouseholdForm && !editingHouseholdTask">
-            <template x-for="task in householdTasks" :key="task.id">
+            <template x-for="task in filteredHouseholdTasks" :key="task.id">
                 <div class="task-list-item" style="border-left: 3px solid #52c41a;">
                     <div class="task-info">
-                        <div style="font-weight: 600;" x-text="task.title"></div>
-                        <div x-show="task.description" style="font-size: 13px; color: #666; margin-top: 4px;" x-text="task.description"></div>
-                        <div style="font-size: 12px; color: #999; margin-top: 6px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span class="frequency-badge"
-                                  :class="task.frequency"
-                                  x-text="task.frequency === 'todo' ? 'To-Do' : (task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1))"></span>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 20px; color: #52c41a;"></i>
+                            <div style="font-weight: 600;" x-text="task.title"></div>
+                        </div>
+                        <div x-show="task.description" style="font-size: 13px; color: #666; margin-top: 4px; margin-left: 28px;" x-text="task.description"></div>
+                        <div style="font-size: 12px; color: #999; margin-top: 4px; margin-left: 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span class="task-badge badge-frequency" :class="task.frequency" x-text="formatFrequency(task.frequency)"></span>
                             <template x-if="task.frequency === 'todo' && task.due_date">
                                 <span style="color: #666;" x-text="'Due: ' + new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></span>
                             </template>
                             <span>•</span>
-                            <span x-show="task.is_active">Active</span>
-                            <span x-show="!task.is_active" style="color: #ff4d4f;">Inactive</span>
+                            <span x-show="task.is_active">Enabled</span>
+                            <span x-show="!task.is_active" style="color: #ff4d4f;">Disabled</span>
                         </div>
                     </div>
                     <div class="task-actions">
@@ -440,6 +548,19 @@
             </div>
 
             <div class="form-group">
+                <label>Icon (optional - auto-assigned from title if not selected)</label>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <button type="button" class="btn-secondary" @click="showIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                        <i :class="'mdi mdi-' + (householdForm.icon || 'checkbox-marked-circle')" style="font-size: 20px;"></i>
+                        <span>Choose Icon</span>
+                    </button>
+                    <template x-if="householdForm.icon">
+                        <button type="button" class="btn-secondary" @click="householdForm.icon = null" style="padding: 8px 12px;">Clear</button>
+                    </template>
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label>Sort Order</label>
                 <input type="number" x-model.number="householdForm.sort_order" placeholder="0">
             </div>
@@ -456,6 +577,49 @@
                 <button class="btn-primary" @click="saveHouseholdTask()">
                     <span x-text="editingHouseholdTask ? 'Update' : 'Add'"></span> Task
                 </button>
+            </div>
+        </div>
+
+        <!-- Icon Picker Modal -->
+        <div x-show="showIconPicker" class="modal-overlay" @click.self="showIconPicker = false" style="z-index: 1000;">
+            <div class="modal-content" style="max-width: 600px; max-height: 80vh; overflow-y: auto;" @click.stop>
+                <div class="modal-header">
+                    <h2>Choose an Icon</h2>
+                    <button @click="showIconPicker = false" class="btn-close">✕</button>
+                </div>
+
+                <div style="padding: 20px;">
+                    <!-- Search Box -->
+                    <input type="text"
+                           x-model="iconSearch"
+                           placeholder="Search icons..."
+                           style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
+
+                    <!-- Icon Categories -->
+                    <template x-for="(icons, category) in iconCategories" :key="category">
+                        <div x-show="filterIcons(icons).length > 0" style="margin-bottom: 24px;">
+                            <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px;" x-text="category"></h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
+                                <template x-for="icon in filterIcons(icons)" :key="icon">
+                                    <button type="button"
+                                            @click="selectIcon(icon)"
+                                            :class="{'icon-selected': householdForm.icon === icon}"
+                                            style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s; padding: 8px;"
+                                            :style="householdForm.icon === icon ? 'border-color: var(--primary-color); background: #e6f7ff;' : ''"
+                                            @mouseenter="$el.style.borderColor = 'var(--primary-color)'"
+                                            @mouseleave="$el.style.borderColor = householdForm.icon === icon ? 'var(--primary-color)' : 'var(--border-color)'">
+                                        <i :class="'mdi mdi-' + icon" style="font-size: 28px; color: #333;"></i>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- No Results Message -->
+                    <div x-show="iconSearch && !hasVisibleIcons" style="text-align: center; padding: 40px; color: #999;">
+                        No icons found for "<span x-text="iconSearch"></span>"
+                    </div>
+                </div>
             </div>
         </div>
         </div>
@@ -780,6 +944,7 @@ function settings() {
             taskType: 'manual',  // 'manual' or 'fitbit' (for daily tasks)
             fitbitTemplate: '',
             title: '',
+            icon: null,  // Material Design Icon name
             is_required: true,
             is_active: true,
             sort_order: 0,
@@ -846,6 +1011,7 @@ function settings() {
 
         // Household task state
         householdTasks: [],
+        householdFilter: 'all',
         showAddHouseholdForm: false,
         editingHouseholdTask: null,
         householdForm: {
@@ -853,8 +1019,43 @@ function settings() {
             description: '',
             frequency: 'todo',
             due_date: null,
+            icon: null,
             sort_order: 0,
             is_active: true
+        },
+
+        // Icon picker state (household tasks)
+        showIconPicker: false,
+        iconSearch: '',
+        iconCategories: {
+            'Cleaning': ['broom', 'spray-bottle', 'robot-vacuum', 'water', 'dishwasher', 'paper-roll', 'weather-dust'],
+            'Bathroom': ['toilet', 'shower', 'bathtub', 'pump-soap'],
+            'Kitchen': ['silverware-fork-knife', 'fridge', 'stove', 'microwave', 'bottle-wine', 'coffee'],
+            'Laundry': ['washing-machine', 'tshirt-crew', 'tumble-dryer', 'iron', 'hanger'],
+            'Outdoor': ['grass', 'lawnmower', 'flower', 'sprout', 'leaf', 'tree', 'shovel', 'watering-can'],
+            'Maintenance': ['wrench', 'tools', 'hammer', 'screwdriver', 'air-filter', 'air-conditioner', 'lightbulb'],
+            'Inspection': ['clipboard-check', 'magnify', 'test-tube', 'gauge', 'home-analytics'],
+            'Trash': ['delete', 'recycle', 'trash-can'],
+            'Pets': ['paw', 'dog', 'cat', 'bone', 'bowl-mix', 'food-drumstick'],
+            'Vehicles': ['car', 'car-wash', 'oil', 'tire', 'engine', 'gas-station'],
+            'Home': ['home', 'home-roof', 'door', 'window-closed', 'lock', 'key', 'garage'],
+            'General': ['checkbox-marked-circle', 'check', 'calendar', 'clock', 'bell', 'package', 'gift']
+        },
+
+        // Icon picker state (personal tasks)
+        showPersonalIconPicker: false,
+        personalIconSearch: '',
+        personalIconCategories: {
+            'Fitness': ['walk', 'run', 'bike', 'swim', 'dumbbell', 'weight-lifter', 'yoga', 'shoe-print', 'run-fast'],
+            'Health': ['sleep', 'bed', 'meditation', 'pill', 'water', 'cup-water', 'heart-pulse', 'hospital'],
+            'Food': ['food-apple', 'silverware-fork-knife', 'coffee', 'food', 'food-turkey', 'chef-hat', 'carrot'],
+            'Learning': ['book-open-variant', 'book', 'school', 'head-lightbulb', 'pencil', 'notebook'],
+            'Creative': ['palette', 'brush', 'music', 'gamepad-variant', 'music-note', 'guitar-acoustic', 'piano'],
+            'Social': ['phone', 'message', 'account-group', 'account-multiple', 'email', 'video'],
+            'Work': ['briefcase', 'laptop', 'calendar-account', 'folder-multiple', 'clipboard-text'],
+            'Self-care': ['shower', 'face-woman', 'tooth', 'toothbrush', 'spa'],
+            'Time & Goals': ['clock-outline', 'clock', 'calendar-today', 'flag-checkered', 'timer', 'alarm'],
+            'General': ['check-circle', 'check', 'star', 'plus-circle', 'circle-outline']
         },
 
         // Computed property: filtered tasks
@@ -1427,9 +1628,78 @@ function settings() {
                 description: '',
                 frequency: 'todo',
                 due_date: null,
+                icon: null,
                 sort_order: this.householdTasks.length + 1,
                 is_active: true
             };
+        },
+
+        // Icon picker methods
+        filterIcons(icons) {
+            if (!this.iconSearch) return icons;
+            const search = this.iconSearch.toLowerCase();
+            return icons.filter(icon => icon.toLowerCase().includes(search));
+        },
+
+        selectIcon(icon) {
+            this.householdForm.icon = icon;
+            this.showIconPicker = false;
+            this.iconSearch = '';
+        },
+
+        get hasVisibleIcons() {
+            for (const icons of Object.values(this.iconCategories)) {
+                if (this.filterIcons(icons).length > 0) {
+                    return true;
+                }
+            }
+            return false;
+        },
+
+        // Personal task icon picker methods
+        filterPersonalIcons(icons) {
+            if (!this.personalIconSearch) return icons;
+            const search = this.personalIconSearch.toLowerCase();
+            return icons.filter(icon => icon.toLowerCase().includes(search));
+        },
+
+        selectPersonalIcon(icon) {
+            this.newTask.icon = icon;
+            this.showPersonalIconPicker = false;
+            this.personalIconSearch = '';
+        },
+
+        get hasVisiblePersonalIcons() {
+            for (const icons of Object.values(this.personalIconCategories)) {
+                if (this.filterPersonalIcons(icons).length > 0) {
+                    return true;
+                }
+            }
+            return false;
+        },
+
+        // Household task filtering
+        get filteredHouseholdTasks() {
+            if (this.householdFilter === 'all') {
+                return this.householdTasks;
+            }
+            return this.householdTasks.filter(t => t.frequency === this.householdFilter);
+        },
+
+        filteredHouseholdCount(type) {
+            if (type === 'all') return this.householdTasks.length;
+            return this.householdTasks.filter(t => t.frequency === type).length;
+        },
+
+        formatFrequency(frequency) {
+            const labels = {
+                'todo': 'To-Do',
+                'weekly': 'Weekly',
+                'monthly': 'Monthly',
+                'quarterly': 'Quarterly',
+                'annual': 'Annual'
+            };
+            return labels[frequency] || frequency;
         },
 
         editHouseholdTask(task) {
@@ -1439,6 +1709,7 @@ function settings() {
                 description: task.description || '',
                 frequency: task.frequency,
                 due_date: task.due_date || null,
+                icon: task.icon || null,
                 sort_order: task.sort_order,
                 is_active: task.is_active
             };

@@ -379,6 +379,7 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         'description': task.description,
         'frequency': task.frequency,
         'due_date': task.due_date,
+        'icon': task.icon,
         'sort_order': task.sort_order,
         'is_active': task.is_active,
         'created_at': task.created_at,

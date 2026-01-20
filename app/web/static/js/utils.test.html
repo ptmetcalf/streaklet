@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Utils.js Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #666;
+            margin-top: 30px;
+            background: white;
+            padding: 10px 15px;
+            border-left: 4px solid #3b82f6;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-item {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            padding: 10px;
+            margin: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        .test-label {
+            font-weight: 600;
+            color: #555;
+        }
+        .test-result {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #f8f8f8;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #2d3748;
+        }
+        .pass {
+            color: #22c55e;
+            font-weight: bold;
+        }
+        .fail {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .section-summary {
+            background: #f0f9ff;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-left: 4px solid #3b82f6;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Utils.js Test Suite</h1>
+    <p>This page tests all utility functions from <code>/static/js/utils.js</code></p>
+
+    <div id="test-results"></div>
+
+    <script src="./utils.js"></script>
+    <script>
+        const tests = {
+            'Date & Time Formatters': [
+                {
+                    name: 'formatDueDate() - overdue',
+                    fn: () => {
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const dateStr = formatDateLocal(yesterday);
+                        return formatDueDate(dateStr);
+                    },
+                    expected: /1 day overdue|⚠️/
+                },
+                {
+                    name: 'formatDueDate() - today',
+                    fn: () => {
+                        const today = new Date();
+                        const dateStr = formatDateLocal(today);
+                        return formatDueDate(dateStr);
+                    },
+                    expected: /Due today|📅/
+                },
+                {
+                    name: 'formatDueDate() - tomorrow',
+                    fn: () => {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const dateStr = formatDateLocal(tomorrow);
+                        return formatDueDate(dateStr);
+                    },
+                    expected: /Due tomorrow|📅/
+                },
+                {
+                    name: 'formatCompletedDate() - today',
+                    fn: () => formatCompletedDate(new Date().toISOString()),
+                    expected: 'today'
+                },
+                {
+                    name: 'formatCompletedDate() - 3 days ago',
+                    fn: () => {
+                        const threeDaysAgo = new Date();
+                        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+                        return formatCompletedDate(threeDaysAgo.toISOString());
+                    },
+                    expected: '3 days ago'
+                },
+                {
+                    name: 'formatDateDisplay()',
+                    fn: () => formatDateDisplay('2025-01-15'),
+                    expected: /Wednesday, January 15, 2025/
+                },
+                {
+                    name: 'formatSyncTime() - just now',
+                    fn: () => formatSyncTime(new Date().toISOString()),
+                    expected: 'just now'
+                },
+                {
+                    name: 'formatDateLocal()',
+                    fn: () => formatDateLocal(new Date('2025-01-15')),
+                    expected: /2025-01-1[45]/
+                },
+                {
+                    name: 'parseDateOnly()',
+                    fn: () => {
+                        const date = parseDateOnly('2025-01-15');
+                        return date instanceof Date && date.getFullYear() === 2025;
+                    },
+                    expected: true
+                }
+            ],
+
+            'Metric & Number Formatters': [
+                {
+                    name: 'formatNumber() - thousands',
+                    fn: () => formatNumber(12345),
+                    expected: '12,345'
+                },
+                {
+                    name: 'formatNumber() - null',
+                    fn: () => formatNumber(null),
+                    expected: '-'
+                },
+                {
+                    name: 'formatDecimal() - default 2 places',
+                    fn: () => formatDecimal(3.14159),
+                    expected: '3.14'
+                },
+                {
+                    name: 'formatDecimal() - custom 3 places',
+                    fn: () => formatDecimal(3.14159, 3),
+                    expected: '3.142'
+                },
+                {
+                    name: 'formatSleepHours() - 7.5 hours',
+                    fn: () => formatSleepHours(450),
+                    expected: '7h 30m'
+                },
+                {
+                    name: 'formatSleepHours() - null',
+                    fn: () => formatSleepHours(null),
+                    expected: '-'
+                },
+                {
+                    name: 'formatMetricValue() - steps',
+                    fn: () => formatMetricValue(10234, 'steps'),
+                    expected: '10,234'
+                },
+                {
+                    name: 'formatMetricValue() - sleep',
+                    fn: () => formatMetricValue(420, 'sleep_minutes'),
+                    expected: '7h 0m'
+                },
+                {
+                    name: 'formatMetricValue() - distance',
+                    fn: () => formatMetricValue(5.234, 'distance'),
+                    expected: '5.23'
+                },
+                {
+                    name: 'formatMetricName() - underscore',
+                    fn: () => formatMetricName('resting_heart_rate'),
+                    expected: 'Resting Heart Rate'
+                },
+                {
+                    name: 'formatTrend() - positive',
+                    fn: () => formatTrend(15),
+                    expected: '↑ 15%'
+                },
+                {
+                    name: 'formatTrend() - negative',
+                    fn: () => formatTrend(-8),
+                    expected: '↓ 8%'
+                },
+                {
+                    name: 'formatTrend() - zero',
+                    fn: () => formatTrend(0),
+                    expected: '—'
+                }
+            ],
+
+            'Task Formatters': [
+                {
+                    name: 'formatFrequency() - weekly',
+                    fn: () => formatFrequency('weekly'),
+                    expected: 'Weekly'
+                },
+                {
+                    name: 'formatFrequency() - todo',
+                    fn: () => formatFrequency('todo'),
+                    expected: 'To-Do'
+                },
+                {
+                    name: 'getTaskTypeLabel() - punch_list',
+                    fn: () => getTaskTypeLabel('punch_list'),
+                    expected: 'Todo'
+                },
+                {
+                    name: 'getTaskTypeLabel() - scheduled',
+                    fn: () => getTaskTypeLabel('scheduled'),
+                    expected: 'Scheduled'
+                },
+                {
+                    name: 'getTaskTypeBadgeClass() - punch_list',
+                    fn: () => getTaskTypeBadgeClass('punch_list'),
+                    expected: 'badge-todo'
+                }
+            ],
+
+            'Validation & Helpers': [
+                {
+                    name: 'isTaskOverdue() - overdue task',
+                    fn: () => isTaskOverdue({ due_date: '2020-01-01', completed_at: null }),
+                    expected: true
+                },
+                {
+                    name: 'isTaskOverdue() - completed task',
+                    fn: () => isTaskOverdue({ due_date: '2020-01-01', completed_at: '2020-01-02' }),
+                    expected: false
+                },
+                {
+                    name: 'getStreakBadgeClass() - legendary',
+                    fn: () => getStreakBadgeClass(100),
+                    expected: 'streak-legendary'
+                },
+                {
+                    name: 'getStreakBadgeClass() - building',
+                    fn: () => getStreakBadgeClass(5),
+                    expected: 'streak-building'
+                },
+                {
+                    name: 'clamp() - within range',
+                    fn: () => clamp(50, 0, 100),
+                    expected: 50
+                },
+                {
+                    name: 'clamp() - above max',
+                    fn: () => clamp(150, 0, 100),
+                    expected: 100
+                },
+                {
+                    name: 'clamp() - below min',
+                    fn: () => clamp(-10, 0, 100),
+                    expected: 0
+                },
+                {
+                    name: 'debounce() - function type',
+                    fn: () => typeof debounce(() => {}, 100),
+                    expected: 'function'
+                }
+            ]
+        };
+
+        function runTests() {
+            const resultsContainer = document.getElementById('test-results');
+            let totalTests = 0;
+            let passedTests = 0;
+
+            for (const [category, categoryTests] of Object.entries(tests)) {
+                const section = document.createElement('div');
+                section.className = 'test-section';
+
+                const heading = document.createElement('h2');
+                heading.textContent = category;
+                section.appendChild(heading);
+
+                let categoryPassed = 0;
+
+                categoryTests.forEach(test => {
+                    totalTests++;
+                    const testItem = document.createElement('div');
+                    testItem.className = 'test-item';
+
+                    const label = document.createElement('div');
+                    label.className = 'test-label';
+                    label.textContent = test.name;
+
+                    const result = document.createElement('div');
+                    result.className = 'test-result';
+
+                    try {
+                        const output = test.fn();
+                        const passed = test.expected instanceof RegExp
+                            ? test.expected.test(String(output))
+                            : output === test.expected;
+
+                        if (passed) {
+                            passedTests++;
+                            categoryPassed++;
+                            result.innerHTML = `<span class="pass">✓ PASS</span> → ${JSON.stringify(output)}`;
+                        } else {
+                            result.innerHTML = `<span class="fail">✗ FAIL</span> → Got: ${JSON.stringify(output)}, Expected: ${JSON.stringify(test.expected)}`;
+                        }
+                    } catch (error) {
+                        result.innerHTML = `<span class="fail">✗ ERROR</span> → ${error.message}`;
+                    }
+
+                    testItem.appendChild(label);
+                    testItem.appendChild(result);
+                    section.appendChild(testItem);
+                });
+
+                const summary = document.createElement('div');
+                summary.className = 'section-summary';
+                summary.textContent = `${category}: ${categoryPassed}/${categoryTests.length} tests passed`;
+                section.appendChild(summary);
+
+                resultsContainer.appendChild(section);
+            }
+
+            // Overall summary
+            const overallSummary = document.createElement('div');
+            overallSummary.className = 'test-section';
+            overallSummary.style.background = passedTests === totalTests ? '#f0fdf4' : '#fef2f2';
+            overallSummary.style.borderLeft = `4px solid ${passedTests === totalTests ? '#22c55e' : '#ef4444'}`;
+
+            const summaryHeading = document.createElement('h2');
+            summaryHeading.textContent = '📊 Test Summary';
+            summaryHeading.style.background = 'transparent';
+            summaryHeading.style.borderLeft = 'none';
+
+            const summaryText = document.createElement('p');
+            summaryText.style.fontSize = '1.2em';
+            summaryText.style.fontWeight = 'bold';
+            summaryText.innerHTML = `
+                <span class="${passedTests === totalTests ? 'pass' : 'fail'}">
+                    ${passedTests} / ${totalTests} tests passed
+                </span>
+                ${passedTests === totalTests ? ' 🎉' : ' ❌'}
+            `;
+
+            overallSummary.appendChild(summaryHeading);
+            overallSummary.appendChild(summaryText);
+            resultsContainer.insertBefore(overallSummary, resultsContainer.firstChild);
+        }
+
+        // Run tests on page load
+        window.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

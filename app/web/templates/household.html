@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container" x-data="householdMaintenance()" x-init="await loadTasks()">
     <header class="page-header">
-        <h1>Household Maintenance</h1>
+        <h1>Household Tasks</h1>
         <p class="page-subtitle">Shared tasks for everyone in the household</p>
     </header>
 
@@ -39,10 +39,13 @@
         </div>
         <div class="household-tasks">
             <template x-for="task in overdueTasks" :key="task.id">
-                <div class="household-task-card overdue">
+                <div class="household-task-card unified-task-card task-card-household task-card-overdue">
                     <div class="task-main">
                         <div class="task-info">
-                            <h3 x-text="task.title"></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 24px; color: #ff4d4f;"></i>
+                                <h3 x-text="task.title" style="margin: 0;"></h3>
+                            </div>
                             <p class="task-description" x-show="task.description" x-text="task.description"></p>
                             <div class="task-meta">
                                 <span class="frequency-badge" :class="task.frequency" x-text="formatFrequency(task.frequency)"></span>
@@ -78,10 +81,13 @@
         </div>
         <div class="household-tasks">
             <template x-for="task in getTasksByFrequency('todo')" :key="task.id">
-                <div class="household-task-card" :class="{ 'overdue': task.is_overdue }">
+                <div class="household-task-card unified-task-card task-card-household" :class="{ 'task-card-overdue': task.is_overdue }">
                     <div class="task-main">
                         <div class="task-info">
-                            <h3 x-text="task.title"></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 24px;" :style="{ color: task.is_overdue ? '#ff4d4f' : '#595959' }"></i>
+                                <h3 x-text="task.title" style="margin: 0;"></h3>
+                            </div>
                             <p class="task-description" x-show="task.description" x-text="task.description"></p>
                             <div class="task-meta">
                                 <span class="frequency-badge todo">To-Do</span>
@@ -120,10 +126,13 @@
         </div>
         <div class="household-tasks">
             <template x-for="task in getTasksByFrequency('weekly')" :key="task.id">
-                <div class="household-task-card">
+                <div class="household-task-card unified-task-card task-card-household">
                     <div class="task-main">
                         <div class="task-info">
-                            <h3 x-text="task.title"></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 24px; color: #0066cc;"></i>
+                                <h3 x-text="task.title" style="margin: 0;"></h3>
+                            </div>
                             <p class="task-description" x-show="task.description" x-text="task.description"></p>
                             <div class="task-meta">
                                 <span class="frequency-badge weekly">Weekly</span>
@@ -162,10 +171,13 @@
         </div>
         <div class="household-tasks">
             <template x-for="task in getTasksByFrequency('monthly')" :key="task.id">
-                <div class="household-task-card">
+                <div class="household-task-card unified-task-card task-card-household">
                     <div class="task-main">
                         <div class="task-info">
-                            <h3 x-text="task.title"></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 24px; color: #5b21b6;"></i>
+                                <h3 x-text="task.title" style="margin: 0;"></h3>
+                            </div>
                             <p class="task-description" x-show="task.description" x-text="task.description"></p>
                             <div class="task-meta">
                                 <span class="frequency-badge monthly">Monthly</span>
@@ -204,10 +216,13 @@
         </div>
         <div class="household-tasks">
             <template x-for="task in getTasksByFrequency('quarterly')" :key="task.id">
-                <div class="household-task-card">
+                <div class="household-task-card unified-task-card task-card-household">
                     <div class="task-main">
                         <div class="task-info">
-                            <h3 x-text="task.title"></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 24px; color: #d46b08;"></i>
+                                <h3 x-text="task.title" style="margin: 0;"></h3>
+                            </div>
                             <p class="task-description" x-show="task.description" x-text="task.description"></p>
                             <div class="task-meta">
                                 <span class="frequency-badge quarterly">Quarterly</span>
@@ -246,10 +261,13 @@
         </div>
         <div class="household-tasks">
             <template x-for="task in getTasksByFrequency('annual')" :key="task.id">
-                <div class="household-task-card">
+                <div class="household-task-card unified-task-card task-card-household">
                     <div class="task-main">
                         <div class="task-info">
-                            <h3 x-text="task.title"></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 24px; color: #7cb305;"></i>
+                                <h3 x-text="task.title" style="margin: 0;"></h3>
+                            </div>
                             <p class="task-description" x-show="task.description" x-text="task.description"></p>
                             <div class="task-meta">
                                 <span class="frequency-badge annual">Annual</span>
@@ -353,7 +371,10 @@
                 <div class="household-task-card" :class="{ 'overdue': task.is_overdue }">
                     <div class="task-main">
                         <div class="task-info">
-                            <h3 x-text="task.title"></h3>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 24px; color: #52c41a;"></i>
+                                <h3 x-text="task.title" style="margin: 0;"></h3>
+                            </div>
                             <p class="task-description" x-show="task.description" x-text="task.description"></p>
                             <div class="task-meta">
                                 <span class="frequency-badge" :class="task.frequency" x-text="task.frequency"></span>

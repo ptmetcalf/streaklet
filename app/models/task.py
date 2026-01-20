@@ -9,6 +9,7 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("profiles.id"), nullable=False, index=True)
     title = Column(String, nullable=False)
+    icon = Column(String, nullable=True)  # Material Design Icon name
     sort_order = Column(Integer, nullable=False, default=0)
     is_required = Column(Boolean, nullable=False, default=True)
     is_active = Column(Boolean, nullable=False, default=True)

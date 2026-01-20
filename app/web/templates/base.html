@@ -25,6 +25,10 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+    <!-- Streaklet Utilities - Consolidated formatters and helpers -->
+    <script src="/static/js/utils.js"></script>
+
     <script>
         // Alpine.js profile store - manages profile selection via localStorage
         document.addEventListener('alpine:init', () => {
@@ -60,11 +64,7 @@
             });
         }
 
-        // Helper for local date-only parsing to avoid UTC shifts.
-        function parseDateOnly(dateStr) {
-            const [year, month, day] = dateStr.split('-').map(Number);
-            return new Date(year, month - 1, day);
-        }
+        // Note: parseDateOnly and other utilities are now in /static/js/utils.js
 
         // Check if profile is selected AND exists on page load (except on /profiles page)
         document.addEventListener('DOMContentLoaded', async () => {
@@ -203,7 +203,7 @@
             </svg>
             <span class="nav-label">History</span>
         </a>
-        <a href="/household" class="nav-item {{ 'active' if request.url.path == '/household' else '' }}" title="Household Maintenance">
+        <a href="/household" class="nav-item {{ 'active' if request.url.path == '/household' else '' }}" title="Household Tasks">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
                 <polyline points="9 22 9 12 15 12 15 22"></polyline>

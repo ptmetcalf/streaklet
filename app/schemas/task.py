@@ -5,6 +5,7 @@ from typing import Optional, Literal, Dict, Any
 
 class TaskBase(BaseModel):
     title: str
+    icon: Optional[str] = None  # Material Design Icon name
     sort_order: int = 0
     is_required: bool = True
     is_active: bool = True
@@ -67,6 +68,7 @@ class TaskCreate(TaskBase):
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
+    icon: Optional[str] = None
     sort_order: Optional[int] = None
     is_required: Optional[bool] = None
     is_active: Optional[bool] = None

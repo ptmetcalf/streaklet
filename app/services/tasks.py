@@ -5,6 +5,115 @@ from app.schemas.task import TaskCreate, TaskUpdate
 from typing import List, Optional
 
 
+# Default icon mappings for personal tasks
+DEFAULT_TASK_ICONS = {
+    # Fitness & Health
+    'walk': 'walk',
+    'step': 'shoe-print',
+    'run': 'run',
+    'exercise': 'dumbbell',
+    'workout': 'weight-lifter',
+    'gym': 'weight-lifter',
+    'yoga': 'yoga',
+    'stretch': 'human-handsup',
+    'bike': 'bike',
+    'swim': 'swim',
+
+    # Health
+    'sleep': 'sleep',
+    'rest': 'bed',
+    'meditate': 'meditation',
+    'medicine': 'pill',
+    'vitamin': 'pill',
+    'water': 'water',
+    'hydrate': 'cup-water',
+
+    # Food & Diet
+    'eat': 'food-apple',
+    'meal': 'silverware-fork-knife',
+    'breakfast': 'coffee',
+    'lunch': 'food',
+    'dinner': 'food-turkey',
+    'cook': 'chef-hat',
+    'protein': 'food-steak',
+    'vegetable': 'carrot',
+    'fruit': 'food-apple',
+
+    # Mental & Productivity
+    'read': 'book-open-variant',
+    'book': 'book',
+    'study': 'school',
+    'learn': 'head-lightbulb',
+    'write': 'pencil',
+    'journal': 'notebook',
+    'plan': 'calendar-check',
+
+    # Hobbies & Creative
+    'hobby': 'palette',
+    'creative': 'brush',
+    'art': 'palette',
+    'music': 'music',
+    'play': 'gamepad-variant',
+    'practice': 'music-note',
+    'guitar': 'guitar-acoustic',
+    'piano': 'piano',
+
+    # Social & Relationships
+    'call': 'phone',
+    'text': 'message',
+    'family': 'account-group',
+    'friend': 'account-multiple',
+    'social': 'account-group',
+
+    # Work & Productivity
+    'work': 'briefcase',
+    'email': 'email',
+    'meeting': 'calendar-account',
+    'project': 'folder-multiple',
+
+    # Self-care
+    'shower': 'shower',
+    'skincare': 'face-woman',
+    'teeth': 'tooth',
+    'brush': 'toothbrush',
+    'floss': 'tooth',
+
+    # Chores
+    'clean': 'broom',
+    'laundry': 'washing-machine',
+    'dishes': 'dishwasher',
+    'trash': 'delete',
+
+    # Misc
+    'active': 'run-fast',
+    'minute': 'clock-outline',
+    'time': 'clock',
+    'daily': 'calendar-today',
+    'goal': 'flag-checkered',
+}
+
+
+def get_default_task_icon(title: str) -> str:
+    """
+    Get a sensible default icon based on task title keywords.
+
+    Args:
+        title: Task title to analyze
+
+    Returns:
+        Material Design Icon name (default: 'check-circle')
+    """
+    title_lower = title.lower()
+
+    # Check for keyword matches
+    for keyword, icon in DEFAULT_TASK_ICONS.items():
+        if keyword in title_lower:
+            return icon
+
+    # Default fallback icon
+    return 'check-circle'
+
+
 DEFAULT_TASKS = [
     {
         "title": "Walk 10,000 steps",
@@ -96,6 +205,10 @@ def create_task(db: Session, task: TaskCreate, profile_id: int) -> Task:
     # Set active_since to today if not provided
     if task_data.get('active_since') is None:
         task_data['active_since'] = get_today()
+
+    # Auto-assign icon if not provided
+    if task_data.get('icon') is None:
+        task_data['icon'] = get_default_task_icon(task_data['title'])
 
     db_task = Task(**task_data, user_id=profile_id)
     db.add(db_task)
