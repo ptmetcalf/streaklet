@@ -8,10 +8,10 @@
         <h1>Select Your Profile</h1>
         <p class="subheader">Choose a profile to start tracking your tasks</p>
         <div class="backup-actions">
-            <button @click="exportAllProfiles()" class="btn btn-secondary">
+            <button @click="exportAllProfiles()" class="btn btn--secondary">
                 Export All Profiles
             </button>
-            <button @click="$refs.importAllFile.click()" class="btn btn-secondary">
+            <button @click="$refs.importAllFile.click()" class="btn btn--secondary">
                 Import All Profiles
             </button>
             <input
@@ -32,19 +32,19 @@
                     <div class="profile-color" :style="`background: ${profile.color}`"></div>
                 </div>
                 <div class="profile-actions">
-                    <button @click="selectProfile(profile)" class="btn btn-primary">
+                    <button @click="selectProfile(profile)" class="btn btn--primary">
                         Select
                     </button>
-                    <button @click="editProfile(profile)" class="btn btn-secondary">
+                    <button @click="editProfile(profile)" class="btn btn--secondary">
                         Edit
                     </button>
-                    <button @click="exportProfile(profile)" class="btn btn-secondary">
+                    <button @click="exportProfile(profile)" class="btn btn--secondary">
                         Export
                     </button>
-                    <button @click="importProfileClick(profile)" class="btn btn-secondary">
+                    <button @click="importProfileClick(profile)" class="btn btn--secondary">
                         Import
                     </button>
-                    <button @click="deleteProfile(profile)" class="btn btn-danger" x-show="profiles.length > 1">
+                    <button @click="deleteProfile(profile)" class="btn btn--danger" x-show="profiles.length > 1">
                         Delete
                     </button>
                     <input
@@ -91,8 +91,8 @@
                     >
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Create Profile</button>
-                    <button type="button" @click="showCreateModal = false" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn--primary">Create Profile</button>
+                    <button type="button" @click="showCreateModal = false" class="btn btn--secondary">Cancel</button>
                 </div>
                 <p x-show="createError" class="error" x-text="createError"></p>
             </form>
@@ -125,8 +125,8 @@
                     >
                 </div>
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                    <button type="button" @click="showEditModal = false" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn--primary">Save Changes</button>
+                    <button type="button" @click="showEditModal = false" class="btn btn--secondary">Cancel</button>
                 </div>
                 <p x-show="editError" class="error" x-text="editError"></p>
             </form>

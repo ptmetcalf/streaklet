@@ -181,35 +181,7 @@
     background: #e0e0e0;
 }
 
-/* Legacy Class Support - For backward compatibility */
-/* TODO: Migrate to new BEM classes and remove these */
-.btn-primary {
-    background-color: var(--primary-color, #3b82f6);
-    color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background-color: #2563eb;
-}
-
-.btn-secondary {
-    background-color: var(--border-color, #e5e7eb);
-    color: var(--text-color, #374151);
-}
-
-.btn-secondary:hover:not(:disabled) {
-    background-color: #d1d5db;
-}
-
-.btn-danger {
-    background-color: var(--danger-color, #ef4444);
-    color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-    background-color: #dc2626;
-}
-
+/* Task-specific Button Styles - Specialized for task cards */
 .btn-complete {
     background: #52c41a;
     color: white;

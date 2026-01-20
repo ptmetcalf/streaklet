@@ -56,8 +56,8 @@
                     </div>
                 </div>
                 <div class="task-actions">
-                    <button class="btn-secondary" @click="editTask(task)">Edit</button>
-                    <button class="btn-danger" @click="showDeleteConfirm(task)">Delete</button>
+                    <button class="btn btn--secondary" @click="editTask(task)">Edit</button>
+                    <button class="btn btn--danger" @click="showDeleteConfirm(task)">Delete</button>
                 </div>            </div>
         </template>
 
@@ -65,7 +65,7 @@
             <p x-text="taskFilter === 'all' ? 'No tasks yet. Add one to get started!' : `No ${getTaskTypeLabel(taskFilter)} tasks yet.`"></p>
         </div>
 
-        <button class="btn-primary" @click="showAddForm = true; editingTask = null" x-show="!showAddForm && !editingTask" style="margin-top: 16px; width: 100%;">
+        <button class="btn btn--primary btn--block" @click="showAddForm = true; editingTask = null" x-show="!showAddForm && !editingTask" style="margin-top: 16px;">
             Add New Task
         </button>
 
@@ -115,12 +115,12 @@
                 <div class="form-field">
                     <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="btn btn--secondary" @click="showPersonalIconPicker = true">
                             <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
                             <span>Choose Icon</span>
                         </button>
                         <template x-if="newTask.icon">
-                            <button type="button" class="btn-secondary" @click="newTask.icon = null" style="padding: 8px 12px;">Clear</button>
+                            <button type="button" class="btn btn--secondary btn--sm" @click="newTask.icon = null">Clear</button>
                         </template>
                     </div>
                 </div>
@@ -147,12 +147,12 @@
                 <div class="form-field">
                     <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="btn btn--secondary" @click="showPersonalIconPicker = true">
                             <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
                             <span>Choose Icon</span>
                         </button>
                         <template x-if="newTask.icon">
-                            <button type="button" class="btn-secondary" @click="newTask.icon = null" style="padding: 8px 12px;">Clear</button>
+                            <button type="button" class="btn btn--secondary btn--sm" @click="newTask.icon = null">Clear</button>
                         </template>
                     </div>
                 </div>
@@ -177,12 +177,12 @@
                 <div class="form-field">
                     <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <button type="button" class="btn-secondary" @click="showPersonalIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                        <button type="button" class="btn btn--secondary" @click="showPersonalIconPicker = true">
                             <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
                             <span>Choose Icon</span>
                         </button>
                         <template x-if="newTask.icon">
-                            <button type="button" class="btn-secondary" @click="newTask.icon = null" style="padding: 8px 12px;">Clear</button>
+                            <button type="button" class="btn btn--secondary btn--sm" @click="newTask.icon = null">Clear</button>
                         </template>
                     </div>
                 </div>
@@ -319,8 +319,8 @@
             </div>
 
             <div style="display: flex; gap: 8px; margin-top: 16px;">
-                <button class="btn-primary" @click="addTask">Save</button>
-                <button class="btn-secondary" @click="showAddForm = false; resetNewTask()">Cancel</button>
+                <button class="btn btn--primary" @click="addTask">Save</button>
+                <button class="btn btn--secondary" @click="showAddForm = false; resetNewTask()">Cancel</button>
             </div>
         </div>
 
@@ -391,8 +391,8 @@
                     </div>
 
                     <div style="display: flex; gap: 8px; margin-top: 16px;">
-                        <button class="btn-primary" @click="updateTask">Save</button>
-                        <button class="btn-secondary" @click="editingTask = null">Cancel</button>
+                        <button class="btn btn--primary" @click="updateTask">Save</button>
+                        <button class="btn btn--secondary" @click="editingTask = null">Cancel</button>
                     </div>
                 </div>
             </template>
@@ -504,8 +504,8 @@
                         </div>
                     </div>
                     <div class="task-actions">
-                        <button class="btn-secondary" @click="editHouseholdTask(task)">Edit</button>
-                        <button class="btn-danger" @click="deleteHouseholdTask(task)">Delete</button>
+                        <button class="btn btn--secondary" @click="editHouseholdTask(task)">Edit</button>
+                        <button class="btn btn--danger" @click="deleteHouseholdTask(task)">Delete</button>
                     </div>
                 </div>
             </template>
@@ -514,7 +514,7 @@
                 No household tasks yet. Add one to get started!
             </div>
 
-            <button class="btn-primary" @click="showAddHouseholdForm = true" style="margin-top: 16px; width: 100%;">
+            <button class="btn btn--primary btn--block" @click="showAddHouseholdForm = true" style="margin-top: 16px;">
                 Add Household Task
             </button>
         </div>
@@ -552,12 +552,12 @@
             <div class="form-field">
                 <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <button type="button" class="btn-secondary" @click="showIconPicker = true" style="display: flex; align-items: center; gap: 8px;">
+                    <button type="button" class="btn btn--secondary" @click="showIconPicker = true">
                         <i :class="'mdi mdi-' + (householdForm.icon || 'checkbox-marked-circle')" style="font-size: 20px;"></i>
                         <span>Choose Icon</span>
                     </button>
                     <template x-if="householdForm.icon">
-                        <button type="button" class="btn-secondary" @click="householdForm.icon = null" style="padding: 8px 12px;">Clear</button>
+                        <button type="button" class="btn btn--secondary btn--sm" @click="householdForm.icon = null">Clear</button>
                     </template>
                 </div>
             </div>
@@ -575,8 +575,8 @@
             </div>
 
             <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn-secondary" @click="cancelHouseholdForm()">Cancel</button>
-                <button class="btn-primary" @click="saveHouseholdTask()">
+                <button class="btn btn--secondary" @click="cancelHouseholdForm()">Cancel</button>
+                <button class="btn btn--primary" @click="saveHouseholdTask()">
                     <span x-text="editingHouseholdTask ? 'Update' : 'Add'"></span> Task
                 </button>
             </div>
@@ -664,7 +664,7 @@
             <p style="margin-bottom: 16px; color: #666;">
                 Manage profiles, switch between users, and backup/restore your data.
             </p>
-            <a href="/profiles" class="btn-primary" style="display: inline-block; text-decoration: none;">
+            <a href="/profiles" class="btn btn--primary">
                 Manage Profiles →
             </a>
         </div>
@@ -686,7 +686,7 @@
                 Connect your Fitbit account to automatically track steps, sleep, and activity.
                 Tasks can auto-check when you meet your fitness goals!
             </p>
-            <button class="btn-primary" @click="connectFitbit">
+            <button class="btn btn--primary" @click="connectFitbit">
                 Connect to Fitbit
             </button>
         </div>
@@ -709,11 +709,11 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn-secondary" @click="manualSync" :disabled="isSyncing">
+                    <button class="btn btn--secondary" @click="manualSync" :disabled="isSyncing">
                         <span x-show="!isSyncing">Sync Now</span>
                         <span x-show="isSyncing">Syncing...</span>
                     </button>
-                    <button class="btn-danger" @click="disconnectFitbit">
+                    <button class="btn btn--danger" @click="disconnectFitbit">
                         Disconnect
                     </button>
                 </div>
@@ -815,7 +815,7 @@
                 </div>
 
                 <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                    <button class="btn-secondary" @click="resetFitbitPreferences">
+                    <button class="btn btn--secondary" @click="resetFitbitPreferences">
                         Reset to Defaults
                     </button>
                     <span x-show="prefsSaved" x-transition style="color: #10b981; font-size: 14px; display: flex; align-items: center;">
@@ -843,8 +843,8 @@
                 </p>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary" @click="cancelDelete()">Cancel</button>
-                <button class="btn-danger" @click="confirmDelete()">Delete</button>
+                <button class="btn btn--secondary" @click="cancelDelete()">Cancel</button>
+                <button class="btn btn--danger" @click="confirmDelete()">Delete</button>
             </div>
         </div>
     </div>

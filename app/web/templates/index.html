@@ -126,7 +126,7 @@
 
         <!-- Completed section (collapsible) -->
         <div x-show="completedPunchListTasks.length > 0" style="margin-top: 16px;">
-            <button @click="showCompletedTodos = !showCompletedTodos" class="btn-secondary" style="width: 100%;">
+            <button @click="showCompletedTodos = !showCompletedTodos" class="btn btn--secondary btn--block">
                 <span>
                     <span x-text="`Completed (${completedPunchListTasks.length})`"></span>
                     <span style="font-size: 12px; margin-left: 8px; opacity: 0.7;">auto-archive after 7 days</span>
