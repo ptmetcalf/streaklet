@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/ptmetcalf/streaklet/compare/v1.3.0...v1.4.0) (2026-01-21)
+
+
+### Features
+
+* **household:** add calendar recurrence for household tasks ([23ce817](https://github.com/ptmetcalf/streaklet/commit/23ce817209e4774b97a9d4b470dd7789faf22ab6))
+* **household:** implement fallback to interval-based calculation for due dates without recurrence configuration ([e63db6d](https://github.com/ptmetcalf/streaklet/commit/e63db6d4f46fc9d856dbb1666af0277f7ab1b601))
+
 ## [1.3.0](https://github.com/ptmetcalf/streaklet/compare/v1.2.1...v1.3.0) (2026-01-20)
 
 
