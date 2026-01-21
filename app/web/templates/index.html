@@ -34,18 +34,6 @@
             <span>Todo List</span>
             <span class="badge-count" x-show="punchListCount > 0" x-text="punchListCount"></span>
         </button>
-        <button class="tab-button"
-                :class="{ 'active': activeTab === 'scheduled' }"
-                @click="switchTab('scheduled')">
-            <span>Scheduled</span>
-            <span class="badge-count" x-show="scheduledCount > 0" x-text="scheduledCount"></span>
-        </button>
-        <button class="tab-button"
-                :class="{ 'active': activeTab === 'household' }"
-                @click="switchTab('household')">
-            <span>Household</span>
-            <span class="badge-count" x-show="householdCount > 0" x-text="householdCount"></span>
-        </button>
     </div>
 
     <!-- Daily Tasks Tab -->
@@ -91,6 +79,15 @@
                     </div>
                 </div>
             </template>
+
+            <!-- Add New Daily Task Card -->
+            <div class="add-task-card" @click="showAddDailyTaskModal = true">
+                <i class="mdi mdi-plus-circle" style="font-size: 32px; color: var(--primary-color);"></i>
+                <div class="add-task-card__text">
+                    <div class="add-task-card__title">Add New Daily Task</div>
+                    <div class="add-task-card__subtitle">Create a new recurring daily task</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -118,9 +115,18 @@
                 </div>
             </template>
 
+            <!-- Add New Todo Card -->
+            <div class="add-task-card" @click="showAddTodoModal = true">
+                <i class="mdi mdi-plus-circle" style="font-size: 32px; color: var(--primary-color);"></i>
+                <div class="add-task-card__text">
+                    <div class="add-task-card__title">Add New Todo</div>
+                    <div class="add-task-card__subtitle">Create a one-off task with optional due date</div>
+                </div>
+            </div>
+
             <!-- Empty state -->
             <div x-show="activePunchListTasks.length === 0 && completedPunchListTasks.length === 0" class="empty-state">
-                <p>No todo items yet. Add one-off tasks from the Settings page.</p>
+                <p>No todo items yet.</p>
             </div>
         </div>
 
@@ -157,73 +163,143 @@
         </div>
     </div>
 
-    <!-- Scheduled Tasks Tab -->
-    <div x-show="activeTab === 'scheduled'" class="tab-content">
-        <div class="checklist">
-            <template x-for="task in scheduledTasksDueToday" :key="task.id">
-                <div class="unified-task-card task-card-scheduled" :class="{ 'task-card-checked': task.checked }">
-                    <div class="task-card-header">
-                        <i :class="'mdi mdi-' + (task.icon || 'check-circle')" class="task-card-icon"></i>
-                        <div class="task-card-title" x-text="task.title"></div>
+    <!-- Add Daily Task Modal -->
+    <div x-show="showAddDailyTaskModal" class="modal-overlay" @click.self="closeAddDailyTaskModal()" @keydown.escape.window="showAddDailyTaskModal && closeAddDailyTaskModal()">
+        <div class="modal-content modal-content--md">
+            <div class="modal-header">
+                <h2>Add New Daily Task</h2>
+                <button @click="closeAddDailyTaskModal()" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <form @submit.prevent="submitDailyTask()">
+                    <div class="form-field">
+                        <label class="form-field__label form-field__label--required">Title</label>
+                        <input type="text" class="form-field__input" x-model="newDailyTask.title" placeholder="e.g., Exercise for 30 minutes" required>
                     </div>
-
-                    <div class="task-card-metadata">
-                        <span class="task-badge badge-required" x-show="task.is_required">Required</span>
-                        <div class="recurrence-badge" x-text="formatRecurrence(task)"></div>
+                    <div class="form-field">
+                        <label class="form-field__label">Icon</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button type="button" class="btn btn--secondary" @click="showDailyIconPicker = true">
+                                <i :class="'mdi mdi-' + (newDailyTask.icon || 'check-circle')" style="font-size: 20px;"></i>
+                                <span>Choose Icon</span>
+                            </button>
+                            <template x-if="newDailyTask.icon">
+                                <button type="button" class="btn btn--secondary btn--sm" @click="newDailyTask.icon = null">Clear</button>
+                            </template>
+                        </div>
                     </div>
-
-                    <div class="task-card-actions">
-                        <button @click="toggleTask(task)" class="btn-task-action btn-task-complete">
-                            <span x-show="!task.checked">✓ Mark Complete</span>
-                            <span x-show="task.checked">↶ Undo</span>
-                        </button>
+                    <div class="form-field">
+                        <label class="form-field__checkbox-label">
+                            <input type="checkbox" class="form-field__checkbox" x-model="newDailyTask.is_required">
+                            <span>Required for daily completion</span>
+                        </label>
                     </div>
-                </div>
-            </template>
-
-            <div x-show="scheduledTasksDueToday.length === 0" class="empty-state">
-                <p>No scheduled tasks due today. Add recurring tasks from the Settings page.</p>
+                    <div class="form-field">
+                        <label class="form-field__checkbox-label">
+                            <input type="checkbox" class="form-field__checkbox" x-model="newDailyTask.is_active">
+                            <span>Enabled</span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn--primary" :disabled="!newDailyTask.title.trim()">Add Task</button>
+                        <button type="button" class="btn btn--secondary" @click="closeAddDailyTaskModal()">Cancel</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Household Tasks Tab -->
-    <div x-show="activeTab === 'household'" class="tab-content">
-        <div x-show="householdTasks.length > 0">
-            <template x-for="task in householdTasks" :key="task.id">
-                <div class="unified-task-card task-card-household" :class="{ 'task-card-overdue': task.is_overdue }">
-                    <div class="task-card-header">
-                        <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" class="task-card-icon"></i>
-                        <div class="task-card-title" x-text="task.title"></div>
+    <!-- Add Todo Modal -->
+    <div x-show="showAddTodoModal" class="modal-overlay" @click.self="closeAddTodoModal()" @keydown.escape.window="showAddTodoModal && closeAddTodoModal()">
+        <div class="modal-content modal-content--md">
+            <div class="modal-header">
+                <h2>Add New Todo</h2>
+                <button @click="closeAddTodoModal()" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <form @submit.prevent="submitTodo()">
+                    <div class="form-field">
+                        <label class="form-field__label form-field__label--required">Title</label>
+                        <input type="text" class="form-field__input" x-model="newTodo.title" placeholder="e.g., Call dentist, Fix faucet" required>
                     </div>
-
-                    <p class="task-description" x-show="task.description" x-text="task.description"></p>
-
-                    <div class="task-card-metadata">
-                        <span class="task-badge badge-frequency" :class="task.frequency" x-text="task.frequency"></span>
-                        <template x-if="task.last_completed_at">
-                            <span style="font-size: 13px; color: #666;"
-                                  x-text="`Last: ${task.days_since_completion}d ago by ${task.last_completed_by_profile_name}`"></span>
-                        </template>
-                        <template x-if="!task.last_completed_at">
-                            <span style="font-size: 13px; color: #666;">Never completed</span>
-                        </template>
+                    <div class="form-field">
+                        <label class="form-field__label">Icon</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button type="button" class="btn btn--secondary" @click="showTodoIconPicker = true">
+                                <i :class="'mdi mdi-' + (newTodo.icon || 'check-circle')" style="font-size: 20px;"></i>
+                                <span>Choose Icon</span>
+                            </button>
+                            <template x-if="newTodo.icon">
+                                <button type="button" class="btn btn--secondary btn--sm" @click="newTodo.icon = null">Clear</button>
+                            </template>
+                        </div>
                     </div>
-
-                    <div class="task-card-actions">
-                        <button @click="markHouseholdComplete(task)"
-                                :disabled="completingHouseholdId === task.id"
-                                class="btn-task-action btn-task-complete">
-                            <span x-show="completingHouseholdId !== task.id">✓ Mark Complete</span>
-                            <span x-show="completingHouseholdId === task.id">⏳ Completing...</span>
-                        </button>
+                    <div class="form-field">
+                        <label class="form-field__label">Due Date (optional)</label>
+                        <input type="date" class="form-field__input" x-model="newTodo.due_date">
                     </div>
-                </div>
-            </template>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn--primary" :disabled="!newTodo.title.trim()">Add Todo</button>
+                        <button type="button" class="btn btn--secondary" @click="closeAddTodoModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
         </div>
+    </div>
 
-        <div x-show="householdTasks.length === 0" class="empty-state">
-            <p>✨ All household tasks are up to date!</p>
+    <!-- Icon Picker Modal for Daily Tasks -->
+    <div x-show="showDailyIconPicker" class="modal-overlay" @click.self="showDailyIconPicker = false">
+        <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
+            <div class="modal-header">
+                <h2>Choose an Icon</h2>
+                <button @click="showDailyIconPicker = false" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-field__input" x-model="dailyIconSearch" placeholder="Search icons..." style="margin-bottom: 16px;">
+                <div x-show="!hasPersonalIconResults" style="text-align: center; padding: 20px; color: #999;">
+                    No icons found matching "<span x-text="dailyIconSearch"></span>"
+                </div>
+                <template x-for="(icons, category) in filteredPersonalIcons" :key="category">
+                    <div x-show="icons.length > 0" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #666; font-size: 13px; text-transform: uppercase;" x-text="category"></h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
+                            <template x-for="icon in icons" :key="icon">
+                                <button type="button" @click="selectDailyIcon(icon)" class="icon-picker-btn">
+                                    <i :class="'mdi mdi-' + icon" style="font-size: 24px;"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Icon Picker Modal for Todo -->
+    <div x-show="showTodoIconPicker" class="modal-overlay" @click.self="showTodoIconPicker = false">
+        <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
+            <div class="modal-header">
+                <h2>Choose an Icon</h2>
+                <button @click="showTodoIconPicker = false" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-field__input" x-model="todoIconSearch" placeholder="Search icons..." style="margin-bottom: 16px;">
+                <div x-show="!hasPersonalIconResults" style="text-align: center; padding: 20px; color: #999;">
+                    No icons found matching "<span x-text="todoIconSearch"></span>"
+                </div>
+                <template x-for="(icons, category) in filteredPersonalIcons" :key="category">
+                    <div x-show="icons.length > 0" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #666; font-size: 13px; text-transform: uppercase;" x-text="category"></h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
+                            <template x-for="icon in icons" :key="icon">
+                                <button type="button" @click="selectTodoIcon(icon)" class="icon-picker-btn">
+                                    <i :class="'mdi mdi-' + icon" style="font-size: 24px;"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
         </div>
     </div>
 
@@ -249,15 +325,32 @@ function checklist() {
         punchListTasks: [],
         showCompletedTodos: false,
 
-        // Scheduled tasks state
-        scheduledTasksDueToday: [],
-
-        // Household tasks state
-        householdTasks: [],
-        completingHouseholdId: null,
-
         // Tab state
         activeTab: 'daily',
+
+        // Add task modals state
+        showAddDailyTaskModal: false,
+        showAddTodoModal: false,
+        showDailyIconPicker: false,
+        showTodoIconPicker: false,
+        dailyIconSearch: '',
+        todoIconSearch: '',
+
+        // New task forms
+        newDailyTask: {
+            title: '',
+            icon: null,
+            is_required: true,
+            is_active: true
+        },
+        newTodo: {
+            title: '',
+            icon: null,
+            due_date: null
+        },
+
+        // Personal icon categories (shared for both modals)
+        personalIconCategories: window.iconPickerUtils?.personalIcons || {},
 
         // Badge counts
         get dailyCount() {
@@ -265,12 +358,6 @@ function checklist() {
         },
         get punchListCount() {
             return this.punchListTasks.filter(t => !t.completed_at).length;
-        },
-        get scheduledCount() {
-            return this.scheduledTasksDueToday.filter(t => !t.checked && t.is_required).length;
-        },
-        get householdCount() {
-            return this.householdTasks.length;
         },
         get activePunchListTasks() {
             return this.punchListTasks.filter(t => !t.completed_at);
@@ -323,6 +410,16 @@ function checklist() {
             return Math.round((this.completedCount / this.requiredCount) * 100);
         },
 
+        // Icon picker computed properties
+        get filteredPersonalIcons() {
+            const searchTerm = (this.showDailyIconPicker ? this.dailyIconSearch : this.todoIconSearch).toLowerCase();
+            return window.iconPickerUtils?.filterCategories(this.personalIconCategories, searchTerm) || {};
+        },
+
+        get hasPersonalIconResults() {
+            return window.iconPickerUtils?.hasVisibleIcons(this.personalIconCategories, this.showDailyIconPicker ? this.dailyIconSearch : this.todoIconSearch) || false;
+        },
+
         // Tab switching
         switchTab(tab) {
             this.activeTab = tab;
@@ -333,12 +430,10 @@ function checklist() {
         async loadAllTasks() {
             await this.loadDailyTasks();
             await this.loadPunchListTasks();
-            await this.loadScheduledTasks();
-            await this.loadHouseholdTasks();
 
             // Restore last active tab
             const lastTab = localStorage.getItem('streaklet_last_tab');
-            if (lastTab && ['daily', 'punch_list', 'scheduled', 'household'].includes(lastTab)) {
+            if (lastTab && ['daily', 'punch_list'].includes(lastTab)) {
                 this.activeTab = lastTab;
             }
         },
@@ -363,43 +458,6 @@ function checklist() {
                 this.punchListTasks = await api.punchList.list();
             } catch (error) {
                 console.error('Error loading punch list tasks:', error);
-            }
-        },
-
-        async loadScheduledTasks() {
-            try {
-                this.scheduledTasksDueToday = await api.scheduled.dueToday();
-            } catch (error) {
-                console.error('Error loading scheduled tasks:', error);
-            }
-        },
-
-        async loadHouseholdTasks() {
-            try {
-                const tasks = await api.household.list();
-                // Show only tasks that need attention (never completed OR overdue)
-                this.householdTasks = tasks.filter(t =>
-                    !t.last_completed_at || t.is_overdue
-                );
-            } catch (error) {
-                console.error('Error loading household tasks:', error);
-            }
-        },
-
-        async markHouseholdComplete(task) {
-            if (this.completingHouseholdId === task.id) {
-                return;
-            }
-
-            this.completingHouseholdId = task.id;
-            try {
-                await api.household.complete(task.id);
-                await this.loadHouseholdTasks();
-            } catch (error) {
-                console.error('Error marking household task complete:', error);
-                toast.error('Failed to mark task complete');
-            } finally {
-                this.completingHouseholdId = null;
             }
         },
 
@@ -448,33 +506,84 @@ function checklist() {
             }
         },
 
-        formatRecurrence(task) {
-            if (!task.recurrence_pattern) return '';
-
-            const pattern = task.recurrence_pattern;
-            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-            if (pattern.type === 'weekly') {
-                return `📅 Weekly on ${days[pattern.day_of_week]}`;
-            }
-            if (pattern.type === 'monthly') {
-                const nth = (n) => {
-                    const s = ['th', 'st', 'nd', 'rd'];
-                    const v = n % 100;
-                    return n + (s[(v - 20) % 10] || s[v] || s[0]);
-                };
-                return `📅 Monthly on ${nth(pattern.day_of_month)}`;
-            }
-            if (pattern.type === 'days') {
-                return `📅 Every ${pattern.interval} day${pattern.interval !== 1 ? 's' : ''}`;
-            }
-            return '';
-        },
-
         isOverdue(task) {
             if (!task.due_date || task.completed_at) return false;
             const today = new Date().toISOString().split('T')[0];
             return task.due_date < today;
+        },
+
+        // Modal handling methods
+        closeAddDailyTaskModal() {
+            this.showAddDailyTaskModal = false;
+            this.newDailyTask = {
+                title: '',
+                icon: null,
+                is_required: true,
+                is_active: true
+            };
+            this.dailyIconSearch = '';
+        },
+
+        closeAddTodoModal() {
+            this.showAddTodoModal = false;
+            this.newTodo = {
+                title: '',
+                icon: null,
+                due_date: null
+            };
+            this.todoIconSearch = '';
+        },
+
+        selectDailyIcon(icon) {
+            this.newDailyTask.icon = icon;
+            this.showDailyIconPicker = false;
+            this.dailyIconSearch = '';
+        },
+
+        selectTodoIcon(icon) {
+            this.newTodo.icon = icon;
+            this.showTodoIconPicker = false;
+            this.todoIconSearch = '';
+        },
+
+        async submitDailyTask() {
+            if (!this.newDailyTask.title.trim()) return;
+
+            try {
+                await api.tasks.create({
+                    title: this.newDailyTask.title,
+                    icon: this.newDailyTask.icon,
+                    is_required: this.newDailyTask.is_required,
+                    is_active: this.newDailyTask.is_active,
+                    frequency: 'daily'
+                });
+
+                this.closeAddDailyTaskModal();
+                await this.loadDailyTasks();
+                toast.success('Daily task created successfully');
+            } catch (error) {
+                console.error('Error creating daily task:', error);
+                toast.error('Failed to create daily task');
+            }
+        },
+
+        async submitTodo() {
+            if (!this.newTodo.title.trim()) return;
+
+            try {
+                await api.punchList.create({
+                    title: this.newTodo.title,
+                    icon: this.newTodo.icon,
+                    due_date: this.newTodo.due_date || null
+                });
+
+                this.closeAddTodoModal();
+                await this.loadPunchListTasks();
+                toast.success('Todo created successfully');
+            } catch (error) {
+                console.error('Error creating todo:', error);
+                toast.error('Failed to create todo');
+            }
         },
 
         // All formatters now use global utils.js functions:
@@ -645,112 +754,84 @@ function checklist() {
     font-size: 14px;
 }
 
-/* Household Tasks */
-.household-task-item {
+/* Add Task Card */
+.add-task-card {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    margin-bottom: 12px;
-    background: white;
-    border: 2px solid #52c41a;
-    border-radius: 12px;
     gap: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px dashed var(--primary-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.household-task-item.overdue {
-    border-color: #ff4d4f;
-    background: #fff2f0;
+.add-task-card:hover {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+    border-color: #1976d2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
 }
 
-.household-task-item .task-info {
+.add-task-card__text {
     flex: 1;
 }
 
-.household-task-item .task-title {
+.add-task-card__title {
     font-size: 16px;
     font-weight: 600;
-    color: #333;
+    color: var(--primary-color);
     margin-bottom: 4px;
 }
 
-.household-task-item .task-meta {
+.add-task-card__subtitle {
     font-size: 13px;
     color: #666;
 }
 
-.household-task-item .frequency-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: capitalize;
-}
-
-.household-task-item .frequency-badge.weekly {
-    background: #e6f7ff;
-    color: #1890ff;
-}
-
-.household-task-item .frequency-badge.monthly {
-    background: #f9f0ff;
-    color: #722ed1;
-}
-
-.household-task-item .frequency-badge.quarterly {
-    background: #fff7e6;
-    color: #fa8c16;
-}
-
-.household-task-item .frequency-badge.annual {
-    background: #fff1f0;
-    color: #f5222d;
-}
-
-.household-task-item .task-status {
-    color: #8c8c8c;
-    font-size: 12px;
-}
-
-.btn-household-complete {
-    padding: 10px 20px;
-    border: none;
+/* Icon Picker Button */
+.icon-picker-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border: 2px solid var(--border-color);
     border-radius: 8px;
-    background: #52c41a;
-    color: white;
-    font-size: 14px;
-    font-weight: 600;
+    background: white;
     cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.2s;
+    transition: all 0.2s ease;
+    padding: 0;
 }
 
-.btn-household-complete:hover {
-    background: #45a617;
+.icon-picker-btn:hover {
+    border-color: var(--primary-color);
+    background: #f0f7ff;
+    transform: scale(1.05);
 }
 
-.btn-household-complete:disabled,
-.btn-household-complete.disabled {
-    background: #d9d9d9;
-    color: #999;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.btn-household-complete:disabled:hover,
-.btn-household-complete.disabled:hover {
-    background: #d9d9d9;
+.icon-picker-btn:active {
+    transform: scale(0.95);
 }
 
 @media (max-width: 480px) {
-    .household-task-item {
-        flex-direction: column;
-        align-items: stretch;
+    .add-task-card {
+        padding: 16px;
+        gap: 12px;
     }
 
-    .btn-household-complete {
-        width: 100%;
+    .add-task-card i {
+        font-size: 28px !important;
+    }
+
+    .add-task-card__title {
+        font-size: 15px;
+    }
+
+    .add-task-card__subtitle {
+        font-size: 12px;
     }
 }
 </style>

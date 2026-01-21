@@ -100,7 +100,11 @@ def create_household_task(
         frequency=task_data.frequency,
         due_date=task_data.due_date,
         icon=task_data.icon,
-        sort_order=task_data.sort_order
+        sort_order=task_data.sort_order,
+        recurrence_day_of_week=task_data.recurrence_day_of_week,
+        recurrence_day_of_month=task_data.recurrence_day_of_month,
+        recurrence_month=task_data.recurrence_month,
+        recurrence_day=task_data.recurrence_day
     )
     return task
 
@@ -130,7 +134,11 @@ def update_household_task(
         due_date=task_data.due_date,
         icon=task_data.icon,
         sort_order=task_data.sort_order,
-        is_active=task_data.is_active
+        is_active=task_data.is_active,
+        recurrence_day_of_week=task_data.recurrence_day_of_week,
+        recurrence_day_of_month=task_data.recurrence_day_of_month,
+        recurrence_month=task_data.recurrence_month,
+        recurrence_day=task_data.recurrence_day
     )
     if not task:
         raise HTTPException(status_code=404, detail="Household task not found")

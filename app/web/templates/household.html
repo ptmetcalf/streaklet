@@ -298,9 +298,20 @@
         </div>
     </section>
 
+    <!-- Add New Household Task Card (always visible) -->
+    <div style="margin-top: 40px;">
+        <div class="add-task-card" @click="showAddHouseholdTaskModal = true">
+            <i class="mdi mdi-plus-circle" style="font-size: 32px; color: var(--primary-color);"></i>
+            <div class="add-task-card__text">
+                <div class="add-task-card__title">Add New Household Task</div>
+                <div class="add-task-card__subtitle">Create a shared household task for everyone</div>
+            </div>
+        </div>
+    </div>
+
     <!-- Empty State -->
     <div x-show="allTasks.length === 0 && !loading" class="empty-state">
-        <p>No household tasks yet. Add tasks from Settings.</p>
+        <p>No household tasks yet.</p>
     </div>
 
     <!-- Loading State -->
@@ -405,6 +416,146 @@
         </div>
     </div>
 
+    <!-- Add Household Task Modal -->
+    <div x-show="showAddHouseholdTaskModal" class="modal-overlay" @click.self="closeAddHouseholdTaskModal()" @keydown.escape.window="showAddHouseholdTaskModal && closeAddHouseholdTaskModal()">
+        <div class="modal-content modal-content--md">
+            <div class="modal-header">
+                <h2>Add New Household Task</h2>
+                <button @click="closeAddHouseholdTaskModal()" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <form @submit.prevent="submitHouseholdTask()">
+                    <div class="form-field">
+                        <label class="form-field__label form-field__label--required">Title</label>
+                        <input type="text" class="form-field__input" x-model="newHouseholdTask.title" placeholder="e.g., Clean gutters, Change air filter" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-field__label">Description</label>
+                        <textarea class="form-field__textarea" x-model="newHouseholdTask.description" rows="3" placeholder="Additional details about this task"></textarea>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-field__label form-field__label--required">Frequency</label>
+                        <select class="form-field__select" x-model="newHouseholdTask.frequency" required>
+                            <option value="todo">To-Do (one-time)</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="quarterly">Quarterly (every 3 months)</option>
+                            <option value="annual">Annual (once per year)</option>
+                        </select>
+                    </div>
+                    <!-- Recurrence Configuration -->
+                    <div x-show="newHouseholdTask.frequency === 'todo'" class="form-field">
+                        <label class="form-field__label">Due Date (optional)</label>
+                        <input type="date" class="form-field__input" x-model="newHouseholdTask.due_date">
+                    </div>
+
+                    <!-- Weekly: Day of Week -->
+                    <div x-show="newHouseholdTask.frequency === 'weekly'" class="form-field">
+                        <label class="form-field__label form-field__label--required">Day of Week</label>
+                        <select class="form-field__select" x-model.number="newHouseholdTask.recurrence_day_of_week" required>
+                            <option value="0">Monday</option>
+                            <option value="1">Tuesday</option>
+                            <option value="2">Wednesday</option>
+                            <option value="3">Thursday</option>
+                            <option value="4">Friday</option>
+                            <option value="5">Saturday</option>
+                            <option value="6">Sunday</option>
+                        </select>
+                    </div>
+
+                    <!-- Monthly: Day of Month -->
+                    <div x-show="newHouseholdTask.frequency === 'monthly'" class="form-field">
+                        <label class="form-field__label form-field__label--required">Day of Month</label>
+                        <input type="number" class="form-field__input form-field__input--narrow" x-model.number="newHouseholdTask.recurrence_day_of_month" min="1" max="31" placeholder="1-31" required>
+                        <span style="font-size: 12px; color: #666; margin-top: 4px; display: block;">Task will appear on this day each month</span>
+                    </div>
+
+                    <!-- Quarterly: Month of Quarter + Day -->
+                    <div x-show="newHouseholdTask.frequency === 'quarterly'" class="form-field">
+                        <label class="form-field__label form-field__label--required">Month of Quarter</label>
+                        <select class="form-field__select" x-model.number="newHouseholdTask.recurrence_month" required>
+                            <option value="1">1st month (Jan, Apr, Jul, Oct)</option>
+                            <option value="2">2nd month (Feb, May, Aug, Nov)</option>
+                            <option value="3">3rd month (Mar, Jun, Sep, Dec)</option>
+                        </select>
+                    </div>
+                    <div x-show="newHouseholdTask.frequency === 'quarterly'" class="form-field">
+                        <label class="form-field__label form-field__label--required">Day of Month</label>
+                        <input type="number" class="form-field__input form-field__input--narrow" x-model.number="newHouseholdTask.recurrence_day" min="1" max="31" placeholder="1-31" required>
+                    </div>
+
+                    <!-- Annual: Month + Day -->
+                    <div x-show="newHouseholdTask.frequency === 'annual'" class="form-field">
+                        <label class="form-field__label form-field__label--required">Month</label>
+                        <select class="form-field__select" x-model.number="newHouseholdTask.recurrence_month" required>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                    <div x-show="newHouseholdTask.frequency === 'annual'" class="form-field">
+                        <label class="form-field__label form-field__label--required">Day of Month</label>
+                        <input type="number" class="form-field__input form-field__input--narrow" x-model.number="newHouseholdTask.recurrence_day" min="1" max="31" placeholder="1-31" required>
+                    </div>
+
+                    <div class="form-field">
+                        <label class="form-field__label">Icon</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button type="button" class="btn btn--secondary" @click="showHouseholdIconPicker = true">
+                                <i :class="'mdi mdi-' + (newHouseholdTask.icon || 'checkbox-marked-circle')" style="font-size: 20px;"></i>
+                                <span>Choose Icon</span>
+                            </button>
+                            <template x-if="newHouseholdTask.icon">
+                                <button type="button" class="btn btn--secondary btn--sm" @click="newHouseholdTask.icon = null">Clear</button>
+                            </template>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn--primary" :disabled="!newHouseholdTask.title.trim()">Add Task</button>
+                        <button type="button" class="btn btn--secondary" @click="closeAddHouseholdTaskModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Icon Picker Modal for Household Tasks -->
+    <div x-show="showHouseholdIconPicker" class="modal-overlay" @click.self="showHouseholdIconPicker = false">
+        <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
+            <div class="modal-header">
+                <h2>Choose an Icon</h2>
+                <button @click="showHouseholdIconPicker = false" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-field__input" x-model="householdIconSearch" placeholder="Search icons..." style="margin-bottom: 16px;">
+                <div x-show="!hasHouseholdIconResults" style="text-align: center; padding: 20px; color: #999;">
+                    No icons found matching "<span x-text="householdIconSearch"></span>"
+                </div>
+                <template x-for="(icons, category) in filteredHouseholdIcons" :key="category">
+                    <div x-show="icons.length > 0" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #666; font-size: 13px; text-transform: uppercase;" x-text="category"></h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
+                            <template x-for="icon in icons" :key="icon">
+                                <button type="button" @click="selectHouseholdIcon(icon)" class="icon-picker-btn">
+                                    <i :class="'mdi mdi-' + icon" style="font-size: 24px;"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
     <!-- History Modal -->
     <div x-show="historyModal.show" class="modal-overlay" @click.self="closeHistory()" @keydown.escape.window="historyModal.show && closeHistory()">
         <div class="modal-content">
@@ -456,6 +607,36 @@ function householdMaintenance() {
         selectedDayTasks: [],
         weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
 
+        // Add task modal state
+        showAddHouseholdTaskModal: false,
+        showHouseholdIconPicker: false,
+        householdIconSearch: '',
+
+        // New household task form
+        newHouseholdTask: {
+            title: '',
+            description: '',
+            frequency: 'todo',
+            due_date: null,
+            icon: null,
+            recurrence_day_of_week: 0,  // Default: Monday
+            recurrence_day_of_month: 1, // Default: 1st of month
+            recurrence_month: 1,         // Default: Jan / 1st month of quarter
+            recurrence_day: 1           // Default: 1st day
+        },
+
+        // Household icon categories
+        householdIconCategories: window.iconPickerUtils?.householdIcons || {},
+
+        // Computed properties for icon picker
+        get filteredHouseholdIcons() {
+            return window.iconPickerUtils?.filterCategories(this.householdIconCategories, this.householdIconSearch) || {};
+        },
+
+        get hasHouseholdIconResults() {
+            return window.iconPickerUtils?.hasVisibleIcons(this.householdIconCategories, this.householdIconSearch) || false;
+        },
+
         async loadTasks() {
             this.loading = true;
             try {
@@ -465,15 +646,13 @@ function householdMaintenance() {
                 // Store ALL tasks for calendar view
                 this.allTasksForCalendar = tasks;
 
-                // Only show tasks that need attention in list view:
-                // 1. Never completed (last_completed_at is null)
-                // 2. Overdue (is_overdue is true)
-                const needsAttention = tasks.filter(t =>
-                    !t.last_completed_at || t.is_overdue
-                );
+                // Calendar-based recurrence: Show tasks that are currently due
+                // is_due: task's next due date has arrived (based on calendar recurrence)
+                // is_overdue: task is due but overdue (past due date and not completed)
+                const dueTasks = tasks.filter(t => t.is_due || t.is_overdue);
 
-                this.allTasks = needsAttention.filter(t => !t.is_overdue);
-                this.overdueTasks = needsAttention.filter(t => t.is_overdue);
+                this.allTasks = dueTasks.filter(t => !t.is_overdue);
+                this.overdueTasks = dueTasks.filter(t => t.is_overdue);
             } catch (error) {
                 console.error('Error loading household tasks:', error);
             } finally {
@@ -540,6 +719,67 @@ function householdMaintenance() {
             this.historyModal.show = false;
             this.historyModal.task = null;
             this.historyModal.history = [];
+        },
+
+        // Modal handling methods
+        closeAddHouseholdTaskModal() {
+            this.showAddHouseholdTaskModal = false;
+            this.newHouseholdTask = {
+                title: '',
+                description: '',
+                frequency: 'todo',
+                due_date: null,
+                icon: null,
+                recurrence_day_of_week: 0,
+                recurrence_day_of_month: 1,
+                recurrence_month: 1,
+                recurrence_day: 1
+            };
+            this.householdIconSearch = '';
+        },
+
+        selectHouseholdIcon(icon) {
+            this.newHouseholdTask.icon = icon;
+            this.showHouseholdIconPicker = false;
+            this.householdIconSearch = '';
+        },
+
+        async submitHouseholdTask() {
+            if (!this.newHouseholdTask.title.trim()) return;
+
+            try {
+                const payload = {
+                    title: this.newHouseholdTask.title,
+                    description: this.newHouseholdTask.description || '',
+                    frequency: this.newHouseholdTask.frequency,
+                    due_date: this.newHouseholdTask.frequency === 'todo' ? this.newHouseholdTask.due_date : null,
+                    icon: this.newHouseholdTask.icon,
+                    sort_order: 0,
+                    is_active: true
+                };
+
+                // Add recurrence fields based on frequency
+                if (this.newHouseholdTask.frequency === 'weekly') {
+                    payload.recurrence_day_of_week = this.newHouseholdTask.recurrence_day_of_week;
+                } else if (this.newHouseholdTask.frequency === 'monthly') {
+                    payload.recurrence_day_of_month = this.newHouseholdTask.recurrence_day_of_month;
+                } else if (this.newHouseholdTask.frequency === 'quarterly') {
+                    payload.recurrence_month = this.newHouseholdTask.recurrence_month;
+                    payload.recurrence_day = this.newHouseholdTask.recurrence_day;
+                } else if (this.newHouseholdTask.frequency === 'annual') {
+                    payload.recurrence_month = this.newHouseholdTask.recurrence_month;
+                    payload.recurrence_day = this.newHouseholdTask.recurrence_day;
+                }
+
+                await api.household.create(payload);
+
+                this.closeAddHouseholdTaskModal();
+                await this.loadTasks();
+                toast.success('Household task created successfully');
+            } catch (error) {
+                console.error('Error creating household task:', error);
+                toast.error('Failed to create household task');
+            }
         },
 
         formatDate(dateStr) {
@@ -623,44 +863,35 @@ function householdMaintenance() {
         },
 
         getTasksForDate(dateStr) {
-            const today = new Date().toISOString().split('T')[0];
-            const THRESHOLDS = {
-                'weekly': 7,
-                'monthly': 30,
-                'quarterly': 90,
-                'annual': 365
-            };
-
+            // Calendar-based recurrence: Show tasks on their actual due dates
+            // The backend already calculates next_due_date based on calendar patterns
             return this.allTasksForCalendar.filter(task => {
-                // Handle to-do items separately
+                // Handle to-do items
                 if (task.frequency === 'todo') {
                     // If has due_date, show on that date (if not completed)
                     if (task.due_date && !task.is_completed) {
                         return task.due_date === dateStr;
                     }
-                    // If no due_date, show on today (if not completed)
+                    // If no due_date and not completed, show today only
+                    const today = new Date().toISOString().split('T')[0];
                     if (!task.due_date && !task.is_completed) {
                         return dateStr === today;
                     }
                     return false; // Don't show completed to-dos
                 }
 
-                // Handle recurring tasks
+                // Recurring tasks: Show on their next_due_date
+                if (task.next_due_date) {
+                    return task.next_due_date === dateStr;
+                }
+
+                // Fallback: Never-completed tasks show today
                 if (!task.last_completed_at) {
-                    // Never completed - show on current day only
+                    const today = new Date().toISOString().split('T')[0];
                     return dateStr === today;
                 }
 
-                // Calculate when task becomes due based on last completion
-                const lastCompleted = new Date(task.last_completed_at);
-                const threshold = THRESHOLDS[task.frequency] || 999;
-                const dueDate = new Date(lastCompleted);
-                dueDate.setDate(dueDate.getDate() + threshold);
-
-                const dueDateStr = dueDate.toISOString().split('T')[0];
-
-                // Show task on its due date
-                return dateStr === dueDateStr;
+                return false;
             });
         },
 
@@ -957,6 +1188,87 @@ function householdMaintenance() {
     font-size: 18px;
     font-weight: 600;
     color: #333;
+}
+
+/* Add Task Card */
+.add-task-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px dashed var(--primary-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-task-card:hover {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+    border-color: #1976d2;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.15);
+}
+
+.add-task-card__text {
+    flex: 1;
+}
+
+.add-task-card__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 4px;
+}
+
+.add-task-card__subtitle {
+    font-size: 13px;
+    color: #666;
+}
+
+/* Icon Picker Button */
+.icon-picker-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.icon-picker-btn:hover {
+    border-color: var(--primary-color);
+    background: #f0f7ff;
+    transform: scale(1.05);
+}
+
+.icon-picker-btn:active {
+    transform: scale(0.95);
+}
+
+@media (max-width: 480px) {
+    .add-task-card {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .add-task-card i {
+        font-size: 28px !important;
+    }
+
+    .add-task-card__title {
+        font-size: 15px;
+    }
+
+    .add-task-card__subtitle {
+        font-size: 12px;
+    }
 }
 </style>
 {% endblock %}

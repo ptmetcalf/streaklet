@@ -24,6 +24,13 @@ class HouseholdTask(Base):
     )
     due_date = Column(Date, nullable=True)  # Optional due date for to-do items
     icon = Column(String, nullable=True)  # Material Design Icon name (e.g., 'broom', 'leaf')
+
+    # Calendar-based recurrence fields
+    recurrence_day_of_week = Column(Integer, nullable=True)  # 0-6 (Mon-Sun) for weekly tasks
+    recurrence_day_of_month = Column(Integer, nullable=True)  # 1-31 for monthly tasks
+    recurrence_month = Column(Integer, nullable=True)  # 1-12 for annual/quarterly tasks
+    recurrence_day = Column(Integer, nullable=True)  # 1-31 for annual tasks
+
     sort_order = Column(Integer, default=0)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, server_default=func.now())

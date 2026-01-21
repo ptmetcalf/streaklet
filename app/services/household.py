@@ -6,7 +6,7 @@ Unlike other services, household tasks are SHARED across all profiles (no profil
 profile_id is ONLY used for completion attribution (tracking WHO completed a task).
 """
 from typing import List, Optional, Dict
-from datetime import date
+from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
@@ -126,6 +126,176 @@ def get_default_icon(title: str) -> str:
     return 'checkbox-marked-circle'
 
 
+def calculate_next_due_date(task: HouseholdTask, from_date: Optional[date] = None) -> Optional[date]:
+    """
+    Calculate the next due date for a task based on its calendar recurrence pattern.
+
+    This implements calendar-based recurrence (e.g., "every Monday", "1st of month")
+    rather than interval-based recurrence (e.g., "7 days after completion").
+
+    Args:
+        task: The household task with recurrence configuration
+        from_date: Calculate from this date (default: today)
+
+    Returns:
+        Next due date, or None for to-do items without due date
+    """
+    if from_date is None:
+        from_date = get_today()
+
+    # To-do items use their explicit due_date (not calculated)
+    if task.frequency == 'todo':
+        return task.due_date
+
+    # Weekly: Find next occurrence of specified day of week
+    if task.frequency == 'weekly':
+        if task.recurrence_day_of_week is None:
+            # Fallback for tasks without recurrence configured
+            return from_date
+
+        # Python weekday: 0=Monday, 6=Sunday (matches our storage format)
+        current_weekday = from_date.weekday()
+        target_weekday = task.recurrence_day_of_week
+
+        # Days until next occurrence
+        days_ahead = (target_weekday - current_weekday) % 7
+        if days_ahead == 0:
+            # If it's the same day, it's due today
+            days_ahead = 0
+
+        return from_date + timedelta(days=days_ahead)
+
+    # Monthly: Find next occurrence of specified day of month
+    if task.frequency == 'monthly':
+        if task.recurrence_day_of_month is None:
+            return from_date
+
+        target_day = task.recurrence_day_of_month
+
+        # Try current month first
+        try:
+            next_date = from_date.replace(day=target_day)
+            if next_date >= from_date:
+                return next_date
+        except ValueError:
+            # Day doesn't exist in current month (e.g., Feb 31)
+            pass
+
+        # Try next month
+        next_month = from_date.month + 1
+        next_year = from_date.year
+        if next_month > 12:
+            next_month = 1
+            next_year += 1
+
+        # Handle months with fewer days
+        while True:
+            try:
+                return date(next_year, next_month, target_day)
+            except ValueError:
+                # This day doesn't exist in this month, try next month
+                next_month += 1
+                if next_month > 12:
+                    next_month = 1
+                    next_year += 1
+
+    # Quarterly: 1st day of 1st month of each quarter (Jan 1, Apr 1, Jul 1, Oct 1)
+    if task.frequency == 'quarterly':
+        if task.recurrence_month is None or task.recurrence_day is None:
+            return from_date
+
+        # Quarters start in months 1, 4, 7, 10
+        quarter_start_months = [1, 4, 7, 10]
+        target_month_of_quarter = task.recurrence_month  # 1-12, but we interpret 1-3
+        target_day = task.recurrence_day
+
+        # Map to actual month (1-3 maps to quarters)
+        # Month 1 = first month of quarter (1, 4, 7, 10)
+        # Month 2 = second month of quarter (2, 5, 8, 11)
+        # Month 3 = third month of quarter (3, 6, 9, 12)
+
+        current_quarter = (from_date.month - 1) // 3  # 0, 1, 2, 3
+
+        for i in range(4):  # Check up to 4 quarters ahead
+            quarter = (current_quarter + i) % 4
+            base_month = quarter_start_months[quarter]
+            actual_month = base_month + (target_month_of_quarter - 1)
+            year = from_date.year + ((current_quarter + i) // 4)
+
+            try:
+                next_date = date(year, actual_month, target_day)
+                if next_date >= from_date:
+                    return next_date
+            except ValueError:
+                continue
+
+        return from_date  # Fallback
+
+    # Annual: Specific date each year (e.g., "March 15th")
+    if task.frequency == 'annual':
+        if task.recurrence_month is None or task.recurrence_day is None:
+            return from_date
+
+        target_month = task.recurrence_month
+        target_day = task.recurrence_day
+
+        # Try current year first
+        try:
+            next_date = date(from_date.year, target_month, target_day)
+            if next_date >= from_date:
+                return next_date
+        except ValueError:
+            pass  # Invalid date (e.g., Feb 30)
+
+        # Try next year
+        try:
+            return date(from_date.year + 1, target_month, target_day)
+        except ValueError:
+            # Fallback for invalid dates
+            return from_date
+
+    return from_date  # Fallback
+
+
+def is_task_due(task: HouseholdTask, last_completion: Optional[HouseholdCompletion] = None) -> bool:
+    """
+    Check if a task is currently due based on calendar recurrence.
+
+    A task is due if:
+    - It has never been completed, OR
+    - The next due date (after last completion) has arrived
+
+    Args:
+        task: The household task
+        last_completion: Most recent completion record
+
+    Returns:
+        True if task is currently due
+    """
+    today = get_today()
+
+    # To-do items are due if not completed
+    if task.frequency == 'todo':
+        if last_completion:
+            return False  # Already completed
+        if task.due_date:
+            return today >= task.due_date
+        return True  # No due date, always visible until completed
+
+    # Never completed = due now
+    if not last_completion:
+        return True
+
+    # Calculate next due date after last completion
+    completion_date = last_completion.completed_at.date()
+    next_due = calculate_next_due_date(task, from_date=completion_date + timedelta(days=1))
+
+    if next_due is None:
+        return False
+
+    return today >= next_due
+
+
 def get_all_household_tasks(db: Session, include_inactive: bool = False) -> List[HouseholdTask]:
     """
     Get all household tasks (SHARED - no profile filtering).
@@ -168,7 +338,11 @@ def get_household_task_by_id(db: Session, task_id: int) -> Optional[HouseholdTas
 
 def create_household_task(db: Session, title: str, description: Optional[str], frequency: str,
                          due_date: Optional[date] = None, icon: Optional[str] = None,
-                         sort_order: int = 0) -> HouseholdTask:
+                         sort_order: int = 0,
+                         recurrence_day_of_week: Optional[int] = None,
+                         recurrence_day_of_month: Optional[int] = None,
+                         recurrence_month: Optional[int] = None,
+                         recurrence_day: Optional[int] = None) -> HouseholdTask:
     """
     Create a new household task (SHARED - no profile association).
 
@@ -180,6 +354,10 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         due_date: Optional due date (primarily for to-do items)
         icon: Optional Material Design Icon name (auto-assigned if None)
         sort_order: Sort order for display
+        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly tasks
+        recurrence_day_of_month: 1-31 for monthly tasks
+        recurrence_month: 1-12 for annual/quarterly tasks
+        recurrence_day: 1-31 for annual tasks
 
     Returns:
         Created HouseholdTask
@@ -188,6 +366,19 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
     if icon is None:
         icon = get_default_icon(title)
 
+    # Set default recurrence values based on frequency if not provided
+    if recurrence_day_of_week is None and frequency == 'weekly':
+        recurrence_day_of_week = 0  # Default to Monday
+
+    if recurrence_day_of_month is None and frequency == 'monthly':
+        recurrence_day_of_month = 1  # Default to 1st of month
+
+    if frequency in ['quarterly', 'annual']:
+        if recurrence_month is None:
+            recurrence_month = 1  # Default to first month (Jan for annual, 1st month of quarter for quarterly)
+        if recurrence_day is None:
+            recurrence_day = 1  # Default to 1st day
+
     task = HouseholdTask(
         title=title,
         description=description,
@@ -195,7 +386,11 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         due_date=due_date,
         icon=icon,
         sort_order=sort_order,
-        is_active=True
+        is_active=True,
+        recurrence_day_of_week=recurrence_day_of_week,
+        recurrence_day_of_month=recurrence_day_of_month,
+        recurrence_month=recurrence_month,
+        recurrence_day=recurrence_day
     )
     db.add(task)
     db.commit()
@@ -206,7 +401,11 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
 def update_household_task(db: Session, task_id: int, title: Optional[str] = None,
                          description: Optional[str] = None, frequency: Optional[str] = None,
                          due_date: Optional[date] = None, icon: Optional[str] = None,
-                         sort_order: Optional[int] = None, is_active: Optional[bool] = None) -> Optional[HouseholdTask]:
+                         sort_order: Optional[int] = None, is_active: Optional[bool] = None,
+                         recurrence_day_of_week: Optional[int] = None,
+                         recurrence_day_of_month: Optional[int] = None,
+                         recurrence_month: Optional[int] = None,
+                         recurrence_day: Optional[int] = None) -> Optional[HouseholdTask]:
     """
     Update an existing household task.
 
@@ -220,6 +419,10 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         icon: New icon (if provided)
         sort_order: New sort order (if provided)
         is_active: New active status (if provided)
+        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly tasks
+        recurrence_day_of_month: 1-31 for monthly tasks
+        recurrence_month: 1-12 for annual/quarterly tasks
+        recurrence_day: 1-31 for annual tasks
 
     Returns:
         Updated HouseholdTask or None if not found
@@ -242,6 +445,14 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         task.sort_order = sort_order
     if is_active is not None:
         task.is_active = is_active
+    if recurrence_day_of_week is not None:
+        task.recurrence_day_of_week = recurrence_day_of_week
+    if recurrence_day_of_month is not None:
+        task.recurrence_day_of_month = recurrence_day_of_month
+    if recurrence_month is not None:
+        task.recurrence_month = recurrence_month
+    if recurrence_day is not None:
+        task.recurrence_day = recurrence_day
 
     task.updated_at = get_now()
     db.commit()
@@ -373,6 +584,10 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
 
     last_completion = get_last_completion(db, task_id)
 
+    # Calculate next due date based on calendar recurrence
+    next_due_date = calculate_next_due_date(task)
+    is_due = is_task_due(task, last_completion)
+
     result = {
         'id': task.id,
         'title': task.title,
@@ -384,10 +599,19 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         'is_active': task.is_active,
         'created_at': task.created_at,
         'updated_at': task.updated_at,
+        # Recurrence configuration
+        'recurrence_day_of_week': task.recurrence_day_of_week,
+        'recurrence_day_of_month': task.recurrence_day_of_month,
+        'recurrence_month': task.recurrence_month,
+        'recurrence_day': task.recurrence_day,
+        # Completion status
         'last_completed_at': None,
         'last_completed_by_profile_id': None,
         'last_completed_by_profile_name': None,
         'days_since_completion': None,
+        # Calendar-based due status
+        'next_due_date': next_due_date,
+        'is_due': is_due,
         'is_overdue': False,
         'is_completed': False  # For to-do items
     }
@@ -416,15 +640,19 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         # For to-do items, mark as completed (will be filtered from list)
         is_todo_completed = task.frequency == 'todo'
 
-        # Calculate is_overdue based on task type
+        # Calculate is_overdue using calendar-based logic
+        # Task is overdue if it's due but was completed before the current due date
+        today = get_today()
         if task.frequency == 'todo':
-            # To-do tasks: overdue only if they have a due_date in the past and aren't completed
+            # To-do tasks: never overdue if completed
             is_overdue = False
-            if task.due_date and not is_todo_completed:
-                is_overdue = get_today() > task.due_date
+        elif next_due_date:
+            # Recurring tasks: overdue if due date has passed and not completed since then
+            completion_date = last_completion.completed_at.date()
+            # Task is overdue if today >= next due date AND last completion was before next due date
+            is_overdue = today >= next_due_date and completion_date < next_due_date
         else:
-            # Recurring tasks: overdue if days since completion > threshold
-            is_overdue = days_since > FREQUENCY_THRESHOLDS.get(task.frequency, 999999)
+            is_overdue = False
 
         result.update({
             'last_completed_at': last_completion.completed_at,
@@ -436,9 +664,13 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         })
     else:
         # No completion yet
-        # For to-do items with due dates, check if overdue
+        today = get_today()
         if task.frequency == 'todo' and task.due_date:
-            result['is_overdue'] = get_today() > task.due_date
+            # To-do items: overdue if past due date
+            result['is_overdue'] = today > task.due_date
+        elif next_due_date:
+            # Recurring tasks: overdue if past due date
+            result['is_overdue'] = today > next_due_date
 
     return result
 
