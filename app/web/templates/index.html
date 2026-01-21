@@ -177,7 +177,7 @@
                         <input type="text" class="form-field__input" x-model="newDailyTask.title" placeholder="e.g., Exercise for 30 minutes" required>
                     </div>
                     <div class="form-field">
-                        <label class="form-field__label">Icon</label>
+                        <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <button type="button" class="btn btn--secondary" @click="showDailyIconPicker = true">
                                 <i :class="'mdi mdi-' + (newDailyTask.icon || 'check-circle')" style="font-size: 20px;"></i>
@@ -223,7 +223,7 @@
                         <input type="text" class="form-field__input" x-model="newTodo.title" placeholder="e.g., Call dentist, Fix faucet" required>
                     </div>
                     <div class="form-field">
-                        <label class="form-field__label">Icon</label>
+                        <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <button type="button" class="btn btn--secondary" @click="showTodoIconPicker = true">
                                 <i :class="'mdi mdi-' + (newTodo.icon || 'check-circle')" style="font-size: 20px;"></i>

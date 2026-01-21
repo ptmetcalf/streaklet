@@ -534,19 +534,78 @@
             </div>
 
             <div class="form-field">
-                <label class="form-field__label">Frequency</label>
-                <select class="form-field__select" x-model="householdForm.frequency">
-                    <option value="todo">One-Time To-Do</option>
-                    <option value="weekly">Weekly (every 7 days)</option>
-                    <option value="monthly">Monthly (every 30 days)</option>
-                    <option value="quarterly">Quarterly (every 90 days)</option>
-                    <option value="annual">Annual (every 365 days)</option>
+                <label class="form-field__label form-field__label--required">Frequency</label>
+                <select class="form-field__select" x-model="householdForm.frequency" required>
+                    <option value="todo">To-Do (one-time)</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly (every 3 months)</option>
+                    <option value="annual">Annual (once per year)</option>
                 </select>
             </div>
 
-            <div class="form-field" x-show="householdForm.frequency === 'todo'">
+            <!-- Recurrence Configuration -->
+            <div x-show="householdForm.frequency === 'todo'" class="form-field">
                 <label class="form-field__label">Due Date (optional)</label>
                 <input type="date" class="form-field__input" x-model="householdForm.due_date">
+            </div>
+
+            <!-- Weekly: Day of Week -->
+            <div x-show="householdForm.frequency === 'weekly'" class="form-field">
+                <label class="form-field__label form-field__label--required">Day of Week</label>
+                <select class="form-field__select" x-model.number="householdForm.recurrence_day_of_week" required>
+                    <option value="0">Monday</option>
+                    <option value="1">Tuesday</option>
+                    <option value="2">Wednesday</option>
+                    <option value="3">Thursday</option>
+                    <option value="4">Friday</option>
+                    <option value="5">Saturday</option>
+                    <option value="6">Sunday</option>
+                </select>
+            </div>
+
+            <!-- Monthly: Day of Month -->
+            <div x-show="householdForm.frequency === 'monthly'" class="form-field">
+                <label class="form-field__label form-field__label--required">Day of Month</label>
+                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day_of_month" min="1" max="31" placeholder="1-31" required>
+                <span style="font-size: 12px; color: #666; margin-top: 4px; display: block;">Task will appear on this day each month</span>
+            </div>
+
+            <!-- Quarterly: Month of Quarter + Day -->
+            <div x-show="householdForm.frequency === 'quarterly'" class="form-field">
+                <label class="form-field__label form-field__label--required">Month of Quarter</label>
+                <select class="form-field__select" x-model.number="householdForm.recurrence_month" required>
+                    <option value="1">1st month (Jan, Apr, Jul, Oct)</option>
+                    <option value="2">2nd month (Feb, May, Aug, Nov)</option>
+                    <option value="3">3rd month (Mar, Jun, Sep, Dec)</option>
+                </select>
+            </div>
+            <div x-show="householdForm.frequency === 'quarterly'" class="form-field">
+                <label class="form-field__label form-field__label--required">Day of Month</label>
+                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day" min="1" max="31" placeholder="1-31" required>
+            </div>
+
+            <!-- Annual: Month + Day -->
+            <div x-show="householdForm.frequency === 'annual'" class="form-field">
+                <label class="form-field__label form-field__label--required">Month</label>
+                <select class="form-field__select" x-model.number="householdForm.recurrence_month" required>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                </select>
+            </div>
+            <div x-show="householdForm.frequency === 'annual'" class="form-field">
+                <label class="form-field__label form-field__label--required">Day of Month</label>
+                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day" min="1" max="31" placeholder="1-31" required>
             </div>
 
             <div class="form-field">
@@ -1001,7 +1060,11 @@ function settings() {
             due_date: null,
             icon: null,
             sort_order: 0,
-            is_active: true
+            is_active: true,
+            recurrence_day_of_week: 0,
+            recurrence_day_of_month: 1,
+            recurrence_month: 1,
+            recurrence_day: 1
         },
 
         // Icon picker state (household tasks)
@@ -1497,7 +1560,11 @@ function settings() {
                 due_date: null,
                 icon: null,
                 sort_order: this.householdTasks.length + 1,
-                is_active: true
+                is_active: true,
+                recurrence_day_of_week: 0,
+                recurrence_day_of_month: 1,
+                recurrence_month: 1,
+                recurrence_day: 1
             };
         },
 
@@ -1555,7 +1622,11 @@ function settings() {
                 due_date: task.due_date || null,
                 icon: task.icon || null,
                 sort_order: task.sort_order,
-                is_active: task.is_active
+                is_active: task.is_active,
+                recurrence_day_of_week: task.recurrence_day_of_week ?? 0,
+                recurrence_day_of_month: task.recurrence_day_of_month ?? 1,
+                recurrence_month: task.recurrence_month ?? 1,
+                recurrence_day: task.recurrence_day ?? 1
             };
             this.showAddHouseholdForm = false;
         },

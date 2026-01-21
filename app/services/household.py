@@ -281,12 +281,12 @@ def is_task_due(task: HouseholdTask, last_completion: Optional[HouseholdCompleti
     today = get_today()
 
     # To-do items are due if not completed
+    # They should be visible from creation until completion, regardless of due date
     if task.frequency == 'todo':
         if last_completion:
             return False  # Already completed
-        if task.due_date:
-            return today >= task.due_date
-        return True  # No due date, always visible until completed
+        # Always show todo items until completed (due date only affects overdue status)
+        return True
 
     # Never completed = due now
     if not last_completion:
