@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/ptmetcalf/streaklet/compare/v1.4.0...v1.5.0) (2026-01-21)
+
+
+### Features
+
+* **household:** enhance task frequency options and recurrence configuration in settings ([035a7cd](https://github.com/ptmetcalf/streaklet/commit/035a7cde6f0a03d006bbf431c6b9888ac9ae2a61))
+
 ## [1.4.0](https://github.com/ptmetcalf/streaklet/compare/v1.3.0...v1.4.0) (2026-01-21)
 
 
