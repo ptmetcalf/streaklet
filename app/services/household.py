@@ -19,6 +19,7 @@ from app.core.time import get_now, get_today
 # Frequency thresholds in days
 FREQUENCY_THRESHOLDS = {
     'weekly': 7,
+    'biweekly': 14,
     'monthly': 30,
     'quarterly': 90,
     'annual': 365
@@ -165,6 +166,27 @@ def calculate_next_due_date(task: HouseholdTask, from_date: Optional[date] = Non
         if days_ahead == 0:
             # If it's the same day, it's due today
             days_ahead = 0
+
+        return from_date + timedelta(days=days_ahead)
+
+    # Bi-weekly: Find next occurrence of specified day of week (2 weeks out)
+    if task.frequency == 'biweekly':
+        if task.recurrence_day_of_week is None:
+            # Fallback: Use interval-based calculation (14 days from from_date)
+            return from_date + timedelta(days=FREQUENCY_THRESHOLDS['biweekly'])
+
+        # Python weekday: 0=Monday, 6=Sunday (matches our storage format)
+        current_weekday = from_date.weekday()
+        target_weekday = task.recurrence_day_of_week
+
+        # Days until next occurrence of this weekday
+        days_ahead = (target_weekday - current_weekday) % 7
+        if days_ahead == 0:
+            # If it's the same weekday today, schedule for 2 weeks from now
+            days_ahead = 14
+        else:
+            # Otherwise, find the occurrence 2 weeks out
+            days_ahead += 14
 
         return from_date + timedelta(days=days_ahead)
 
@@ -345,6 +367,7 @@ def get_household_task_by_id(db: Session, task_id: int) -> Optional[HouseholdTas
 def create_household_task(db: Session, title: str, description: Optional[str], frequency: str,
                          due_date: Optional[date] = None, icon: Optional[str] = None,
                          sort_order: int = 0,
+                         schedule_mode: Optional[str] = 'calendar',
                          recurrence_day_of_week: Optional[int] = None,
                          recurrence_day_of_month: Optional[int] = None,
                          recurrence_month: Optional[int] = None,
@@ -356,11 +379,12 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         db: Database session
         title: Task title
         description: Optional task description
-        frequency: One of 'weekly', 'monthly', 'quarterly', 'annual', 'todo'
+        frequency: One of 'weekly', 'biweekly', 'monthly', 'quarterly', 'annual', 'todo'
         due_date: Optional due date (primarily for to-do items)
         icon: Optional Material Design Icon name (auto-assigned if None)
         sort_order: Sort order for display
-        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly tasks
+        schedule_mode: 'calendar' (fixed dates) or 'rolling' (interval from completion)
+        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly/biweekly tasks
         recurrence_day_of_month: 1-31 for monthly tasks
         recurrence_month: 1-12 for annual/quarterly tasks
         recurrence_day: 1-31 for annual tasks
@@ -373,7 +397,7 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         icon = get_default_icon(title)
 
     # Set default recurrence values based on frequency if not provided
-    if recurrence_day_of_week is None and frequency == 'weekly':
+    if recurrence_day_of_week is None and frequency in ['weekly', 'biweekly']:
         recurrence_day_of_week = 0  # Default to Monday
 
     if recurrence_day_of_month is None and frequency == 'monthly':
@@ -393,6 +417,7 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
         icon=icon,
         sort_order=sort_order,
         is_active=True,
+        schedule_mode=schedule_mode,
         recurrence_day_of_week=recurrence_day_of_week,
         recurrence_day_of_month=recurrence_day_of_month,
         recurrence_month=recurrence_month,
@@ -408,6 +433,7 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
                          description: Optional[str] = None, frequency: Optional[str] = None,
                          due_date: Optional[date] = None, icon: Optional[str] = None,
                          sort_order: Optional[int] = None, is_active: Optional[bool] = None,
+                         schedule_mode: Optional[str] = None,
                          recurrence_day_of_week: Optional[int] = None,
                          recurrence_day_of_month: Optional[int] = None,
                          recurrence_month: Optional[int] = None,
@@ -425,7 +451,8 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         icon: New icon (if provided)
         sort_order: New sort order (if provided)
         is_active: New active status (if provided)
-        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly tasks
+        schedule_mode: 'calendar' or 'rolling' (if provided)
+        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly/biweekly tasks
         recurrence_day_of_month: 1-31 for monthly tasks
         recurrence_month: 1-12 for annual/quarterly tasks
         recurrence_day: 1-31 for annual tasks
@@ -451,6 +478,8 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
         task.sort_order = sort_order
     if is_active is not None:
         task.is_active = is_active
+    if schedule_mode is not None:
+        task.schedule_mode = schedule_mode
     if recurrence_day_of_week is not None:
         task.recurrence_day_of_week = recurrence_day_of_week
     if recurrence_day_of_month is not None:
@@ -490,6 +519,10 @@ def mark_task_complete(db: Session, task_id: int, profile_id: int, notes: Option
     """
     Mark a household task as completed by a specific profile.
 
+    Updates next_due_date based on schedule_mode:
+    - Calendar mode: Calculate from current next_due_date (or today if None)
+    - Rolling mode: Calculate from completion date
+
     Args:
         db: Database session
         task_id: Household task ID
@@ -503,13 +536,27 @@ def mark_task_complete(db: Session, task_id: int, profile_id: int, notes: Option
     if not task:
         return None
 
+    completion_time = get_now()
+    completion_date = completion_time.date()
+
     completion = HouseholdCompletion(
         household_task_id=task_id,
         completed_by_profile_id=profile_id,
-        completed_at=get_now(),
+        completed_at=completion_time,
         notes=notes
     )
     db.add(completion)
+
+    # Update next_due_date based on schedule mode
+    if task.schedule_mode == 'rolling':
+        # Rolling mode: Calculate from completion date
+        task.next_due_date = calculate_next_due_date(task, from_date=completion_date)
+    else:
+        # Calendar mode (default): Calculate from scheduled date to prevent early completion issues
+        # Use current next_due_date if available, otherwise use today
+        base_date = task.next_due_date or get_today()
+        task.next_due_date = calculate_next_due_date(task, from_date=base_date)
+
     db.commit()
     db.refresh(completion)
     return completion
@@ -601,6 +648,7 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         'is_active': task.is_active,
         'created_at': task.created_at,
         'updated_at': task.updated_at,
+        'schedule_mode': task.schedule_mode,
         # Recurrence configuration
         'recurrence_day_of_week': task.recurrence_day_of_week,
         'recurrence_day_of_month': task.recurrence_day_of_month,
@@ -615,6 +663,7 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         'next_due_date': None,
         'is_due': False,
         'is_overdue': False,
+        'days_overdue': 0,
         'is_completed': False  # For to-do items
     }
 
@@ -650,6 +699,7 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         # Calculate is_overdue using calendar-based logic
         # Task is overdue if it's due but was completed before the current due date
         today = get_today()
+        days_overdue = 0
         if task.frequency == 'todo':
             # To-do tasks: never overdue if completed
             is_overdue = False
@@ -657,6 +707,8 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
             # Recurring tasks: overdue if due date has passed and not completed since then
             # Task is overdue if today > next due date
             is_overdue = today > next_due_date
+            if is_overdue:
+                days_overdue = (today - next_due_date).days
         else:
             is_overdue = False
 
@@ -668,6 +720,7 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
             'next_due_date': next_due_date,
             'is_due': is_due,
             'is_overdue': is_overdue,
+            'days_overdue': days_overdue,
             'is_completed': is_todo_completed
         })
     else:
@@ -677,18 +730,24 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         is_due = is_task_due(task, None)
 
         today = get_today()
+        days_overdue = 0
         if task.frequency == 'todo' and task.due_date:
             # To-do items: overdue if past due date
             is_overdue = today > task.due_date
+            if is_overdue:
+                days_overdue = (today - task.due_date).days
         elif next_due_date:
             # Recurring tasks: overdue if past due date
             is_overdue = today > next_due_date
+            if is_overdue:
+                days_overdue = (today - next_due_date).days
         else:
             is_overdue = False
 
         result['next_due_date'] = next_due_date
         result['is_due'] = is_due
         result['is_overdue'] = is_overdue
+        result['days_overdue'] = days_overdue
 
     return result
 

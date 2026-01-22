@@ -12,13 +12,14 @@ class HouseholdTaskBase(BaseModel):
     """Base schema for household task data."""
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = None
-    frequency: Literal['weekly', 'monthly', 'quarterly', 'annual', 'todo']
+    frequency: Literal['weekly', 'biweekly', 'monthly', 'quarterly', 'annual', 'todo']
     due_date: Optional[date] = None  # Optional due date for to-do items
     icon: Optional[str] = None  # Material Design Icon name
     sort_order: int = 0
+    schedule_mode: Optional[Literal['calendar', 'rolling']] = 'calendar'
 
     # Calendar-based recurrence fields
-    recurrence_day_of_week: Optional[int] = Field(None, ge=0, le=6)  # 0-6 (Mon-Sun) for weekly
+    recurrence_day_of_week: Optional[int] = Field(None, ge=0, le=6)  # 0-6 (Mon-Sun) for weekly/biweekly
     recurrence_day_of_month: Optional[int] = Field(None, ge=1, le=31)  # 1-31 for monthly
     recurrence_month: Optional[int] = Field(None, ge=1, le=12)  # 1-12 for annual/quarterly
     recurrence_day: Optional[int] = Field(None, ge=1, le=31)  # 1-31 for annual
@@ -33,11 +34,12 @@ class HouseholdTaskUpdate(BaseModel):
     """Schema for updating a household task (all fields optional)."""
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
-    frequency: Optional[Literal['weekly', 'monthly', 'quarterly', 'annual', 'todo']] = None
+    frequency: Optional[Literal['weekly', 'biweekly', 'monthly', 'quarterly', 'annual', 'todo']] = None
     due_date: Optional[date] = None
     icon: Optional[str] = None
     sort_order: Optional[int] = None
     is_active: Optional[bool] = None
+    schedule_mode: Optional[Literal['calendar', 'rolling']] = None
 
     # Calendar-based recurrence fields
     recurrence_day_of_week: Optional[int] = Field(None, ge=0, le=6)
@@ -90,6 +92,7 @@ class HouseholdTaskWithStatus(HouseholdTaskResponse):
     - next_due_date: Next date when task should be completed
     - is_due: Whether task is currently due
     - is_overdue: Whether task is overdue based on frequency
+    - days_overdue: Number of days past the due date
     """
     last_completed_at: Optional[datetime] = None
     last_completed_by_profile_id: Optional[int] = None
@@ -98,5 +101,6 @@ class HouseholdTaskWithStatus(HouseholdTaskResponse):
     next_due_date: Optional[date] = None
     is_due: bool = False
     is_overdue: bool = False
+    days_overdue: int = 0
 
     model_config = ConfigDict(from_attributes=True)

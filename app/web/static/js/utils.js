@@ -331,6 +331,7 @@ window.formatFrequency = function(frequency) {
     const labels = {
         'todo': 'To-Do',
         'weekly': 'Weekly',
+        'biweekly': 'Bi-Weekly',
         'monthly': 'Monthly',
         'quarterly': 'Quarterly',
         'annual': 'Annual'

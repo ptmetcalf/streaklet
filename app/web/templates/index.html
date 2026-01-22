@@ -31,15 +31,15 @@
         <button class="tab-button"
                 :class="{ 'active': activeTab === 'punch_list' }"
                 @click="switchTab('punch_list')">
-            <span>Todo List</span>
-            <span class="badge-count" x-show="punchListCount > 0" x-text="punchListCount"></span>
+            <span>To-Do</span>
+            <span class="badge-count" x-show="todoCount > 0" x-text="todoCount"></span>
         </button>
     </div>
 
     <!-- Daily Tasks Tab -->
     <div x-show="activeTab === 'daily'" class="tab-content">
         <div class="checklist">
-            <template x-for="task in dailyTasks" :key="task.id">
+            <template x-for="task in dailyTasksFiltered" :key="task.id">
                 <div class="unified-task-card task-card-daily" :class="{ 'task-card-checked': task.checked }">
                     <div class="task-card-header">
                         <i :class="'mdi mdi-' + (task.icon || 'check-circle')" class="task-card-icon"></i>
@@ -91,10 +91,46 @@
         </div>
     </div>
 
-    <!-- Todo List Tab -->
+    <!-- To-Do List Tab -->
     <div x-show="activeTab === 'punch_list'" class="tab-content">
-        <!-- Active/Incomplete Todo Items -->
+        <!-- Active/Incomplete To-Do Items (Punch List + Scheduled Tasks Due Today) -->
         <div class="checklist">
+            <!-- Scheduled Tasks Due Today -->
+            <template x-for="task in scheduledTasksFiltered" :key="task.id">
+                <div class="unified-task-card task-card-scheduled" :class="{ 'task-card-checked': task.checked }">
+                    <div class="task-card-header">
+                        <i :class="'mdi mdi-' + (task.icon || 'calendar-clock')" class="task-card-icon"></i>
+                        <div class="task-card-title" x-text="task.title"></div>
+                    </div>
+
+                    <!-- Metadata badges -->
+                    <div class="task-card-metadata">
+                        <span class="task-badge badge-scheduled">Scheduled</span>
+                        <span class="task-badge badge-required" x-show="task.is_required">Required</span>
+
+                        <!-- Per-Task Streak -->
+                        <template x-if="task.task_streak && task.task_streak > 0">
+                            <div class="task-streak-badge" :class="getStreakBadgeClass(task.task_streak)"
+                                 :title="`${task.task_streak}-day streak${task.task_streak_milestone ? ' • Next: ' + task.task_streak_milestone + ' days' : ''}`">
+                                <span class="streak-icon">🔥</span>
+                                <span x-text="task.task_streak"></span>
+                            </div>
+                        </template>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div class="task-card-actions">
+                        <button @click="toggleTask(task)"
+                                class="btn-task-action btn-task-complete"
+                                :class="{ 'task-card-checked': task.checked }">
+                            <span x-show="!task.checked">✓ Mark Complete</span>
+                            <span x-show="task.checked">↶ Undo</span>
+                        </button>
+                    </div>
+                </div>
+            </template>
+
+            <!-- One-Off Punch List Items -->
             <template x-for="task in activePunchListTasks" :key="task.id">
                 <div class="unified-task-card task-card-punch-list" :class="{ 'task-card-overdue': isOverdue(task) }">
                     <div class="task-card-header">
@@ -115,18 +151,18 @@
                 </div>
             </template>
 
-            <!-- Add New Todo Card -->
+            <!-- Add New To-Do Card -->
             <div class="add-task-card" @click="showAddTodoModal = true">
                 <i class="mdi mdi-plus-circle" style="font-size: 32px; color: var(--primary-color);"></i>
                 <div class="add-task-card__text">
-                    <div class="add-task-card__title">Add New Todo</div>
+                    <div class="add-task-card__title">Add New To-Do</div>
                     <div class="add-task-card__subtitle">Create a one-off task with optional due date</div>
                 </div>
             </div>
 
             <!-- Empty state -->
-            <div x-show="activePunchListTasks.length === 0 && completedPunchListTasks.length === 0" class="empty-state">
-                <p>No todo items yet.</p>
+            <div x-show="scheduledTasksFiltered.length === 0 && activePunchListTasks.length === 0 && completedPunchListTasks.length === 0" class="empty-state">
+                <p>No to-do items yet.</p>
             </div>
         </div>
 
@@ -209,11 +245,11 @@
         </div>
     </div>
 
-    <!-- Add Todo Modal -->
+    <!-- Add To-Do Modal -->
     <div x-show="showAddTodoModal" class="modal-overlay" @click.self="closeAddTodoModal()" @keydown.escape.window="showAddTodoModal && closeAddTodoModal()">
         <div class="modal-content modal-content--md">
             <div class="modal-header">
-                <h2>Add New Todo</h2>
+                <h2>Add New To-Do</h2>
                 <button @click="closeAddTodoModal()" class="btn-close">✕</button>
             </div>
             <div class="modal-body">
@@ -239,7 +275,7 @@
                         <input type="date" class="form-field__input" x-model="newTodo.due_date">
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" class="btn btn--primary" :disabled="!newTodo.title.trim()">Add Todo</button>
+                        <button type="submit" class="btn btn--primary" :disabled="!newTodo.title.trim()">Add To-Do</button>
                         <button type="button" class="btn btn--secondary" @click="closeAddTodoModal()">Cancel</button>
                     </div>
                 </form>
@@ -275,7 +311,7 @@
         </div>
     </div>
 
-    <!-- Icon Picker Modal for Todo -->
+    <!-- Icon Picker Modal for To-Do -->
     <div x-show="showTodoIconPicker" class="modal-overlay" @click.self="showTodoIconPicker = false">
         <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
             <div class="modal-header">
@@ -352,12 +388,23 @@ function checklist() {
         // Personal icon categories (shared for both modals)
         personalIconCategories: window.iconPickerUtils?.personalIcons || {},
 
+        // Filtered task lists by task_type
+        get dailyTasksFiltered() {
+            return this.dailyTasks.filter(t => t.task_type === 'daily');
+        },
+        get scheduledTasksFiltered() {
+            return this.dailyTasks.filter(t => t.task_type === 'scheduled');
+        },
+
         // Badge counts
         get dailyCount() {
-            return this.dailyTasks.filter(t => !t.checked && t.is_required).length;
+            return this.dailyTasksFiltered.filter(t => !t.checked && t.is_required).length;
         },
-        get punchListCount() {
-            return this.punchListTasks.filter(t => !t.completed_at).length;
+        get todoCount() {
+            // Count of incomplete punch list items + unchecked scheduled tasks (required ones)
+            const punchListCount = this.punchListTasks.filter(t => !t.completed_at).length;
+            const scheduledCount = this.scheduledTasksFiltered.filter(t => !t.checked && t.is_required).length;
+            return punchListCount + scheduledCount;
         },
         get activePunchListTasks() {
             return this.punchListTasks.filter(t => !t.completed_at);
@@ -579,10 +626,10 @@ function checklist() {
 
                 this.closeAddTodoModal();
                 await this.loadPunchListTasks();
-                toast.success('Todo created successfully');
+                toast.success('To-do created successfully');
             } catch (error) {
-                console.error('Error creating todo:', error);
-                toast.error('Failed to create todo');
+                console.error('Error creating to-do:', error);
+                toast.error('Failed to create to-do');
             }
         },
 

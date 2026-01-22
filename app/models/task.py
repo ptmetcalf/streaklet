@@ -29,6 +29,7 @@ class Task(Base):
 
     # Scheduled task fields
     recurrence_pattern = Column(JSON, nullable=True)
+    schedule_mode = Column(String, nullable=True)  # 'calendar' or 'rolling'
     last_occurrence_date = Column(Date, nullable=True)
     next_occurrence_date = Column(Date, nullable=True, index=True)
 

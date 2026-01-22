@@ -131,7 +131,18 @@ def complete_scheduled_occurrence(db: Session, task_id: int, check_date: date, p
 
     # Update task occurrence dates
     task.last_occurrence_date = check_date
-    task.next_occurrence_date = calculate_next_occurrence(task, from_date=check_date)
+
+    # Determine which date to calculate from based on schedule mode
+    if task.schedule_mode == 'rolling':
+        # Rolling: calculate from completion date
+        # This allows flexible completion and resets the interval from when completed
+        task.next_occurrence_date = calculate_next_occurrence(task, from_date=check_date)
+    else:
+        # Calendar mode (default): calculate from scheduled date
+        # This prevents early completion from making task reappear sooner
+        # If completed early, next occurrence is still the next scheduled date
+        base_date = task.next_occurrence_date or check_date
+        task.next_occurrence_date = calculate_next_occurrence(task, from_date=base_date)
 
     db.commit()
     db.refresh(task)
@@ -160,3 +171,44 @@ def update_scheduled_tasks_daily(db: Session):
             task.next_occurrence_date = calculate_next_occurrence(task)
 
     db.commit()
+
+
+def is_task_overdue(task: Task, check_date: Optional[date] = None) -> bool:
+    """Check if a scheduled task is overdue.
+
+    Args:
+        task: Task to check
+        check_date: Date to check against (defaults to today)
+
+    Returns:
+        True if task is overdue, False otherwise
+    """
+    if not task or task.task_type != 'scheduled':
+        return False
+
+    today = check_date or get_today()
+
+    # Task is overdue if next_occurrence_date is in the past
+    if task.next_occurrence_date and task.next_occurrence_date < today:
+        return True
+
+    return False
+
+
+def get_days_overdue(task: Task, check_date: Optional[date] = None) -> int:
+    """Calculate how many days overdue a task is.
+
+    Args:
+        task: Task to check
+        check_date: Date to check against (defaults to today)
+
+    Returns:
+        Number of days overdue, or 0 if not overdue
+    """
+    if not is_task_overdue(task, check_date):
+        return 0
+
+    today = check_date or get_today()
+    days_diff = (today - task.next_occurrence_date).days
+
+    return max(0, days_diff)

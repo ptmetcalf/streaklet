@@ -1519,6 +1519,11 @@ button:active {
     color: #ff4d4f;
 }
 
+.badge-scheduled {
+    background: #f9f0ff;
+    color: #722ed1;
+}
+
 .badge-frequency {
     text-transform: capitalize;
 }
