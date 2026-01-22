@@ -386,7 +386,7 @@ function checklist() {
         },
 
         // Personal icon categories (shared for both modals)
-        personalIconCategories: window.iconPickerUtils?.personalIcons || {},
+        personalIconCategories: window.iconPickerCategories.personal,
 
         // Filtered task lists by task_type
         get dailyTasksFiltered() {
@@ -460,11 +460,11 @@ function checklist() {
         // Icon picker computed properties
         get filteredPersonalIcons() {
             const searchTerm = (this.showDailyIconPicker ? this.dailyIconSearch : this.todoIconSearch).toLowerCase();
-            return window.iconPickerUtils?.filterCategories(this.personalIconCategories, searchTerm) || {};
+            return window.iconPickerUtils.filterCategories(this.personalIconCategories, searchTerm);
         },
 
         get hasPersonalIconResults() {
-            return window.iconPickerUtils?.hasVisibleIcons(this.personalIconCategories, this.showDailyIconPicker ? this.dailyIconSearch : this.todoIconSearch) || false;
+            return window.iconPickerUtils.hasVisibleIcons(this.personalIconCategories, this.showDailyIconPicker ? this.dailyIconSearch : this.todoIconSearch);
         },
 
         // Tab switching

@@ -469,6 +469,10 @@
                     :class="{ 'btn-primary': householdFilter === 'weekly', 'btn-secondary': householdFilter !== 'weekly' }">
                 Weekly <span x-text="`(${filteredHouseholdCount('weekly')})`"></span>
             </button>
+            <button @click="householdFilter = 'biweekly'"
+                    :class="{ 'btn-primary': householdFilter === 'biweekly', 'btn-secondary': householdFilter !== 'biweekly' }">
+                Bi-Weekly <span x-text="`(${filteredHouseholdCount('biweekly')})`"></span>
+            </button>
             <button @click="householdFilter = 'monthly'"
                     :class="{ 'btn-primary': householdFilter === 'monthly', 'btn-secondary': householdFilter !== 'monthly' }">
                 Monthly <span x-text="`(${filteredHouseholdCount('monthly')})`"></span>
@@ -538,10 +542,26 @@
                 <select class="form-field__select" x-model="householdForm.frequency" required>
                     <option value="todo">To-Do (one-time)</option>
                     <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-Weekly (every 2 weeks)</option>
                     <option value="monthly">Monthly</option>
                     <option value="quarterly">Quarterly (every 3 months)</option>
                     <option value="annual">Annual (once per year)</option>
                 </select>
+            </div>
+
+            <!-- Schedule Mode (for recurring tasks) -->
+            <div x-show="householdForm.frequency !== 'todo'" class="form-field">
+                <label class="form-field__label">Schedule Type</label>
+                <div class="form-field__radio-group">
+                    <label class="form-field__radio-label">
+                        <input type="radio" class="form-field__radio" name="scheduleMode" value="calendar" x-model="householdForm.schedule_mode">
+                        <span>Fixed Schedule - Task appears on specific dates (e.g., every Tuesday)</span>
+                    </label>
+                    <label class="form-field__radio-label">
+                        <input type="radio" class="form-field__radio" name="scheduleMode" value="rolling" x-model="householdForm.schedule_mode">
+                        <span>Rolling Schedule - Task resets from completion date (e.g., every 7 days after done)</span>
+                    </label>
+                </div>
             </div>
 
             <!-- Recurrence Configuration -->
@@ -550,8 +570,8 @@
                 <input type="date" class="form-field__input" x-model="householdForm.due_date">
             </div>
 
-            <!-- Weekly: Day of Week -->
-            <div x-show="householdForm.frequency === 'weekly'" class="form-field">
+            <!-- Weekly/Bi-weekly: Day of Week (calendar mode only) -->
+            <div x-show="(householdForm.frequency === 'weekly' || householdForm.frequency === 'biweekly') && householdForm.schedule_mode === 'calendar'" class="form-field">
                 <label class="form-field__label form-field__label--required">Day of Week</label>
                 <select class="form-field__select" x-model.number="householdForm.recurrence_day_of_week" required>
                     <option value="0">Monday</option>
@@ -564,15 +584,15 @@
                 </select>
             </div>
 
-            <!-- Monthly: Day of Month -->
-            <div x-show="householdForm.frequency === 'monthly'" class="form-field">
+            <!-- Monthly: Day of Month (calendar mode only) -->
+            <div x-show="householdForm.frequency === 'monthly' && householdForm.schedule_mode === 'calendar'" class="form-field">
                 <label class="form-field__label form-field__label--required">Day of Month</label>
                 <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day_of_month" min="1" max="31" placeholder="1-31" required>
                 <span style="font-size: 12px; color: #666; margin-top: 4px; display: block;">Task will appear on this day each month</span>
             </div>
 
-            <!-- Quarterly: Month of Quarter + Day -->
-            <div x-show="householdForm.frequency === 'quarterly'" class="form-field">
+            <!-- Quarterly: Month of Quarter + Day (calendar mode only) -->
+            <div x-show="householdForm.frequency === 'quarterly' && householdForm.schedule_mode === 'calendar'" class="form-field">
                 <label class="form-field__label form-field__label--required">Month of Quarter</label>
                 <select class="form-field__select" x-model.number="householdForm.recurrence_month" required>
                     <option value="1">1st month (Jan, Apr, Jul, Oct)</option>
@@ -580,13 +600,13 @@
                     <option value="3">3rd month (Mar, Jun, Sep, Dec)</option>
                 </select>
             </div>
-            <div x-show="householdForm.frequency === 'quarterly'" class="form-field">
+            <div x-show="householdForm.frequency === 'quarterly' && householdForm.schedule_mode === 'calendar'" class="form-field">
                 <label class="form-field__label form-field__label--required">Day of Month</label>
                 <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day" min="1" max="31" placeholder="1-31" required>
             </div>
 
-            <!-- Annual: Month + Day -->
-            <div x-show="householdForm.frequency === 'annual'" class="form-field">
+            <!-- Annual: Month + Day (calendar mode only) -->
+            <div x-show="householdForm.frequency === 'annual' && householdForm.schedule_mode === 'calendar'" class="form-field">
                 <label class="form-field__label form-field__label--required">Month</label>
                 <select class="form-field__select" x-model.number="householdForm.recurrence_month" required>
                     <option value="1">January</option>
@@ -603,7 +623,7 @@
                     <option value="12">December</option>
                 </select>
             </div>
-            <div x-show="householdForm.frequency === 'annual'" class="form-field">
+            <div x-show="householdForm.frequency === 'annual' && householdForm.schedule_mode === 'calendar'" class="form-field">
                 <label class="form-field__label form-field__label--required">Day of Month</label>
                 <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day" min="1" max="31" placeholder="1-31" required>
             </div>
@@ -1061,6 +1081,7 @@ function settings() {
             icon: null,
             sort_order: 0,
             is_active: true,
+            schedule_mode: 'calendar',
             recurrence_day_of_week: 0,
             recurrence_day_of_month: 1,
             recurrence_month: 1,
@@ -1561,6 +1582,7 @@ function settings() {
                 icon: null,
                 sort_order: this.householdTasks.length + 1,
                 is_active: true,
+                schedule_mode: 'calendar',
                 recurrence_day_of_week: 0,
                 recurrence_day_of_month: 1,
                 recurrence_month: 1,
@@ -1623,6 +1645,7 @@ function settings() {
                 icon: task.icon || null,
                 sort_order: task.sort_order,
                 is_active: task.is_active,
+                schedule_mode: task.schedule_mode || 'calendar',
                 recurrence_day_of_week: task.recurrence_day_of_week ?? 0,
                 recurrence_day_of_month: task.recurrence_day_of_month ?? 1,
                 recurrence_month: task.recurrence_month ?? 1,

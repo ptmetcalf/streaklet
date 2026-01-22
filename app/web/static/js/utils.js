@@ -487,30 +487,36 @@ window.iconPickerUtils = {
 // Shared icon categories for icon picker UIs
 window.iconPickerCategories = {
     household: {
-        'Cleaning': ['broom', 'spray-bottle', 'robot-vacuum', 'water', 'dishwasher', 'paper-roll', 'weather-dust'],
-        'Bathroom': ['toilet', 'shower', 'bathtub', 'pump-soap'],
-        'Kitchen': ['silverware-fork-knife', 'fridge', 'stove', 'microwave', 'bottle-wine', 'coffee'],
-        'Laundry': ['washing-machine', 'tshirt-crew', 'tumble-dryer', 'iron', 'hanger'],
-        'Outdoor': ['grass', 'lawnmower', 'flower', 'sprout', 'leaf', 'tree', 'shovel', 'watering-can'],
-        'Maintenance': ['wrench', 'tools', 'hammer', 'screwdriver', 'air-filter', 'air-conditioner', 'lightbulb'],
-        'Inspection': ['clipboard-check', 'magnify', 'test-tube', 'gauge', 'home-analytics'],
+        'Cleaning': ['broom', 'spray-bottle', 'robot-vacuum', 'water', 'dishwasher', 'paper-roll', 'weather-dust', 'vacuum', 'bucket'],
+        'Bathroom': ['toilet', 'shower', 'bathtub', 'hand-wash', 'mirror', 'water-pump'],
+        'Kitchen': ['silverware-fork-knife', 'fridge', 'stove', 'microwave', 'bottle-wine', 'coffee', 'blender', 'kettle', 'pot'],
+        'Laundry': ['washing-machine', 'tshirt-crew', 'tumble-dryer', 'iron', 'hanger', 'basket'],
+        'Outdoor': ['grass', 'mower', 'flower', 'sprout', 'leaf', 'tree', 'shovel', 'watering-can', 'fence', 'gate', 'pool', 'grill'],
+        'Maintenance': ['wrench', 'tools', 'hammer', 'screwdriver', 'air-filter', 'air-conditioner', 'lightbulb', 'pipe', 'power-plug', 'razor-single-edge', 'toolbox'],
+        'Inspection': ['clipboard-check', 'magnify', 'test-tube', 'gauge', 'home-analytics', 'thermometer'],
         'Trash': ['delete', 'recycle', 'trash-can'],
-        'Pets': ['paw', 'dog', 'cat', 'bone', 'bowl-mix', 'food-drumstick'],
-        'Vehicles': ['car', 'car-wash', 'oil', 'tire', 'engine', 'gas-station'],
-        'Home': ['home', 'home-roof', 'door', 'window-closed', 'lock', 'key', 'garage'],
-        'General': ['checkbox-marked-circle', 'check', 'calendar', 'clock', 'bell', 'package', 'gift']
+        'Pets': ['paw', 'dog', 'cat', 'bone', 'bowl-mix', 'food-drumstick', 'fish', 'rabbit'],
+        'Vehicles': ['car', 'car-wash', 'oil', 'tire', 'engine', 'gas-station', 'truck'],
+        'Home': ['home', 'home-roof', 'door', 'window-closed', 'lock', 'key', 'garage', 'sofa', 'bed', 'desk', 'lamp', 'fan'],
+        'Seasonal': ['snowflake', 'weather-sunny', 'umbrella', 'leaf-maple', 'pine-tree'],
+        'Errands': ['cart', 'shopping', 'store', 'map-marker'],
+        'General': ['checkbox-marked-circle', 'check', 'calendar', 'clock', 'bell', 'package', 'gift', 'email', 'phone']
     },
     personal: {
-        'Fitness': ['walk', 'run', 'bike', 'swim', 'dumbbell', 'weight-lifter', 'yoga', 'shoe-print', 'run-fast'],
-        'Health': ['sleep', 'bed', 'meditation', 'pill', 'water', 'cup-water', 'heart-pulse', 'hospital'],
-        'Food': ['food-apple', 'silverware-fork-knife', 'coffee', 'food', 'food-turkey', 'chef-hat', 'carrot'],
-        'Learning': ['book-open-variant', 'book', 'school', 'head-lightbulb', 'pencil', 'notebook'],
-        'Creative': ['palette', 'brush', 'music', 'gamepad-variant', 'music-note', 'guitar-acoustic', 'piano'],
+        'Fitness': ['walk', 'run', 'bike', 'swim', 'dumbbell', 'weight-lifter', 'yoga', 'shoe-print', 'run-fast', 'basketball', 'football', 'soccer', 'tennis', 'golf', 'hiking'],
+        'Health': ['sleep', 'bed', 'meditation', 'pill', 'water', 'cup-water', 'heart-pulse', 'hospital', 'bandage', 'thermometer'],
+        'Food': ['food-apple', 'silverware-fork-knife', 'coffee', 'food', 'food-turkey', 'chef-hat', 'carrot', 'pizza'],
+        'Learning': ['book-open-variant', 'book', 'school', 'head-lightbulb', 'pencil', 'notebook', 'certificate', 'library'],
+        'Creative': ['palette', 'brush', 'music', 'gamepad-variant', 'music-note', 'guitar-acoustic', 'piano', 'camera', 'draw', 'movie'],
         'Social': ['phone', 'message', 'account-group', 'account-multiple', 'email', 'video'],
-        'Work': ['briefcase', 'laptop', 'calendar-account', 'folder-multiple', 'clipboard-text'],
-        'Self-care': ['shower', 'face-woman', 'tooth', 'toothbrush', 'spa'],
-        'Time & Goals': ['clock-outline', 'clock', 'calendar-today', 'flag-checkered', 'timer', 'alarm'],
-        'General': ['check-circle', 'check', 'star', 'plus-circle', 'circle-outline']
+        'Work': ['briefcase', 'laptop', 'calendar-account', 'folder-multiple', 'clipboard-text', 'file-document', 'chart-line', 'calculator'],
+        'Self-care': ['shower', 'face-woman', 'tooth', 'toothbrush', 'spa', 'emoticon-happy'],
+        'Technology': ['cellphone', 'tablet', 'monitor', 'keyboard', 'mouse', 'headphones', 'wifi', 'router', 'hard-drive', 'usb'],
+        'Finance': ['cash', 'credit-card', 'bank', 'wallet', 'chart-line', 'piggy-bank', 'currency-usd'],
+        'Hobbies': ['puzzle', 'chess-knight', 'basketball', 'baseball', 'bowling', 'golf', 'fishing'],
+        'Productivity': ['target', 'trophy', 'diamond', 'rocket', 'brain', 'trending-up', 'bullseye'],
+        'Time & Goals': ['clock-outline', 'clock', 'calendar-today', 'flag-checkered', 'timer', 'alarm', 'calendar-check', 'calendar-star'],
+        'General': ['check-circle', 'check', 'star', 'plus-circle', 'circle-outline', 'heart', 'fire', 'lightning-bolt']
     }
 };
 
