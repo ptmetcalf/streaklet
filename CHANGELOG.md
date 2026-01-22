@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.6.0](https://github.com/ptmetcalf/streaklet/compare/v1.5.0...v1.6.0) (2026-01-22)
+
+
+### Features
+
+* **household:** add schedule modes, bi-weekly frequency, and overdue tracking ([58dbc5b](https://github.com/ptmetcalf/streaklet/commit/58dbc5b008ffddbc1e0b29ce51d6b11a0aba949b))
+* **punch-list:** add create punch list task endpoint and service ([7ac4f15](https://github.com/ptmetcalf/streaklet/commit/7ac4f1553a77412bb8e1041ae3ca605f3bd8eed1))
+
+
+### Bug Fixes
+
+* **api-client:** handle 204 No Content responses in API client ([7ac4f15](https://github.com/ptmetcalf/streaklet/commit/7ac4f1553a77412bb8e1041ae3ca605f3bd8eed1))
+* **index:** adjust SVG style for completed tasks button ([7ac4f15](https://github.com/ptmetcalf/streaklet/commit/7ac4f1553a77412bb8e1041ae3ca605f3bd8eed1))
+
 ## [1.5.0](https://github.com/ptmetcalf/streaklet/compare/v1.4.0...v1.5.0) (2026-01-21)
 
 
