@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from datetime import date, datetime
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 
 class TaskWithCheck(BaseModel):
@@ -8,11 +8,15 @@ class TaskWithCheck(BaseModel):
 
     id: int
     title: str
+    icon: Optional[str] = None
     sort_order: int
     is_required: bool
     is_active: bool
     checked: bool
     checked_at: Optional[datetime]
+
+    # Task type
+    task_type: Literal['daily', 'punch_list', 'scheduled'] = 'daily'
 
     # Fitbit fields
     fitbit_metric_type: Optional[str] = None

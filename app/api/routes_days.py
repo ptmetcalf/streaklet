@@ -72,11 +72,14 @@ async def get_today_info(
             TaskWithCheck(
                 id=task.id,
                 title=task.title,
+                icon=task.icon,
                 sort_order=task.sort_order,
                 is_required=task.is_required,
                 is_active=task.is_active,
                 checked=check.checked if check else False,
                 checked_at=check.checked_at if check else None,
+                # Task type
+                task_type=task.task_type,
                 # Fitbit fields
                 fitbit_metric_type=task.fitbit_metric_type,
                 fitbit_goal_value=task.fitbit_goal_value,
@@ -157,11 +160,14 @@ async def get_day_info(
             TaskWithCheck(
                 id=task.id,
                 title=task.title,
+                icon=task.icon,
                 sort_order=task.sort_order,
                 is_required=task.is_required,
                 is_active=task.is_active,
                 checked=check.checked if check else False,
                 checked_at=check.checked_at if check else None,
+                # Task type
+                task_type=task.task_type,
                 # Fitbit fields
                 fitbit_metric_type=task.fitbit_metric_type,
                 fitbit_goal_value=task.fitbit_goal_value,
