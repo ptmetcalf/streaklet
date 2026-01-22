@@ -121,11 +121,16 @@ class ApiClient {
             if (skipJsonParse) {
                 data = response;
             } else {
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    data = await response.json();
+                // Handle 204 No Content responses (common for DELETE operations)
+                if (response.status === 204) {
+                    data = null;
                 } else {
-                    data = await response.text();
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        data = await response.json();
+                    } else {
+                        data = await response.text();
+                    }
                 }
             }
 

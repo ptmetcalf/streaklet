@@ -6,7 +6,7 @@ from typing import List
 
 from app.core.db import get_db
 from app.core.profile_context import get_profile_id
-from app.schemas.task import TaskResponse
+from app.schemas.task import TaskResponse, TaskCreate
 from app.services import punch_list
 
 router = APIRouter(prefix="/api/punch-list", tags=["punch-list"])
@@ -29,6 +29,25 @@ def list_punch_list_tasks(
         List of punch list tasks
     """
     return punch_list.get_active_punch_list_tasks(db, profile_id, include_archived)
+
+
+@router.post("", response_model=TaskResponse, status_code=201)
+def create_punch_list_task(
+    task: TaskCreate,
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """Create a new punch list task for a profile.
+
+    Args:
+        task: Task creation data
+        db: Database session
+        profile_id: User profile ID
+
+    Returns:
+        Created task
+    """
+    return punch_list.create_punch_list_task(db, task, profile_id)
 
 
 @router.post("/{task_id}/complete", response_model=TaskResponse)

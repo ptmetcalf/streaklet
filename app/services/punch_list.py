@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.task import Task
 from app.models.task_check import TaskCheck
+from app.schemas.task import TaskCreate
 from app.core.time import get_now, get_today
 
 
@@ -36,6 +37,41 @@ def get_active_punch_list_tasks(db: Session, profile_id: int, include_archived: 
         Task.due_date,
         Task.created_at
     ).all()
+
+
+def create_punch_list_task(db: Session, task: TaskCreate, profile_id: int) -> Task:
+    """Create a new punch list task for a profile.
+
+    Args:
+        db: Database session
+        task: Task creation data
+        profile_id: User profile ID
+
+    Returns:
+        Created task
+    """
+    from app.services.tasks import get_default_task_icon
+
+    task_data = task.model_dump()
+
+    # Override task_type to punch_list
+    task_data['task_type'] = 'punch_list'
+
+    # Punch list tasks are not required for daily completion
+    task_data['is_required'] = False
+
+    # Set active_since to today
+    task_data['active_since'] = get_today()
+
+    # Auto-assign icon if not provided
+    if task_data.get('icon') is None:
+        task_data['icon'] = get_default_task_icon(task_data['title'])
+
+    db_task = Task(**task_data, user_id=profile_id)
+    db.add(db_task)
+    db.commit()
+    db.refresh(db_task)
+    return db_task
 
 
 def complete_punch_list_task(db: Session, task_id: int, profile_id: int) -> Optional[Task]:
