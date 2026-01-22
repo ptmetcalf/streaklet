@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/ptmetcalf/streaklet/compare/v1.7.0...v1.8.0) (2026-01-22)
+
+
+### Features
+
+* **household:** enhance task scheduling with bi-weekly option and calendar mode ([d3ac0b3](https://github.com/ptmetcalf/streaklet/commit/d3ac0b3fdb3f20e4acc0377b5c92d3a42b83bc13))
+
 ## [1.7.0](https://github.com/ptmetcalf/streaklet/compare/v1.6.0...v1.7.0) (2026-01-22)
 
 
