@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/ptmetcalf/streaklet/compare/v1.6.0...v1.7.0) (2026-01-22)
+
+
+### Features
+
+* **day:** add icon and task type to TaskWithCheck schema ([80d155c](https://github.com/ptmetcalf/streaklet/commit/80d155cf8a86f35c234be895a51fee2a06209441))
+
 ## [1.6.0](https://github.com/ptmetcalf/streaklet/compare/v1.5.0...v1.6.0) (2026-01-22)
 
 
