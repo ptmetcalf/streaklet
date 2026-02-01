@@ -4,10 +4,14 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from contextlib import asynccontextmanager
 import logging
+import time
 
 from app.core.db import engine, get_db, Base
 from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit, routes_punch_list, routes_scheduled, routes_household
 from app.services import tasks as task_service, profiles as profile_service
+
+# Cache bust value for static assets (prevents browser caching issues)
+CACHE_BUST = str(int(time.time()))
 
 
 # Configure application logging
@@ -61,7 +65,8 @@ app.include_router(routes_household.router)
 async def home(request: Request):
     """Home page with today's checklist - data fetched client-side."""
     return templates.TemplateResponse("index.html", {
-        "request": request
+        "request": request,
+        "cache_bust": CACHE_BUST
     })
 
 
@@ -69,7 +74,8 @@ async def home(request: Request):
 async def settings(request: Request):
     """Settings page for managing tasks."""
     return templates.TemplateResponse("settings.html", {
-        "request": request
+        "request": request,
+        "cache_bust": CACHE_BUST
     })
 
 
@@ -77,7 +83,8 @@ async def settings(request: Request):
 async def fitbit(request: Request):
     """Fitbit metrics viewing page."""
     return templates.TemplateResponse("fitbit.html", {
-        "request": request
+        "request": request,
+        "cache_bust": CACHE_BUST
     })
 
 
@@ -85,7 +92,8 @@ async def fitbit(request: Request):
 async def household(request: Request):
     """Household maintenance tracker page."""
     return templates.TemplateResponse("household.html", {
-        "request": request
+        "request": request,
+        "cache_bust": CACHE_BUST
     })
 
 
@@ -121,7 +129,8 @@ async def history(request: Request):
         "month": month,
         "calendar_data": {"days_in_month": 0, "first_day_weekday": 0, "days": {}},
         "streak": {"current_streak": 0, "today_complete": False, "last_completed_date": None},
-        "today": today.isoformat()
+        "today": today.isoformat(),
+        "cache_bust": CACHE_BUST
     })
 
 
@@ -129,7 +138,8 @@ async def history(request: Request):
 async def profiles(request: Request):
     """Profile management page for selecting and managing user profiles."""
     return templates.TemplateResponse("profiles.html", {
-        "request": request
+        "request": request,
+        "cache_bust": CACHE_BUST
     })
 
 
