@@ -186,15 +186,15 @@ ruff check app/ tests/ --fix
 
 **Profile Context Propagation**: The entire application is built around profile isolation using dependency injection.
 
-1. **Frontend**: Browser localStorage stores selected profile ID
-2. **HTTP Layer**: `X-Profile-Id` header sent with every API request via `fetchWithProfile()` helper
-3. **Dependency Injection**: `get_profile_id()` dependency extracts header (defaults to 1)
+1. **Frontend**: Browser cookies store profile ID (`profile_id` and `profile_name` cookies)
+2. **HTTP Layer**: Cookies sent automatically with every request (no manual headers needed)
+3. **Dependency Injection**: `get_profile_id()` dependency extracts from cookie (defaults to 1)
 4. **Service Layer**: All functions accept `profile_id` parameter and filter data accordingly
 5. **Database**: Foreign key constraints enforce data isolation (tasks, task_checks, daily_status all have `user_id`)
 
 **Key Files**:
-- `app/core/profile_context.py` - Dependency that extracts profile ID from header
-- `app/web/templates/base.html` - Alpine.js store + `fetchWithProfile()` helper
+- `app/core/profile_context.py` - Dependency that extracts profile ID from `profile_id` cookie
+- `app/web/templates/base.html` - Alpine.js store + cookie helpers + localStorage migration
 - All service functions in `app/services/` - Must accept and use `profile_id` parameter
 
 **Pattern for New Features**:
@@ -258,6 +258,17 @@ All pages use **client-side data fetching** (not SSR):
 
 **Do not add SSR data** to route functions - keep them minimal and let templates fetch via API.
 
+### Server-Side Rendering (SSR)
+
+Profile-specific pages use **SSR** to eliminate FOUC (Flash of Unstyled Content):
+- Server reads `profile_id` cookie via `Depends(get_profile_id)`
+- Fetches user-specific data before rendering HTML
+- Templates initialize Alpine.js state with `{{ data | tojson }}`
+- Pages appear instantly with correct data, no API loading
+
+**SSR Pages**: `/` (home), `/history`, `/fitbit`
+**Client-side Pages**: `/household` (shared data), `/settings` (minimal data)
+
 ### Database Schema
 
 **Profile Isolation Pattern**:
@@ -306,18 +317,16 @@ See `migrations/versions/002_add_profiles.py` for example.
 
 ## API Testing Pattern
 
-Profile-aware endpoints require header:
+Profile-aware endpoints require cookie in tests:
 ```bash
-# Without header (defaults to profile 1)
+# Without cookie (defaults to profile 1)
 curl http://localhost:8080/api/tasks
 
-# With specific profile
-curl -H "X-Profile-Id: 2" http://localhost:8080/api/tasks
+# With specific profile (cookie)
+curl --cookie "profile_id=2" http://localhost:8080/api/tasks
 
-# Creating/updating with profile
-curl -X POST -H "X-Profile-Id: 2" -H "Content-Type: application/json" \
-  -d '{"title": "New Task", ...}' \
-  http://localhost:8080/api/tasks
+# In tests, use cookies parameter
+response = client.get("/api/tasks", cookies={"profile_id": "2"})
 ```
 
 ## Common Patterns
@@ -357,7 +366,23 @@ Then include router in `app/main.py`: `app.include_router(routes_something.route
        return templates.TemplateResponse("something.html", {"request": request})
    ```
 3. Use Alpine.js with `x-init="await loadData()"` to fetch data via API
-4. Use `fetchWithProfile()` for all API calls to include profile header
+4. Cookies sent automatically with all API calls
+
+### Adding Server-Side Rendering to a Page
+
+If page has FOUC issues, add SSR:
+1. Route accepts `db: Session = Depends(get_db), profile_id: int = Depends(get_profile_id)`
+2. Fetch data server-side before rendering
+3. **Critical**: Convert date/datetime objects to ISO strings before passing to template
+   ```python
+   # Convert dates for JSON serialization
+   data_json = {
+       "date": data["date"].isoformat() if data["date"] else None,
+       "datetime": data["datetime"].isoformat() if data["datetime"] else None
+   }
+   ```
+4. Template initializes Alpine.js state: `tasks: {{ tasks | tojson }}`
+5. Template uses `x-cloak` to prevent FOUC
 
 ## Project Standards
 
