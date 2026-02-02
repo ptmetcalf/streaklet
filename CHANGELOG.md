@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/ptmetcalf/streaklet/compare/v1.8.0...v1.9.0) (2026-02-02)
+
+
+### Features
+
+* **cache:** implement cache busting for static assets ([7705777](https://github.com/ptmetcalf/streaklet/commit/770577788671b494b5032137a117ec675033b0fb))
+
 ## [1.8.0](https://github.com/ptmetcalf/streaklet/compare/v1.7.0...v1.8.0) (2026-01-22)
 
 
