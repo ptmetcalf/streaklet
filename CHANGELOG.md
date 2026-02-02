@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.10.0](https://github.com/ptmetcalf/streaklet/compare/v1.9.0...v1.10.0) (2026-02-02)
+
+
+### Features
+
+* **profile:** migrate profile ID management from headers to cookies ([0874af1](https://github.com/ptmetcalf/streaklet/commit/0874af1ec7cb31110e4f13e9443762d7212b0cc9))
+
+
+### Documentation
+
+* update CLAUDE.md with cookie-based auth and SSR patterns ([7664d3d](https://github.com/ptmetcalf/streaklet/commit/7664d3df8a04ab5d2b092bb734e9ceb61cb2768e))
+
 ## [1.9.0](https://github.com/ptmetcalf/streaklet/compare/v1.8.0...v1.9.0) (2026-02-02)
 
 
