@@ -131,7 +131,7 @@ def test_profile_data_isolation(test_db: Session, sample_profiles):
 def test_api_with_profile_header(client: TestClient, sample_tasks):
     """Test that API endpoints accept X-Profile-Id header."""
     # Call with X-Profile-Id: 1
-    response = client.get("/api/tasks", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/tasks", cookies={"profile_id": "1"})
     assert response.status_code == 200
     tasks = response.json()
     assert len(tasks) == 3

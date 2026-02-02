@@ -287,7 +287,7 @@ def test_post_fitbit_sync_not_connected(client: TestClient, sample_profiles):
 
 
 def test_fitbit_routes_respect_profile_header(client: TestClient, test_db, sample_profiles):
-    """Test that Fitbit routes respect X-Profile-Id header."""
+    """Test that Fitbit routes respect profile_id cookie."""
     # Create connections for two profiles
     connection1 = FitbitConnection(
         user_id=1,
@@ -312,12 +312,12 @@ def test_fitbit_routes_respect_profile_header(client: TestClient, test_db, sampl
     test_db.commit()
 
     # Request for profile 1
-    response1 = client.get("/api/fitbit/connection", headers={"X-Profile-Id": "1"})
+    response1 = client.get("/api/fitbit/connection", cookies={"profile_id": "1"})
     assert response1.status_code == 200
     assert response1.json()["fitbit_user_id"] == "FITBIT_USER1"
 
     # Request for profile 2
-    response2 = client.get("/api/fitbit/connection", headers={"X-Profile-Id": "2"})
+    response2 = client.get("/api/fitbit/connection", cookies={"profile_id": "2"})
     assert response2.status_code == 200
     assert response2.json()["fitbit_user_id"] == "FITBIT_USER2"
 

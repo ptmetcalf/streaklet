@@ -268,8 +268,8 @@ function profileManager() {
         },
 
         selectProfile(profile) {
-            localStorage.setItem('streaklet_profile_id', profile.id);
-            localStorage.setItem('streaklet_profile_name', profile.name);
+            // Use Alpine store to set cookies
+            this.$store.profile.setProfile(profile.id, profile.name);
             window.location.href = '/';
         },
 
@@ -304,10 +304,10 @@ function profileManager() {
                 await this.loadProfiles();
                 this.showEditModal = false;
 
-                // Update localStorage if editing current profile
-                const currentProfileId = parseInt(localStorage.getItem('streaklet_profile_id'));
+                // Update cookie if editing current profile
+                const currentProfileId = this.$store.profile.id;
                 if (currentProfileId === this.editingProfile.id) {
-                    localStorage.setItem('streaklet_profile_name', this.editingProfile.name);
+                    this.$store.profile.setProfile(this.editingProfile.id, this.editingProfile.name);
                 }
             } catch (error) {
                 this.editError = 'Failed to update profile';
@@ -323,11 +323,10 @@ function profileManager() {
             try {
                 await api.profiles.delete(profile.id);
 
-                // Clear localStorage if deleting current profile
-                const currentProfileId = parseInt(localStorage.getItem('streaklet_profile_id'));
+                // Clear cookies if deleting current profile
+                const currentProfileId = this.$store.profile.id;
                 if (currentProfileId === profile.id) {
-                    localStorage.removeItem('streaklet_profile_id');
-                    localStorage.removeItem('streaklet_profile_name');
+                    this.$store.profile.clearProfile();
                 }
 
                 await this.loadProfiles();
@@ -390,7 +389,7 @@ function profileManager() {
                 await this.loadProfiles();
 
                 // Reload page if importing into current profile
-                const currentProfileId = parseInt(localStorage.getItem('streaklet_profile_id'));
+                const currentProfileId = this.$store.profile.id;
                 if (currentProfileId === profile.id) {
                     window.location.reload();
                 }

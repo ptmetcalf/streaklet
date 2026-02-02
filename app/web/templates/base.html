@@ -38,36 +38,59 @@
     <script>
         // Alpine.js profile store - manages profile selection via localStorage
         document.addEventListener('alpine:init', () => {
+            // Helper functions for cookie management
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+                return null;
+            }
+
+            function setCookie(name, value, maxAge = 31536000) {
+                // maxAge default: 1 year in seconds
+                document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+            }
+
+            function deleteCookie(name) {
+                document.cookie = `${name}=; path=/; max-age=0`;
+            }
+
+            // Migrate from localStorage to cookies (one-time migration)
+            const localStorageProfileId = localStorage.getItem('streaklet_profile_id');
+            const localStorageProfileName = localStorage.getItem('streaklet_profile_name');
+            if (localStorageProfileId && !getCookie('profile_id')) {
+                setCookie('profile_id', localStorageProfileId);
+                setCookie('profile_name', localStorageProfileName || '');
+                // Clean up localStorage after migration
+                localStorage.removeItem('streaklet_profile_id');
+                localStorage.removeItem('streaklet_profile_name');
+            }
+
             Alpine.store('profile', {
-                id: parseInt(localStorage.getItem('streaklet_profile_id')) || null,
-                name: localStorage.getItem('streaklet_profile_name') || null,
+                id: parseInt(getCookie('profile_id')) || null,
+                name: getCookie('profile_name') || null,
 
                 setProfile(id, name) {
                     this.id = id;
                     this.name = name;
-                    localStorage.setItem('streaklet_profile_id', id);
-                    localStorage.setItem('streaklet_profile_name', name);
+                    setCookie('profile_id', id);
+                    setCookie('profile_name', name || '');
                 },
 
                 clearProfile() {
                     this.id = null;
                     this.name = null;
-                    localStorage.removeItem('streaklet_profile_id');
-                    localStorage.removeItem('streaklet_profile_name');
+                    deleteCookie('profile_id');
+                    deleteCookie('profile_name');
                 }
             });
         });
 
-        // Helper function to fetch with X-Profile-Id header
+        // Helper function to fetch (cookies sent automatically, no header needed)
         function fetchWithProfile(url, options = {}) {
-            const profileId = parseInt(localStorage.getItem('streaklet_profile_id')) || 1;
-            return fetch(url, {
-                ...options,
-                headers: {
-                    ...options.headers,
-                    'X-Profile-Id': profileId
-                }
-            });
+            // Cookies are sent automatically with every request
+            // No need to manually add headers
+            return fetch(url, options);
         }
 
         // Note: parseDateOnly and other utilities are now in /static/js/utils.js
@@ -75,7 +98,19 @@
         // Check if profile is selected AND exists on page load (except on /profiles page)
         document.addEventListener('DOMContentLoaded', async () => {
             const currentPath = window.location.pathname;
-            const profileId = localStorage.getItem('streaklet_profile_id');
+
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+                return null;
+            }
+
+            function deleteCookie(name) {
+                document.cookie = `${name}=; path=/; max-age=0`;
+            }
+
+            const profileId = getCookie('profile_id');
 
             // If no profile selected, redirect to profile selection
             if (currentPath !== '/profiles' && !profileId) {
@@ -91,8 +126,8 @@
                     if (error && error.status === 404) {
                         // Profile doesn't exist anymore - clear and redirect
                         console.warn(`Profile ${profileId} not found, redirecting to profile selection`);
-                        localStorage.removeItem('streaklet_profile_id');
-                        localStorage.removeItem('streaklet_profile_name');
+                        deleteCookie('profile_id');
+                        deleteCookie('profile_name');
                         window.location.href = '/profiles';
                     } else {
                         console.error('Error validating profile:', error);
@@ -180,7 +215,14 @@
     {% block content %}{% endblock %}
 
     <nav class="nav" x-data="{ fitbitConnected: false }" x-init="async () => {
-        const profileId = localStorage.getItem('streaklet_profile_id');
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        const profileId = getCookie('profile_id');
         if (profileId) {
             try {
                 const data = await api.fitbit.connection();

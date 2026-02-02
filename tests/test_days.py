@@ -8,7 +8,7 @@ from app.core.time import get_today
 
 def test_get_today_info_basic(client: TestClient, sample_tasks):
     """Test getting today's info with basic tasks."""
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -41,7 +41,7 @@ def test_get_today_info_with_checks(client: TestClient, test_db: Session, sample
     check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
     check_service.update_task_check(test_db, today, 1, True, profile_id=1)
 
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -68,7 +68,7 @@ def test_get_today_info_all_complete(client: TestClient, test_db: Session, sampl
     check_service.update_task_check(test_db, today, 1, True, profile_id=1)
     check_service.update_task_check(test_db, today, 2, True, profile_id=1)
 
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -101,7 +101,7 @@ def test_get_today_info_with_streak(client: TestClient, test_db: Session, sample
     check_service.update_task_check(test_db, today, 1, True, profile_id=1)
     check_service.update_task_check(test_db, today, 2, True, profile_id=1)
 
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -130,13 +130,13 @@ def test_get_today_info_different_profile(client: TestClient, test_db: Session, 
     test_db.commit()
 
     # Get today for profile 1 - should only see profile 1 tasks
-    response1 = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response1 = client.get("/api/days/today", cookies={"profile_id": "1"})
     assert response1.status_code == 200
     data1 = response1.json()
     assert len(data1["tasks"]) == 3
 
     # Get today for profile 2 - should only see profile 2 task
-    response2 = client.get("/api/days/today", headers={"X-Profile-Id": "2"})
+    response2 = client.get("/api/days/today", cookies={"profile_id": "2"})
     assert response2.status_code == 200
     data2 = response2.json()
     assert len(data2["tasks"]) == 1
@@ -150,7 +150,7 @@ def test_update_check_toggle_on(client: TestClient, sample_tasks):
     response = client.put(
         f"/api/days/{today}/checks/1",
         json={"checked": True},
-        headers={"X-Profile-Id": "1"}
+        cookies={"profile_id": "1"}
     )
 
     assert response.status_code == 200
@@ -174,7 +174,7 @@ def test_update_check_toggle_off(client: TestClient, test_db: Session, sample_ta
     response = client.put(
         f"/api/days/{today}/checks/1",
         json={"checked": False},
-        headers={"X-Profile-Id": "1"}
+        cookies={"profile_id": "1"}
     )
 
     assert response.status_code == 200
@@ -191,7 +191,7 @@ def test_update_check_task_not_found(client: TestClient, sample_tasks):
     response = client.put(
         f"/api/days/{today}/checks/999",
         json={"checked": True},
-        headers={"X-Profile-Id": "1"}
+        cookies={"profile_id": "1"}
     )
 
     assert response.status_code == 404
@@ -206,7 +206,7 @@ def test_update_check_wrong_profile(client: TestClient, sample_tasks, sample_pro
     response = client.put(
         f"/api/days/{today}/checks/1",
         json={"checked": True},
-        headers={"X-Profile-Id": "2"}
+        cookies={"profile_id": "2"}
     )
 
     assert response.status_code == 404
@@ -220,7 +220,7 @@ def test_update_check_past_date(client: TestClient, sample_tasks):
     response = client.put(
         f"/api/days/{yesterday}/checks/1",
         json={"checked": True},
-        headers={"X-Profile-Id": "1"}
+        cookies={"profile_id": "1"}
     )
 
     assert response.status_code == 200
@@ -238,24 +238,24 @@ def test_update_check_triggers_completion(client: TestClient, test_db: Session, 
     response1 = client.put(
         f"/api/days/{today}/checks/1",
         json={"checked": True},
-        headers={"X-Profile-Id": "1"}
+        cookies={"profile_id": "1"}
     )
     assert response1.status_code == 200
 
     # Verify day is not complete yet
-    today_info = client.get("/api/days/today", headers={"X-Profile-Id": "1"}).json()
+    today_info = client.get("/api/days/today", cookies={"profile_id": "1"}).json()
     assert today_info["all_required_complete"] is False
 
     # Check second required task
     response2 = client.put(
         f"/api/days/{today}/checks/2",
         json={"checked": True},
-        headers={"X-Profile-Id": "1"}
+        cookies={"profile_id": "1"}
     )
     assert response2.status_code == 200
 
     # Now day should be complete
-    today_info = client.get("/api/days/today", headers={"X-Profile-Id": "1"}).json()
+    today_info = client.get("/api/days/today", cookies={"profile_id": "1"}).json()
     assert today_info["all_required_complete"] is True
     assert today_info["completed_at"] is not None
 
@@ -283,7 +283,7 @@ def test_update_check_default_profile(client: TestClient, sample_tasks):
 def test_get_today_info_no_active_tasks(client: TestClient, test_db: Session, sample_profiles):
     """Test getting today's info when profile has no active tasks."""
     # Profile 2 has no tasks
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "2"})
+    response = client.get("/api/days/today", cookies={"profile_id": "2"})
 
     assert response.status_code == 200
     data = response.json()
@@ -305,7 +305,7 @@ def test_today_endpoint_includes_task_streaks(client: TestClient, test_db: Sessi
         check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
         check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
 
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -340,7 +340,7 @@ def test_task_streak_different_values_per_task(client: TestClient, test_db: Sess
         check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
         check_service.update_task_check(test_db, day, task_id=2, checked=True, profile_id=1)
 
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -364,7 +364,7 @@ def test_task_streak_milestone_calculation(client: TestClient, test_db: Session,
         check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
         check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
 
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -376,7 +376,7 @@ def test_task_streak_milestone_calculation(client: TestClient, test_db: Session,
 
 def test_task_streak_zero_for_no_checks(client: TestClient, sample_tasks):
     """Test that task streak is 0 when task has no checks."""
-    response = client.get("/api/days/today", headers={"X-Profile-Id": "1"})
+    response = client.get("/api/days/today", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()
@@ -398,7 +398,7 @@ def test_get_specific_day_includes_task_streaks(client: TestClient, test_db: Ses
         check_service.ensure_checks_exist_for_date(test_db, day, profile_id=1)
         check_service.update_task_check(test_db, day, task_id=1, checked=True, profile_id=1)
 
-    response = client.get(f"/api/days/{yesterday}", headers={"X-Profile-Id": "1"})
+    response = client.get(f"/api/days/{yesterday}", cookies={"profile_id": "1"})
 
     assert response.status_code == 200
     data = response.json()

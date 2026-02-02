@@ -8,6 +8,7 @@ import logging
 import time
 
 from app.core.db import engine, get_db, Base
+from app.core.profile_context import get_profile_id
 from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit, routes_punch_list, routes_scheduled, routes_household
 from app.services import tasks as task_service, profiles as profile_service
 
@@ -63,21 +64,13 @@ app.include_router(routes_household.router)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request, db: Session = Depends(get_db)):
+async def home(request: Request, db: Session = Depends(get_db), profile_id: int = Depends(get_profile_id)):
     """Home page with today's checklist."""
     from app.services import checks as check_service
     from app.services import streaks as streak_service
     from app.core.time import get_today
     from app.models.task import Task
     from sqlalchemy import and_, or_
-
-    # Get profile ID from header (default to 1)
-    profile_id = 1
-    if "x-profile-id" in request.headers:
-        try:
-            profile_id = int(request.headers["x-profile-id"])
-        except ValueError:
-            pass
 
     today = get_today()
 
@@ -174,18 +167,10 @@ async def settings(request: Request):
 
 
 @app.get("/fitbit", response_class=HTMLResponse)
-async def fitbit(request: Request, db: Session = Depends(get_db)):
+async def fitbit(request: Request, db: Session = Depends(get_db), profile_id: int = Depends(get_profile_id)):
     """Fitbit metrics viewing page."""
     from app.services import fitbit_connection
     from app.core.time import get_today
-
-    # Get profile ID from header (default to 1)
-    profile_id = 1
-    if "x-profile-id" in request.headers:
-        try:
-            profile_id = int(request.headers["x-profile-id"])
-        except ValueError:
-            pass
 
     # Check Fitbit connection status server-side
     connection = fitbit_connection.get_connection(db, profile_id)
@@ -233,19 +218,11 @@ async def household(request: Request, db: Session = Depends(get_db)):
 
 
 @app.get("/history", response_class=HTMLResponse)
-async def history(request: Request, db: Session = Depends(get_db)):
+async def history(request: Request, db: Session = Depends(get_db), profile_id: int = Depends(get_profile_id)):
     """History page showing calendar of completed days."""
     from app.services import history as history_service
     from app.services import streaks as streak_service
     from app.core.time import get_today
-
-    # Get profile ID from header (default to 1)
-    profile_id = 1
-    if "x-profile-id" in request.headers:
-        try:
-            profile_id = int(request.headers["x-profile-id"])
-        except ValueError:
-            pass
 
     today = get_today()
     year_param = request.query_params.get("year")

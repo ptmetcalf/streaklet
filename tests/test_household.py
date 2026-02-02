@@ -373,7 +373,7 @@ def test_api_mark_complete_requires_profile_header(client, sample_household_task
     # With profile header
     response = client.post(
         f"/api/household/tasks/{task.id}/complete",
-        headers={"X-Profile-Id": "1"}
+        cookies={"profile_id": "1"}
     )
 
     assert response.status_code == 201
@@ -386,7 +386,7 @@ def test_api_get_completion_history(client, sample_household_tasks, sample_profi
     task = sample_household_tasks[0]
 
     # Create completions
-    client.post(f"/api/household/tasks/{task.id}/complete", headers={"X-Profile-Id": "1"})
+    client.post(f"/api/household/tasks/{task.id}/complete", cookies={"profile_id": "1"})
     client.post(f"/api/household/tasks/{task.id}/complete", headers={"X-Profile-Id": "2"})
 
     # Get history
@@ -404,7 +404,7 @@ def test_api_get_overdue_tasks(client, sample_household_tasks, sample_profiles):
     with freeze_time("2025-12-04 12:00:00"):
         client.post(
             f"/api/household/tasks/{sample_household_tasks[0].id}/complete",
-            headers={"X-Profile-Id": "1"}
+            cookies={"profile_id": "1"}
         )
 
     # Get overdue tasks
@@ -419,7 +419,7 @@ def test_api_get_overdue_tasks(client, sample_household_tasks, sample_profiles):
 def test_household_tasks_shared_across_profiles(client, sample_household_tasks, sample_profiles):
     """Test that household tasks are visible to all profiles (critical architecture test)."""
     # Get tasks as profile 1
-    response1 = client.get("/api/household/tasks", headers={"X-Profile-Id": "1"})
+    response1 = client.get("/api/household/tasks", cookies={"profile_id": "1"})
     tasks1 = response1.json()
 
     # Get tasks as profile 2
@@ -436,7 +436,7 @@ def test_completion_attribution_preserved(client, sample_household_tasks, sample
     task = sample_household_tasks[0]
 
     # Profile 1 completes the task
-    client.post(f"/api/household/tasks/{task.id}/complete", headers={"X-Profile-Id": "1"})
+    client.post(f"/api/household/tasks/{task.id}/complete", cookies={"profile_id": "1"})
 
     # Profile 2 views the task
     response = client.get(f"/api/household/tasks/{task.id}", headers={"X-Profile-Id": "2"})
@@ -733,7 +733,7 @@ def test_api_undo_completion(client, sample_household_tasks, sample_profiles):
     task = sample_household_tasks[0]
 
     # Complete the task
-    response = client.post(f"/api/household/tasks/{task.id}/complete", headers={"X-Profile-Id": "1"})
+    response = client.post(f"/api/household/tasks/{task.id}/complete", cookies={"profile_id": "1"})
     assert response.status_code == 201
 
     # Undo the completion
