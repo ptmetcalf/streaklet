@@ -5,7 +5,7 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
 <script src="/static/js/chart-factory.js"></script>
-<div class="container" x-data="fitbitMetrics()">
+<div class="container" x-data="fitbitMetrics()" x-cloak>
     <header>
         <h1>Fitbit Metrics</h1>
     </header>
@@ -114,13 +114,8 @@
                 </div>
             </div>
 
-        <!-- Loading State -->
-        <div x-show="loading" style="text-align: center; padding: 40px; color: #666;">
-            Loading metrics...
-        </div>
-
         <!-- Metrics Display -->
-        <div x-show="!loading && Object.keys(metrics).length > 0">
+        <div x-show="Object.keys(metrics).length > 0">
             <!-- Summary Cards -->
             <div class="daily-metrics-grid">
                 <!-- Steps -->
@@ -270,7 +265,7 @@
         </div>
 
             <!-- No Data State -->
-            <div x-show="!loading && Object.keys(metrics).length === 0"
+            <div x-show="Object.keys(metrics).length === 0"
                  style="text-align: center; padding: 40px; color: #666; border: 1px solid var(--border-color); border-radius: 4px;">
                 <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
                 <p>No Fitbit data available for <span x-text="formatDateDisplay(selectedDate)"></span></p>
@@ -720,11 +715,10 @@
 <script>
 function fitbitMetrics() {
     return {
-        fitbitConnected: false,
-        selectedDate: null,
-        today: null,
+        fitbitConnected: {{ fitbit_connected | tojson }},
+        selectedDate: '{{ today }}',
+        today: '{{ today }}',
         metrics: {},
-        loading: false,
 
         // Trends state
         currentTab: 'daily',
@@ -831,19 +825,17 @@ function fitbitMetrics() {
                 this.fitbitConnected = data.connected;
             } catch (error) {
                 console.error('Error checking Fitbit connection:', error);
+                this.fitbitConnected = false;
             }
         },
 
         async loadMetricsForDate() {
-            this.loading = true;
             try {
                 const data = await api.fitbit.dailySummary(this.selectedDate);
                 this.metrics = data.metrics || {};
             } catch (error) {
                 console.error('Error loading metrics:', error);
                 this.metrics = {};
-            } finally {
-                this.loading = false;
             }
         },
 

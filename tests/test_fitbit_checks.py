@@ -355,3 +355,175 @@ async def test_get_task_fitbit_progress_no_data(test_db: Session, sample_profile
     assert progress["current_value"] is None
     assert progress["goal_value"] == 10000
     assert progress["goal_met"] is False
+
+
+@pytest.mark.asyncio
+async def test_evaluate_and_apply_auto_checks_excludes_punch_list(test_db: Session, sample_profiles):
+    """Test that punch_list tasks are never auto-checked by Fitbit."""
+    today = get_today()
+
+    # Create punch_list task with Fitbit goal
+    task = Task(
+        user_id=1,
+        title="Organize garage",
+        task_type="punch_list",
+        sort_order=1,
+        is_required=False,
+        is_active=True,
+        fitbit_metric_type="steps",
+        fitbit_goal_value=10000,
+        fitbit_goal_operator="gte",
+        fitbit_auto_check=True,
+        active_since=date(2025, 1, 1)
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Create Fitbit metric showing goal was met
+    metric = FitbitMetric(
+        user_id=1,
+        date=today,
+        metric_type="steps",
+        value=12500,
+        unit="steps"
+    )
+    test_db.add(metric)
+    test_db.commit()
+
+    # Run auto-check
+    result = await fitbit_checks.evaluate_and_apply_auto_checks(test_db, 1, today)
+
+    # Punch list tasks should not be evaluated
+    assert result["tasks_evaluated"] == 0
+    assert result["tasks_checked"] == 0
+
+
+@pytest.mark.asyncio
+async def test_evaluate_and_apply_auto_checks_excludes_future_tasks(test_db: Session, sample_profiles):
+    """Test that tasks with future active_since dates are not auto-checked."""
+    today = get_today()
+    from datetime import timedelta
+
+    # Create task with future active_since date
+    future_date = today + timedelta(days=7)
+    task = Task(
+        user_id=1,
+        title="Future task",
+        task_type="daily",
+        sort_order=1,
+        is_required=True,
+        is_active=True,
+        fitbit_metric_type="steps",
+        fitbit_goal_value=10000,
+        fitbit_goal_operator="gte",
+        fitbit_auto_check=True,
+        active_since=future_date
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Create Fitbit metric showing goal was met
+    metric = FitbitMetric(
+        user_id=1,
+        date=today,
+        metric_type="steps",
+        value=12500,
+        unit="steps"
+    )
+    test_db.add(metric)
+    test_db.commit()
+
+    # Run auto-check
+    result = await fitbit_checks.evaluate_and_apply_auto_checks(test_db, 1, today)
+
+    # Future tasks should not be evaluated
+    assert result["tasks_evaluated"] == 0
+    assert result["tasks_checked"] == 0
+
+
+@pytest.mark.asyncio
+async def test_evaluate_and_apply_auto_checks_includes_scheduled(test_db: Session, sample_profiles):
+    """Test that scheduled tasks ARE auto-checked by Fitbit."""
+    today = get_today()
+
+    # Create scheduled task with Fitbit goal
+    task = Task(
+        user_id=1,
+        title="Weekly workout goal",
+        task_type="scheduled",
+        sort_order=1,
+        is_required=True,
+        is_active=True,
+        fitbit_metric_type="steps",
+        fitbit_goal_value=10000,
+        fitbit_goal_operator="gte",
+        fitbit_auto_check=True,
+        active_since=date(2025, 1, 1)
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Create Fitbit metric showing goal was met
+    metric = FitbitMetric(
+        user_id=1,
+        date=today,
+        metric_type="steps",
+        value=12500,
+        unit="steps"
+    )
+    test_db.add(metric)
+    test_db.commit()
+
+    # Ensure checks exist
+    check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
+
+    # Run auto-check
+    result = await fitbit_checks.evaluate_and_apply_auto_checks(test_db, 1, today)
+
+    # Scheduled tasks should be evaluated and checked
+    assert result["tasks_evaluated"] == 1
+    assert result["tasks_checked"] == 1
+
+
+@pytest.mark.asyncio
+async def test_evaluate_and_apply_auto_checks_includes_null_active_since(test_db: Session, sample_profiles):
+    """Test that legacy tasks with NULL active_since are still auto-checked."""
+    today = get_today()
+
+    # Create task with NULL active_since (legacy)
+    task = Task(
+        user_id=1,
+        title="Legacy task",
+        task_type="daily",
+        sort_order=1,
+        is_required=True,
+        is_active=True,
+        fitbit_metric_type="steps",
+        fitbit_goal_value=10000,
+        fitbit_goal_operator="gte",
+        fitbit_auto_check=True,
+        active_since=None
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Create Fitbit metric showing goal was met
+    metric = FitbitMetric(
+        user_id=1,
+        date=today,
+        metric_type="steps",
+        value=12500,
+        unit="steps"
+    )
+    test_db.add(metric)
+    test_db.commit()
+
+    # Ensure checks exist
+    check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
+
+    # Run auto-check
+    result = await fitbit_checks.evaluate_and_apply_auto_checks(test_db, 1, today)
+
+    # Legacy tasks should be evaluated and checked
+    assert result["tasks_evaluated"] == 1
+    assert result["tasks_checked"] == 1

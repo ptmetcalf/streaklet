@@ -274,6 +274,7 @@ window.api = {
         create: (data) => ApiClient.post('/api/household/tasks', data, { useProfile: false }),
         update: (id, data) => ApiClient.put(`/api/household/tasks/${id}`, data, { useProfile: false }),
         complete: (id) => ApiClient.post(`/api/household/tasks/${id}/complete`, null, { useProfile: false }),
+        undo: (id) => ApiClient.post(`/api/household/tasks/${id}/undo`, null, { useProfile: false }),
         delete: (id) => ApiClient.delete(`/api/household/tasks/${id}`, { useProfile: false }),
     },
 

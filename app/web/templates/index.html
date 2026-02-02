@@ -3,7 +3,7 @@
 {% block title %}Streaklet - Today's Checklist{% endblock %}
 
 {% block content %}
-<div class="container" x-data="checklist()" x-init="await loadAllTasks()">
+<div class="container" x-data="checklist()" x-init="initWithSSRData()" x-cloak>
     <header>
         <div class="header-content">
             <div>
@@ -200,7 +200,7 @@
     </div>
 
     <!-- Add Daily Task Modal -->
-    <div x-show="showAddDailyTaskModal" class="modal-overlay" @click.self="closeAddDailyTaskModal()" @keydown.escape.window="showAddDailyTaskModal && closeAddDailyTaskModal()">
+    <div x-show="showAddDailyTaskModal" class="modal-overlay" x-cloak @click.self="closeAddDailyTaskModal()" @keydown.escape.window="showAddDailyTaskModal && closeAddDailyTaskModal()">
         <div class="modal-content modal-content--md">
             <div class="modal-header">
                 <h2>Add New Daily Task</h2>
@@ -246,7 +246,7 @@
     </div>
 
     <!-- Add To-Do Modal -->
-    <div x-show="showAddTodoModal" class="modal-overlay" @click.self="closeAddTodoModal()" @keydown.escape.window="showAddTodoModal && closeAddTodoModal()">
+    <div x-show="showAddTodoModal" class="modal-overlay" x-cloak @click.self="closeAddTodoModal()" @keydown.escape.window="showAddTodoModal && closeAddTodoModal()">
         <div class="modal-content modal-content--md">
             <div class="modal-header">
                 <h2>Add New To-Do</h2>
@@ -284,7 +284,7 @@
     </div>
 
     <!-- Icon Picker Modal for Daily Tasks -->
-    <div x-show="showDailyIconPicker" class="modal-overlay" @click.self="showDailyIconPicker = false">
+    <div x-show="showDailyIconPicker" class="modal-overlay" x-cloak @click.self="showDailyIconPicker = false">
         <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
             <div class="modal-header">
                 <h2>Choose an Icon</h2>
@@ -312,7 +312,7 @@
     </div>
 
     <!-- Icon Picker Modal for To-Do -->
-    <div x-show="showTodoIconPicker" class="modal-overlay" @click.self="showTodoIconPicker = false">
+    <div x-show="showTodoIconPicker" class="modal-overlay" x-cloak @click.self="showTodoIconPicker = false">
         <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
             <div class="modal-header">
                 <h2>Choose an Icon</h2>
@@ -340,25 +340,27 @@
     </div>
 
     <div class="milestone-toast" x-show="showToast" x-text="toastMessage"></div>
+    </div>
+    <!-- End Main Content -->
 </div>
 
 <script>
 function checklist() {
     return {
-        // Daily tasks state
-        tasks: [],
-        dailyTasks: [],
-        streak: 0,
-        date: null,
-        todayComplete: false,
-        lastCompletedDate: null,
+        // Daily tasks state (initialized with SSR data)
+        tasks: {{ daily_tasks | tojson }},
+        dailyTasks: {{ daily_tasks | tojson }},
+        streak: {{ streak.current_streak }},
+        date: '{{ date }}',
+        todayComplete: {{ streak.today_complete | tojson }},
+        lastCompletedDate: {{ streak.last_completed_date | tojson }},
         milestoneMessage: '',
         nextMilestoneMessage: '',
         showToast: false,
         toastMessage: '',
 
-        // Punch list state
-        punchListTasks: [],
+        // Punch list state (initialized with SSR data)
+        punchListTasks: {{ punch_list_tasks | tojson }},
         showCompletedTodos: false,
 
         // Tab state
@@ -473,15 +475,32 @@ function checklist() {
             localStorage.setItem('streaklet_last_tab', tab);
         },
 
-        // Load all task types
-        async loadAllTasks() {
-            await this.loadDailyTasks();
-            await this.loadPunchListTasks();
+        // Initialize with SSR data (no API calls needed)
+        initWithSSRData() {
+            // Data is already loaded from server
+            // Just restore UI state and update celebration
+            this.updateCelebration();
 
             // Restore last active tab
             const lastTab = localStorage.getItem('streaklet_last_tab');
             if (lastTab && ['daily', 'punch_list'].includes(lastTab)) {
                 this.activeTab = lastTab;
+            }
+        },
+
+        // Load all task types
+        async loadAllTasks() {
+            try {
+                await this.loadDailyTasks();
+                await this.loadPunchListTasks();
+
+                // Restore last active tab
+                const lastTab = localStorage.getItem('streaklet_last_tab');
+                if (lastTab && ['daily', 'punch_list'].includes(lastTab)) {
+                    this.activeTab = lastTab;
+                }
+            } catch (error) {
+                console.error('Error loading tasks:', error);
             }
         },
 

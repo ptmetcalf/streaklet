@@ -3,7 +3,7 @@
 {% block title %}Streaklet - History{% endblock %}
 
 {% block content %}
-<div class="container" x-data="calendar()" x-init="await loadHistoryData()">
+<div class="container" x-data="calendar()" x-cloak>
     <header class="history-header">
         <div class="history-header-top">
             <h1>History</h1>

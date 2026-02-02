@@ -455,3 +455,301 @@ def test_frequency_threshold_detection():
     assert FREQUENCY_THRESHOLDS["monthly"] == 30
     assert FREQUENCY_THRESHOLDS["quarterly"] == 90
     assert FREQUENCY_THRESHOLDS["annual"] == 365
+
+
+@freeze_time("2026-02-01 12:00:00", tz_offset=-6)  # America/Chicago timezone
+def test_rolling_monthly_task_advances_by_30_days(test_db, sample_profiles):
+    """Test that monthly rolling task advances by 30 days from completion date."""
+    from datetime import date
+
+    # Create rolling monthly task with recurrence_day_of_month=1
+    task = HouseholdTask(
+        title="Change air filter",
+        frequency="monthly",
+        schedule_mode="rolling",
+        recurrence_day_of_month=1,
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Complete on Feb 1st
+    household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    test_db.refresh(task)
+    # Should be due in 30 days (March 3rd), NOT Feb 1st again
+    expected_date = date(2026, 3, 3)
+    assert task.next_due_date == expected_date
+
+
+@freeze_time("2026-02-10 12:00:00", tz_offset=-6)  # America/Chicago timezone
+def test_rolling_weekly_task_advances_by_7_days(test_db, sample_profiles):
+    """Test that weekly rolling task advances by 7 days from completion date."""
+    from datetime import date
+
+    task = HouseholdTask(
+        title="Take out trash",
+        frequency="weekly",
+        schedule_mode="rolling",
+        recurrence_day_of_week=1,  # Monday
+        next_due_date=date(2026, 2, 10),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Complete on Feb 10th (Tuesday)
+    household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    test_db.refresh(task)
+    # Should be due in 7 days (Feb 17th), ignoring day_of_week config
+    expected_date = date(2026, 2, 17)
+    assert task.next_due_date == expected_date
+
+
+@freeze_time("2026-02-01 12:00:00", tz_offset=-6)  # America/Chicago timezone
+def test_rolling_biweekly_task_advances_by_14_days(test_db, sample_profiles):
+    """Test that biweekly rolling task advances by 14 days from completion date."""
+    from datetime import date
+
+    task = HouseholdTask(
+        title="Deep clean bathroom",
+        frequency="biweekly",
+        schedule_mode="rolling",
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    test_db.refresh(task)
+    expected_date = date(2026, 2, 15)
+    assert task.next_due_date == expected_date
+
+
+@freeze_time("2026-01-15 12:00:00", tz_offset=-6)  # America/Chicago timezone
+def test_rolling_quarterly_task_advances_by_90_days(test_db, sample_profiles):
+    """Test that quarterly rolling task advances by 90 days from completion date."""
+    from datetime import date
+
+    task = HouseholdTask(
+        title="Clean gutters",
+        frequency="quarterly",
+        schedule_mode="rolling",
+        next_due_date=date(2026, 1, 15),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    test_db.refresh(task)
+    expected_date = date(2026, 4, 15)
+    assert task.next_due_date == expected_date
+
+
+@freeze_time("2026-02-01 12:00:00", tz_offset=-6)  # America/Chicago timezone
+def test_rolling_annual_task_advances_by_365_days(test_db, sample_profiles):
+    """Test that annual rolling task advances by 365 days from completion date."""
+    from datetime import date
+
+    task = HouseholdTask(
+        title="Service HVAC",
+        frequency="annual",
+        schedule_mode="rolling",
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    test_db.refresh(task)
+    expected_date = date(2027, 2, 1)
+    assert task.next_due_date == expected_date
+
+
+@freeze_time("2026-02-01 12:00:00", tz_offset=-6)  # America/Chicago timezone
+def test_calendar_vs_rolling_mode_difference(test_db, sample_profiles):
+    """Test that calendar and rolling modes produce different next_due_dates."""
+    from datetime import date
+
+    # Create two identical monthly tasks with different schedule modes
+    calendar_task = HouseholdTask(
+        title="Calendar task",
+        frequency="monthly",
+        schedule_mode="calendar",
+        recurrence_day_of_month=1,
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    rolling_task = HouseholdTask(
+        title="Rolling task",
+        frequency="monthly",
+        schedule_mode="rolling",
+        recurrence_day_of_month=1,
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    test_db.add(calendar_task)
+    test_db.add(rolling_task)
+    test_db.commit()
+
+    # Complete both on Feb 1st
+    household_service.mark_task_complete(test_db, calendar_task.id, profile_id=1)
+    household_service.mark_task_complete(test_db, rolling_task.id, profile_id=1)
+
+    test_db.refresh(calendar_task)
+    test_db.refresh(rolling_task)
+
+    # Calendar: March 1st (next occurrence of day 1)
+    # Rolling: March 3rd (Feb 1 + 30 days)
+    assert calendar_task.next_due_date == date(2026, 3, 1)
+    assert rolling_task.next_due_date == date(2026, 3, 3)
+    assert calendar_task.next_due_date != rolling_task.next_due_date
+
+
+@freeze_time("2026-01-25 12:00:00", tz_offset=-6)  # America/Chicago timezone
+def test_rolling_early_completion_still_uses_actual_date(test_db, sample_profiles):
+    """Test that rolling mode uses actual completion date, not scheduled date."""
+    from datetime import date
+
+    # Task is due Feb 1st
+    task = HouseholdTask(
+        title="Monthly task",
+        frequency="monthly",
+        schedule_mode="rolling",
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Complete 7 days early (Jan 25th)
+    household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    test_db.refresh(task)
+    # Should be due Jan 25 + 30 days = Feb 24, NOT Feb 1 + 30 days
+    expected_date = date(2026, 2, 24)
+    assert task.next_due_date == expected_date
+
+
+@freeze_time("2026-02-01 12:00:00", tz_offset=-6)
+def test_undo_last_completion(test_db, sample_profiles):
+    """Test undoing the most recent completion."""
+    from datetime import date
+
+    task = HouseholdTask(
+        title="Weekly task",
+        frequency="weekly",
+        schedule_mode="rolling",
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Complete the task
+    household_service.mark_task_complete(test_db, task.id, profile_id=1)
+    test_db.refresh(task)
+
+    # Verify it was completed
+    completion = household_service.get_last_completion(test_db, task.id)
+    assert completion is not None
+    assert task.next_due_date == date(2026, 2, 8)  # 7 days later
+
+    # Undo the completion
+    success = household_service.undo_last_completion(test_db, task.id)
+    assert success is True
+
+    # Verify completion was deleted
+    completion = household_service.get_last_completion(test_db, task.id)
+    assert completion is None
+
+
+@freeze_time("2026-02-01 12:00:00", tz_offset=-6)
+def test_undo_completion_no_completions(test_db, sample_profiles):
+    """Test undoing when there are no completions returns False."""
+    from datetime import date
+
+    task = HouseholdTask(
+        title="Monthly task",
+        frequency="monthly",
+        next_due_date=date(2026, 2, 1),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Try to undo without any completions
+    success = household_service.undo_last_completion(test_db, task.id)
+    assert success is False
+
+
+@freeze_time("2026-02-01 12:00:00", tz_offset=-6)
+def test_undo_completion_multiple_completions(test_db, sample_profiles):
+    """Test undoing only removes the most recent completion."""
+    from datetime import date, timedelta
+    from freezegun import freeze_time as freeze
+
+    task = HouseholdTask(
+        title="Daily task",
+        frequency="weekly",
+        schedule_mode="rolling",
+        next_due_date=date(2026, 1, 25),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Complete the task twice on different days
+    with freeze("2026-01-25 12:00:00", tz_offset=-6):
+        household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    with freeze("2026-02-01 12:00:00", tz_offset=-6):
+        household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    # Should have 2 completions
+    history = household_service.get_completion_history(test_db, task.id)
+    assert len(history) == 2
+
+    # Undo the last completion
+    success = household_service.undo_last_completion(test_db, task.id)
+    assert success is True
+
+    # Should now have 1 completion
+    history = household_service.get_completion_history(test_db, task.id)
+    assert len(history) == 1
+    assert history[0]['completed_at'].date() == date(2026, 1, 25)
+
+
+def test_api_undo_completion(client, sample_household_tasks, sample_profiles):
+    """Test the undo completion API endpoint."""
+    task = sample_household_tasks[0]
+
+    # Complete the task
+    response = client.post(f"/api/household/tasks/{task.id}/complete", headers={"X-Profile-Id": "1"})
+    assert response.status_code == 201
+
+    # Undo the completion
+    response = client.post(f"/api/household/tasks/{task.id}/undo")
+    assert response.status_code == 200
+    data = response.json()
+    assert "message" in data
+    assert data["message"] == "Completion undone successfully"
+
+
+def test_api_undo_completion_no_completions(client, sample_household_tasks):
+    """Test undoing completion when there are no completions returns 404."""
+    task = sample_household_tasks[0]
+
+    # Try to undo without completing
+    response = client.post(f"/api/household/tasks/{task.id}/undo")
+    assert response.status_code == 404
+    data = response.json()
+    assert "detail" in data

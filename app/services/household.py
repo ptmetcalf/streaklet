@@ -201,7 +201,7 @@ def calculate_next_due_date(task: HouseholdTask, from_date: Optional[date] = Non
         # Try current month first
         try:
             next_date = from_date.replace(day=target_day)
-            if next_date >= from_date:
+            if next_date > from_date:
                 return next_date
         except ValueError:
             # Day doesn't exist in current month (e.g., Feb 31)
@@ -549,8 +549,14 @@ def mark_task_complete(db: Session, task_id: int, profile_id: int, notes: Option
 
     # Update next_due_date based on schedule mode
     if task.schedule_mode == 'rolling':
-        # Rolling mode: Calculate from completion date
-        task.next_due_date = calculate_next_due_date(task, from_date=completion_date)
+        # Rolling mode: Calculate from completion date using fixed intervals
+        # Ignore calendar recurrence config - use interval-based calculation
+        if task.frequency in FREQUENCY_THRESHOLDS:
+            interval_days = FREQUENCY_THRESHOLDS[task.frequency]
+            task.next_due_date = completion_date + timedelta(days=interval_days)
+        else:
+            # Fallback for todo or unknown frequencies
+            task.next_due_date = None
     else:
         # Calendar mode (default): Calculate from scheduled date to prevent early completion issues
         # Use current next_due_date if available, otherwise use today
@@ -613,6 +619,64 @@ def get_completion_history(db: Session, task_id: int, limit: int = 10) -> List[D
         }
         for completion, profile_name in completions
     ]
+
+
+def undo_last_completion(db: Session, task_id: int) -> bool:
+    """
+    Undo the most recent completion for a household task.
+
+    Deletes the most recent completion and recalculates the task's next_due_date
+    based on the previous completion (if any).
+
+    Args:
+        db: Database session
+        task_id: Household task ID
+
+    Returns:
+        True if completion was undone, False if no completion found
+    """
+    task = get_household_task_by_id(db, task_id)
+    if not task:
+        return False
+
+    # Get the most recent completion
+    last_completion = get_last_completion(db, task_id)
+    if not last_completion:
+        return False
+
+    # Delete the most recent completion
+    db.delete(last_completion)
+
+    # Recalculate next_due_date based on previous completion (if any)
+    previous_completion = (
+        db.query(HouseholdCompletion)
+        .filter(HouseholdCompletion.household_task_id == task_id)
+        .order_by(desc(HouseholdCompletion.completed_at))
+        .first()
+    )
+
+    if previous_completion:
+        # Recalculate from the previous completion
+        completion_date = previous_completion.completed_at.date()
+
+        if task.schedule_mode == 'rolling':
+            # Rolling mode: Calculate from previous completion date
+            if task.frequency in FREQUENCY_THRESHOLDS:
+                interval_days = FREQUENCY_THRESHOLDS[task.frequency]
+                task.next_due_date = completion_date + timedelta(days=interval_days)
+            else:
+                task.next_due_date = None
+        else:
+            # Calendar mode: Calculate from previous due date
+            base_date = task.next_due_date or get_today()
+            task.next_due_date = calculate_next_due_date(task, from_date=base_date)
+    else:
+        # No previous completions - task needs to be manually rescheduled or reset
+        # Keep current next_due_date or set to None for manual scheduling
+        pass
+
+    db.commit()
+    return True
 
 
 def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:

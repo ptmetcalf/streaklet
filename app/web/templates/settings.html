@@ -14,7 +14,7 @@
             <span x-text="sectionsCollapsed.personalTasks ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
 
-        <div x-show="!sectionsCollapsed.personalTasks" x-collapse>
+        <div x-show="!sectionsCollapsed.personalTasks" x-collapse x-cloak>
         <!-- Task Type Filter -->
         <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
             <button @click="taskFilter = 'all'"
@@ -399,7 +399,7 @@
         </div>
 
         <!-- Personal Task Icon Picker Modal -->
-        <div x-show="showPersonalIconPicker" class="modal-overlay" @click.self="showPersonalIconPicker = false" @keydown.escape.window="showPersonalIconPicker && (showPersonalIconPicker = false)">
+        <div x-show="showPersonalIconPicker" class="modal-overlay" x-cloak @click.self="showPersonalIconPicker = false" @keydown.escape.window="showPersonalIconPicker && (showPersonalIconPicker = false)">
             <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
                 <div class="modal-header">
                     <h2>Choose an Icon</h2>
@@ -450,7 +450,7 @@
             <span x-text="sectionsCollapsed.household ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
 
-        <div x-show="!sectionsCollapsed.household" x-collapse>
+        <div x-show="!sectionsCollapsed.household" x-collapse x-cloak>
         <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
             Manage shared household maintenance tasks. These tasks are visible to all profiles.
         </p>
@@ -662,7 +662,7 @@
         </div>
 
         <!-- Icon Picker Modal -->
-        <div x-show="showIconPicker" class="modal-overlay" @click.self="showIconPicker = false" @keydown.escape.window="showIconPicker && (showIconPicker = false)">
+        <div x-show="showIconPicker" class="modal-overlay" x-cloak @click.self="showIconPicker = false" @keydown.escape.window="showIconPicker && (showIconPicker = false)">
             <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
                 <div class="modal-header">
                     <h2>Choose an Icon</h2>
@@ -713,7 +713,7 @@
             <span x-text="sectionsCollapsed.appPreferences ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
 
-        <div x-show="!sectionsCollapsed.appPreferences" x-collapse>
+        <div x-show="!sectionsCollapsed.appPreferences" x-collapse x-cloak>
         <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
             <div class="form-group" style="margin-bottom: 0;">
                 <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
@@ -738,7 +738,7 @@
             <span x-text="sectionsCollapsed.profileManagement ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
 
-        <div x-show="!sectionsCollapsed.profileManagement" x-collapse>
+        <div x-show="!sectionsCollapsed.profileManagement" x-collapse x-cloak>
         <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
             <p style="margin-bottom: 16px; color: #666;">
                 Manage profiles, switch between users, and backup/restore your data.
@@ -757,7 +757,7 @@
             <span x-text="sectionsCollapsed.fitbit ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
 
-        <div x-show="!sectionsCollapsed.fitbit" x-collapse>
+        <div x-show="!sectionsCollapsed.fitbit" x-collapse x-cloak>
 
         <!-- Not Connected State -->
         <div x-show="!fitbitConnected" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px; text-align: center;">
@@ -911,7 +911,7 @@
          x-cloak
          @click.self="cancelDelete()"
          @keydown.escape.window="deleteConfirm.show && cancelDelete()"
-         class="modal-overlay">
+         class="modal-overlay" x-cloak>
         <div class="modal-content">
             <div class="modal-body">
                 <h3 style="margin: 0 0 16px; font-size: 20px; color: var(--text-color);">Delete Task?</h3>

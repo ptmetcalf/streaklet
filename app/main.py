@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import logging
 import time
@@ -62,10 +63,103 @@ app.include_router(routes_household.router)
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    """Home page with today's checklist - data fetched client-side."""
+async def home(request: Request, db: Session = Depends(get_db)):
+    """Home page with today's checklist."""
+    from app.services import checks as check_service
+    from app.services import streaks as streak_service
+    from app.core.time import get_today
+    from app.models.task import Task
+    from sqlalchemy import and_, or_
+
+    # Get profile ID from header (default to 1)
+    profile_id = 1
+    if "x-profile-id" in request.headers:
+        try:
+            profile_id = int(request.headers["x-profile-id"])
+        except ValueError:
+            pass
+
+    today = get_today()
+
+    # Ensure checks exist for today
+    check_service.ensure_checks_exist_for_date(db, today, profile_id)
+
+    # Get daily tasks and scheduled tasks that are due today
+    daily_tasks_query = db.query(Task).filter(
+        and_(
+            Task.is_active.is_(True),
+            Task.user_id == profile_id,
+            or_(
+                Task.task_type == 'daily',
+                and_(
+                    Task.task_type == 'scheduled',
+                    Task.next_occurrence_date == today
+                )
+            )
+        )
+    ).order_by(Task.sort_order).all()
+
+    # Get checks for today
+    checks_map = {
+        check.task_id: check
+        for check in check_service.get_checks_for_date(db, today, profile_id)
+    }
+
+    # Build tasks with check status
+    daily_tasks = []
+    for task in daily_tasks_query:
+        check = checks_map.get(task.id)
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "icon": task.icon,
+            "sort_order": task.sort_order,
+            "is_required": task.is_required,
+            "is_active": task.is_active,
+            "checked": check.checked if check else False,
+            "task_type": task.task_type,
+            "fitbit_progress": {},
+            "task_streak": 0
+        }
+        daily_tasks.append(task_dict)
+
+    # Get punch list tasks
+    punch_list_tasks_query = db.query(Task).filter(
+        and_(
+            Task.task_type == 'punch_list',
+            Task.user_id == profile_id
+        )
+    ).order_by(Task.sort_order).all()
+
+    punch_list_tasks = []
+    for task in punch_list_tasks_query:
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "icon": task.icon,
+            "sort_order": task.sort_order,
+            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+            "due_date": task.due_date.isoformat() if task.due_date else None
+        }
+        punch_list_tasks.append(task_dict)
+
+    # Get streak info
+    streak_info = streak_service.get_streak_info(db, profile_id)
+
+    # Convert date objects to strings for JSON serialization
+    streak_json = {
+        "current_streak": streak_info["current_streak"],
+        "today_complete": streak_info["today_complete"],
+        "last_completed_date": streak_info["last_completed_date"].isoformat() if streak_info["last_completed_date"] else None,
+        "today_date": streak_info["today_date"].isoformat() if streak_info["today_date"] else None
+    }
+
     return templates.TemplateResponse("index.html", {
         "request": request,
+        "daily_tasks": daily_tasks,
+        "punch_list_tasks": punch_list_tasks,
+        "streak": streak_json,
+        "date": today.isoformat(),
         "cache_bust": CACHE_BUST
     })
 
@@ -80,27 +174,78 @@ async def settings(request: Request):
 
 
 @app.get("/fitbit", response_class=HTMLResponse)
-async def fitbit(request: Request):
+async def fitbit(request: Request, db: Session = Depends(get_db)):
     """Fitbit metrics viewing page."""
+    from app.services import fitbit_connection
+    from app.core.time import get_today
+
+    # Get profile ID from header (default to 1)
+    profile_id = 1
+    if "x-profile-id" in request.headers:
+        try:
+            profile_id = int(request.headers["x-profile-id"])
+        except ValueError:
+            pass
+
+    # Check Fitbit connection status server-side
+    connection = fitbit_connection.get_connection(db, profile_id)
+    fitbit_connected = connection is not None
+    today = get_today()
+
     return templates.TemplateResponse("fitbit.html", {
         "request": request,
+        "fitbit_connected": fitbit_connected,
+        "today": today.isoformat(),
         "cache_bust": CACHE_BUST
     })
 
 
 @app.get("/household", response_class=HTMLResponse)
-async def household(request: Request):
+async def household(request: Request, db: Session = Depends(get_db)):
     """Household maintenance tracker page."""
+    from app.services import household as household_service
+
+    # Fetch initial tasks server-side (household tasks are shared, no profile_id)
+    tasks = household_service.get_all_tasks_with_status(db)
+
+    # Convert datetime/date objects to strings for JSON serialization
+    tasks_json = []
+    for task in tasks:
+        task_copy = task.copy()
+        # Convert datetime fields
+        if task_copy.get('due_date'):
+            task_copy['due_date'] = task_copy['due_date'].isoformat()
+        if task_copy.get('created_at'):
+            task_copy['created_at'] = task_copy['created_at'].isoformat()
+        if task_copy.get('updated_at'):
+            task_copy['updated_at'] = task_copy['updated_at'].isoformat()
+        if task_copy.get('last_completed_at'):
+            task_copy['last_completed_at'] = task_copy['last_completed_at'].isoformat()
+        if task_copy.get('next_due_date'):
+            task_copy['next_due_date'] = task_copy['next_due_date'].isoformat()
+        tasks_json.append(task_copy)
+
     return templates.TemplateResponse("household.html", {
         "request": request,
+        "tasks": tasks_json,
         "cache_bust": CACHE_BUST
     })
 
 
 @app.get("/history", response_class=HTMLResponse)
-async def history(request: Request):
-    """History page showing calendar of completed days - data fetched client-side."""
+async def history(request: Request, db: Session = Depends(get_db)):
+    """History page showing calendar of completed days."""
+    from app.services import history as history_service
+    from app.services import streaks as streak_service
     from app.core.time import get_today
+
+    # Get profile ID from header (default to 1)
+    profile_id = 1
+    if "x-profile-id" in request.headers:
+        try:
+            profile_id = int(request.headers["x-profile-id"])
+        except ValueError:
+            pass
 
     today = get_today()
     year_param = request.query_params.get("year")
@@ -122,13 +267,23 @@ async def history(request: Request):
     if not (2000 <= year <= 2100):
         year = today.year
 
-    # Pass default values for template - actual data fetched client-side
+    # Fetch real data server-side
+    calendar_data = history_service.get_calendar_month_data(db, year, month, profile_id)
+    streak_info = streak_service.get_streak_info(db, profile_id)
+
+    # Convert date objects to strings for JSON serialization
+    streak_json = {
+        "current_streak": streak_info["current_streak"],
+        "today_complete": streak_info["today_complete"],
+        "last_completed_date": streak_info["last_completed_date"].isoformat() if streak_info["last_completed_date"] else None
+    }
+
     return templates.TemplateResponse("history.html", {
         "request": request,
         "year": year,
         "month": month,
-        "calendar_data": {"days_in_month": 0, "first_day_weekday": 0, "days": {}},
-        "streak": {"current_streak": 0, "today_complete": False, "last_completed_date": None},
+        "calendar_data": calendar_data,
+        "streak": streak_json,
         "today": today.isoformat(),
         "cache_bust": CACHE_BUST
     })

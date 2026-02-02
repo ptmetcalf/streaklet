@@ -192,6 +192,28 @@ def mark_task_complete(
     return {"message": "Task marked complete", "completion_id": completion.id}
 
 
+@router.post("/tasks/{task_id}/undo", status_code=200)
+def undo_task_completion(
+    task_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Undo the most recent completion for a household task.
+
+    Deletes the most recent completion and recalculates next_due_date.
+
+    Args:
+        task_id: Household task ID
+
+    Returns:
+        200 OK with success message
+    """
+    success = household_service.undo_last_completion(db, task_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="No completion found to undo")
+    return {"message": "Completion undone successfully"}
+
+
 @router.get("/tasks/{task_id}/history", response_model=List[HouseholdCompletionResponse])
 def get_completion_history(
     task_id: int,

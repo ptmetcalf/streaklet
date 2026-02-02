@@ -7,7 +7,7 @@ Handles:
 - Goal condition logic (gte, lte, eq)
 """
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from datetime import date
 from typing import Dict
 
@@ -63,7 +63,14 @@ async def evaluate_and_apply_auto_checks(
             Task.user_id == profile_id,
             Task.is_active .is_(True),
             Task.fitbit_auto_check .is_(True),
-            Task.fitbit_metric_type.isnot(None)
+            Task.fitbit_metric_type.isnot(None),
+            # Only auto-check daily and scheduled tasks, not punch_list
+            Task.task_type.in_(['daily', 'scheduled']),
+            # Only auto-check tasks active on the target date
+            or_(
+                Task.active_since <= target_date,
+                Task.active_since.is_(None)
+            )
         )
     ).all()
 
