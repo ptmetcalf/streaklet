@@ -679,7 +679,7 @@ def undo_last_completion(db: Session, task_id: int) -> bool:
     return True
 
 
-def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
+def get_task_with_status(db: Session, task_id: int, upcoming_days_threshold: int = 7) -> Optional[Dict]:
     """
     Get a household task enriched with completion status.
 
@@ -691,6 +691,13 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
     - days_since_completion: Days since last completion
     - is_overdue: Whether task is overdue based on frequency/due date
     - is_completed: Whether to-do task has been completed (for filtering)
+    - is_coming_soon: Whether task is due within upcoming_days_threshold
+    - days_until_due: Days until next due date (negative if overdue)
+
+    Args:
+        db: Database session
+        task_id: Task ID
+        upcoming_days_threshold: Number of days to look ahead for "coming soon" tasks (default: 7)
 
     Returns:
         Dict with task and status info, or None if not found
@@ -728,7 +735,9 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         'is_due': False,
         'is_overdue': False,
         'days_overdue': 0,
-        'is_completed': False  # For to-do items
+        'is_completed': False,  # For to-do items
+        'is_coming_soon': False,  # Due within upcoming_days_threshold
+        'days_until_due': None  # Days until due date (negative if overdue)
     }
 
     if last_completion:
@@ -776,6 +785,14 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         else:
             is_overdue = False
 
+        # Calculate days_until_due and is_coming_soon
+        days_until_due = None
+        is_coming_soon = False
+        if next_due_date:
+            days_until_due = (next_due_date - today).days
+            # Task is coming soon if it's not yet due but will be within threshold
+            is_coming_soon = 0 < days_until_due <= upcoming_days_threshold
+
         result.update({
             'last_completed_at': last_completion.completed_at,
             'last_completed_by_profile_id': last_completion.completed_by_profile_id,
@@ -785,7 +802,9 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
             'is_due': is_due,
             'is_overdue': is_overdue,
             'days_overdue': days_overdue,
-            'is_completed': is_todo_completed
+            'is_completed': is_todo_completed,
+            'is_coming_soon': is_coming_soon,
+            'days_until_due': days_until_due
         })
     else:
         # No completion yet
@@ -808,10 +827,20 @@ def get_task_with_status(db: Session, task_id: int) -> Optional[Dict]:
         else:
             is_overdue = False
 
+        # Calculate days_until_due and is_coming_soon
+        days_until_due = None
+        is_coming_soon = False
+        if next_due_date:
+            days_until_due = (next_due_date - today).days
+            # Task is coming soon if it's not yet due but will be within threshold
+            is_coming_soon = 0 < days_until_due <= upcoming_days_threshold
+
         result['next_due_date'] = next_due_date
         result['is_due'] = is_due
         result['is_overdue'] = is_overdue
         result['days_overdue'] = days_overdue
+        result['is_coming_soon'] = is_coming_soon
+        result['days_until_due'] = days_until_due
 
     return result
 

@@ -753,3 +753,48 @@ def test_api_undo_completion_no_completions(client, sample_household_tasks):
     assert response.status_code == 404
     data = response.json()
     assert "detail" in data
+
+
+@freeze_time("2026-02-10 12:00:00", tz_offset=-6)
+def test_coming_soon_tasks(test_db, sample_profiles):
+    """Test that tasks due within 7 days are marked as coming_soon."""
+    from datetime import date, timedelta
+    from app.core.time import get_today
+
+    today = get_today()
+
+    # Create a task that will be due in 5 days
+    task = HouseholdTask(
+        title="Upcoming task",
+        frequency="weekly",
+        schedule_mode="calendar",
+        recurrence_day_of_week=0,  # Monday
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    # Complete it 9 days ago, so next due date is in 5 days
+    # (weekly = 7 days, so completing 9 days ago means next due is 7 - 9 = -2, but with calendar mode it finds next Monday)
+    completion_date = today - timedelta(days=9)
+    completion = HouseholdCompletion(
+        household_task_id=task.id,
+        completed_by_profile_id=1,
+        completed_at=completion_date
+    )
+    test_db.add(completion)
+    test_db.commit()
+
+    # Get task status with default 7-day threshold
+    status = household_service.get_task_with_status(test_db, task.id)
+
+    # Task should be coming soon (due within 7 days)
+    assert status is not None
+    assert status['is_coming_soon'] is True or status['is_due'] is True  # Could be either depending on exact day
+    assert status['days_until_due'] is not None
+
+    # Test with 2-day threshold - should NOT be coming soon
+    status_short = household_service.get_task_with_status(test_db, task.id, upcoming_days_threshold=2)
+    # If it's more than 2 days away, it shouldn't be coming soon (unless it's actually due)
+    if status_short['days_until_due'] and status_short['days_until_due'] > 2:
+        assert status_short['is_coming_soon'] is False

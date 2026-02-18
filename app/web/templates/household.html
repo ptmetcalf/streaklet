@@ -141,6 +141,9 @@
                                 <template x-if="task.is_overdue">
                                     <span class="overdue-badge" x-text="`${task.days_overdue} day${task.days_overdue !== 1 ? 's' : ''} overdue`"></span>
                                 </template>
+                                <template x-if="task.is_coming_soon && !task.is_due && !task.is_overdue">
+                                    <span class="coming-soon-badge" x-text="`Due in ${task.days_until_due} day${task.days_until_due !== 1 ? 's' : ''}`"></span>
+                                </template>
                                 <span class="completion-info">
                                     <template x-if="task.last_completed_at">
                                         <span x-text="`Last done ${task.days_since_completion} days ago by ${task.last_completed_by_profile_name}`"></span>
@@ -189,6 +192,9 @@
                                 <span class="frequency-badge" :class="'frequency-badge-' + task.frequency" x-text="formatFrequency(task.frequency)"></span>
                                 <template x-if="task.is_overdue">
                                     <span class="overdue-badge" x-text="`${task.days_overdue} day${task.days_overdue !== 1 ? 's' : ''} overdue`"></span>
+                                </template>
+                                <template x-if="task.is_coming_soon && !task.is_due && !task.is_overdue">
+                                    <span class="coming-soon-badge" x-text="`Due in ${task.days_until_due} day${task.days_until_due !== 1 ? 's' : ''}`"></span>
                                 </template>
                                 <span class="completion-info">
                                     <template x-if="task.last_completed_at">
@@ -807,8 +813,8 @@ function householdMaintenance() {
                 return hoursSince <= 48 && t.frequency !== 'todo';
             });
 
-            // Calendar-based recurrence: Show tasks that are currently due
-            const dueTasks = tasks.filter(t => t.is_due || t.is_overdue);
+            // Calendar-based recurrence: Show tasks that are currently due or coming soon
+            const dueTasks = tasks.filter(t => t.is_due || t.is_overdue || t.is_coming_soon);
 
             this.allTasks = dueTasks.filter(t => !t.is_overdue);
             this.overdueTasks = dueTasks.filter(t => t.is_overdue);
@@ -832,10 +838,11 @@ function householdMaintenance() {
                     return hoursSince <= 48 && t.frequency !== 'todo';
                 });
 
-                // Calendar-based recurrence: Show tasks that are currently due
+                // Calendar-based recurrence: Show tasks that are currently due, overdue, or coming soon
                 // is_due: task's next due date has arrived (based on calendar recurrence)
                 // is_overdue: task is due but overdue (past due date and not completed)
-                const dueTasks = tasks.filter(t => t.is_due || t.is_overdue);
+                // is_coming_soon: task will be due within 7 days
+                const dueTasks = tasks.filter(t => t.is_due || t.is_overdue || t.is_coming_soon);
 
                 this.allTasks = dueTasks.filter(t => !t.is_overdue);
                 this.overdueTasks = dueTasks.filter(t => t.is_overdue);
@@ -1423,6 +1430,16 @@ function householdMaintenance() {
     padding: 2px 8px;
     background: #fff1f0;
     color: #ff4d4f;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.coming-soon-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #e6f7ff;
+    color: #1890ff;
     border-radius: 12px;
     font-size: 12px;
     font-weight: 600;

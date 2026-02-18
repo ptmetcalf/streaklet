@@ -93,6 +93,8 @@ class HouseholdTaskWithStatus(HouseholdTaskResponse):
     - is_due: Whether task is currently due
     - is_overdue: Whether task is overdue based on frequency
     - days_overdue: Number of days past the due date
+    - is_coming_soon: Whether task is due within upcoming threshold (default: 7 days)
+    - days_until_due: Days until next due date (negative if overdue)
     """
     last_completed_at: Optional[datetime] = None
     last_completed_by_profile_id: Optional[int] = None
@@ -102,5 +104,7 @@ class HouseholdTaskWithStatus(HouseholdTaskResponse):
     is_due: bool = False
     is_overdue: bool = False
     days_overdue: int = 0
+    is_coming_soon: bool = False
+    days_until_due: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
