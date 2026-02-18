@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.11.0](https://github.com/ptmetcalf/streaklet/compare/v1.10.0...v1.11.0) (2026-02-18)
+
+
+### Features
+
+* **household:** show upcoming tasks due within 7 days with countdown badge ([86fd45a](https://github.com/ptmetcalf/streaklet/commit/86fd45a42f1aef04a7a6613d478a28083d966336))
+
+
+### Bug Fixes
+
+* **daily:** display Fitbit progress and task streak markers on initial page load ([e6e1310](https://github.com/ptmetcalf/streaklet/commit/e6e13107b4528a0afaf5caad94f1eb616701124b))
+
 ## [1.10.0](https://github.com/ptmetcalf/streaklet/compare/v1.9.0...v1.10.0) (2026-02-02)
 
 
