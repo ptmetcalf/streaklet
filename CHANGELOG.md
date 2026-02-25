@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/ptmetcalf/streaklet/compare/v1.11.0...v1.11.1) (2026-02-25)
+
+
+### Bug Fixes
+
+* **punch-list:** wire up auto-archive job and exclude archived tasks from home page ([149adcb](https://github.com/ptmetcalf/streaklet/commit/149adcb53a28f010477a586086651340c2ce3b9c))
+
 ## [1.11.0](https://github.com/ptmetcalf/streaklet/compare/v1.10.0...v1.11.0) (2026-02-18)
 
 
