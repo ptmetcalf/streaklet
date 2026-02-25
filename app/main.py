@@ -143,11 +143,12 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
         }
         daily_tasks.append(task_dict)
 
-    # Get punch list tasks
+    # Get punch list tasks (exclude archived)
     punch_list_tasks_query = db.query(Task).filter(
         and_(
             Task.task_type == 'punch_list',
-            Task.user_id == profile_id
+            Task.user_id == profile_id,
+            Task.archived_at.is_(None)
         )
     ).order_by(Task.sort_order).all()
 

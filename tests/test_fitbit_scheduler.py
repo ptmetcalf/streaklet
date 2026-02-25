@@ -63,14 +63,20 @@ def test_start_scheduler():
         with patch.object(fitbit_scheduler.scheduler, 'start') as mock_start:
             fitbit_scheduler.start_scheduler()
 
-            mock_add_job.assert_called_once()
+            assert mock_add_job.call_count == 2
             mock_start.assert_called_once()
 
-            # Verify job configuration
-            call_kwargs = mock_add_job.call_args[1]
-            assert call_kwargs['id'] == 'fitbit_sync'
-            assert call_kwargs['replace_existing'] is True
-            assert call_kwargs['max_instances'] == 1
+            # Verify Fitbit sync job configuration
+            fitbit_call = mock_add_job.call_args_list[0]
+            assert fitbit_call[1]['id'] == 'fitbit_sync'
+            assert fitbit_call[1]['replace_existing'] is True
+            assert fitbit_call[1]['max_instances'] == 1
+
+            # Verify punch list archive job configuration
+            archive_call = mock_add_job.call_args_list[1]
+            assert archive_call[1]['id'] == 'punch_list_archive'
+            assert archive_call[1]['replace_existing'] is True
+            assert archive_call[1]['max_instances'] == 1
 
 
 def test_shutdown_scheduler_running():

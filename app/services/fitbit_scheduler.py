@@ -13,6 +13,7 @@ from app.core.config import settings
 from app.core.time import get_timezone
 from app.core.db import get_db
 from app.services.fitbit_sync import sync_all_connected_profiles
+from app.services.punch_list import archive_old_completed_punch_list_tasks
 
 
 # Configure logging
@@ -62,9 +63,25 @@ async def sync_all_profiles_job():
         logger.error(f"Fitbit sync job failed: {e}", exc_info=True)
 
 
+async def archive_punch_list_job():
+    """
+    Background job to archive old completed punch list tasks.
+
+    Runs daily to auto-archive tasks completed more than 7 days ago.
+    """
+    logger.info("Running punch list auto-archive job...")
+    try:
+        db = next(get_db())
+        archive_old_completed_punch_list_tasks(db)
+        db.close()
+        logger.info("Punch list auto-archive job complete")
+    except Exception as e:
+        logger.error(f"Punch list auto-archive job failed: {e}", exc_info=True)
+
+
 def start_scheduler():
     """
-    Start the APScheduler with hourly Fitbit sync job.
+    Start the APScheduler with hourly Fitbit sync job and daily punch list archive job.
 
     Called during FastAPI app startup.
     """
@@ -77,6 +94,18 @@ def start_scheduler():
         replace_existing=True,
         max_instances=1,  # Prevent overlapping runs
         misfire_grace_time=3600  # Run missed jobs within 1 hour of scheduled time
+    )
+
+    # Add daily punch list archive job (runs at midnight in configured timezone)
+    scheduler.add_job(
+        archive_punch_list_job,
+        'cron',
+        hour=0,
+        minute=0,
+        id='punch_list_archive',
+        replace_existing=True,
+        max_instances=1,
+        misfire_grace_time=3600
     )
 
     scheduler.start()
