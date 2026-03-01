@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/ptmetcalf/streaklet/compare/v2.1.0...v2.1.1) (2026-03-01)
+
+
+### Bug Fixes
+
+* **fitbit:** preserve auto-check settings and surface sync failures ([65e8da2](https://github.com/ptmetcalf/streaklet/commit/65e8da2175d1cea81408ab9364f94f736d927f48))
+
 ## [2.1.0](https://github.com/ptmetcalf/streaklet/compare/v2.0.0...v2.1.0) (2026-03-01)
 
 
