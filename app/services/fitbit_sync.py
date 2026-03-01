@@ -101,6 +101,7 @@ async def sync_profile_date_range(
     success_days = 0
     error_days = 0
     total_metrics = 0
+    errors: list[dict[str, str]] = []
 
     # Iterate through date range
     current_date = start_date
@@ -120,23 +121,39 @@ async def sync_profile_date_range(
             else:
                 # No metrics available (might be future date or no data)
                 error_days += 1
+                errors.append({
+                    "date": current_date.isoformat(),
+                    "error": "No metrics returned from Fitbit API"
+                })
 
         except Exception as e:
             logger.warning("Error syncing Fitbit date %s for profile %s: %s", current_date, profile_id, e)
             error_days += 1
+            errors.append({
+                "date": current_date.isoformat(),
+                "error": str(e)
+            })
 
         current_date += timedelta(days=1)
 
     # Update connection sync status
     connection.last_sync_at = get_now()
-    connection.last_sync_status = "success" if error_days == 0 else "partial"
+    if error_days == 0:
+        connection.last_sync_status = "success"
+    elif success_days == 0:
+        connection.last_sync_status = "error"
+    else:
+        connection.last_sync_status = "partial"
     db.commit()
 
-    return {
+    result = {
         "success_days": success_days,
         "error_days": error_days,
         "total_metrics": total_metrics
     }
+    if errors:
+        result["errors"] = errors[:5]
+    return result
 
 
 async def sync_profile_recent(db: Session, profile_id: int) -> Dict:

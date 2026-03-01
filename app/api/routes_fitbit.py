@@ -227,11 +227,25 @@ async def manual_sync(
             result = await fitbit_sync.sync_profile_historical(db, profile_id, days=days)
         else:
             result = await fitbit_sync.sync_profile_smart(db, profile_id)
+
+        # If all requested days failed, surface as an API error instead of a false success.
+        if result.get("success_days", 0) == 0 and result.get("error_days", 0) > 0:
+            first_error = None
+            errors = result.get("errors") or []
+            if errors and isinstance(errors[0], dict):
+                first_error = errors[0].get("error")
+            detail = "Sync completed with no data updated."
+            if first_error:
+                detail = f"{detail} First error: {first_error}"
+            raise HTTPException(status_code=502, detail=detail)
+
         return {
             "status": "success",
             "message": "Sync completed",
             "details": result
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Sync failed: {str(e)}")
 

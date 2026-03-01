@@ -110,9 +110,9 @@ async def evaluate_and_apply_auto_checks(
                 profile_id=profile_id
             )
             tasks_checked += 1
-        else:
-            # Uncheck the task if it was auto-checked before but goal no longer met
-            # (This handles case where Fitbit data updates later in the day)
+        elif metric:
+            # Uncheck only when we have metric data and it no longer meets the goal.
+            # Missing metric data should not force an uncheck.
             existing_check = check_service.get_task_check(db, target_date, task.id, profile_id)
             if existing_check and existing_check.checked:
                 check_service.update_task_check(

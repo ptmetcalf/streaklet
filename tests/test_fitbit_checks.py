@@ -252,6 +252,41 @@ async def test_evaluate_and_apply_auto_checks_no_metric_data(test_db: Session, s
 
 
 @pytest.mark.asyncio
+async def test_evaluate_and_apply_auto_checks_no_metric_does_not_uncheck_existing(test_db: Session, sample_profiles):
+    """Missing metric data should not uncheck a previously checked task."""
+    today = get_today()
+
+    task = Task(
+        user_id=1,
+        title="Walk 10,000 steps",
+        sort_order=1,
+        is_required=True,
+        is_active=True,
+        fitbit_metric_type="steps",
+        fitbit_goal_value=10000,
+        fitbit_goal_operator="gte",
+        fitbit_auto_check=True,
+        active_since=date(2025, 1, 1)
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    check_service.ensure_checks_exist_for_date(test_db, today, profile_id=1)
+    check_service.update_task_check(test_db, today, task.id, checked=True, profile_id=1)
+
+    result = await fitbit_checks.evaluate_and_apply_auto_checks(test_db, 1, today)
+
+    assert result["tasks_evaluated"] == 1
+    assert result["tasks_checked"] == 0
+    assert result["tasks_unchecked"] == 0
+
+    checks = check_service.get_checks_for_date(test_db, today, profile_id=1)
+    task_check = next((c for c in checks if c.task_id == task.id), None)
+    assert task_check is not None
+    assert task_check.checked is True
+
+
+@pytest.mark.asyncio
 async def test_get_task_fitbit_progress(test_db: Session, sample_profiles):
     """Test getting Fitbit progress for a task."""
     today = get_today()

@@ -758,6 +758,15 @@
                             <span>Required for daily completion</span>
                         </label>
                     </div>
+                    <div class="form-field" x-show="editingTaskForm?.fitbit_metric_type && editingTaskForm?.task_type !== 'shopping_list'">
+                        <label class="form-field__checkbox-label">
+                            <input type="checkbox" class="form-field__checkbox" x-model="editingTaskForm.fitbit_auto_check">
+                            <span>Auto-check when Fitbit goal is met</span>
+                        </label>
+                        <div style="margin-left: 28px; margin-top: 6px; font-size: 12px; color: #666;">
+                            <span x-text="`Metric: ${formatMetricName(editingTaskForm.fitbit_metric_type)} | Goal: ${editingTaskForm.fitbit_goal_operator || 'gte'} ${editingTaskForm.fitbit_goal_value ?? '-'}`"></span>
+                        </div>
+                    </div>
                     <div class="form-field" x-show="editingTaskForm?.task_type !== 'shopping_list'">
                         <label class="form-field__checkbox-label">
                             <input type="checkbox" class="form-field__checkbox" x-model="editingTaskForm.is_active">
@@ -981,7 +990,11 @@ function checklist() {
             task_type: 'daily',
             due_date: null,
             is_required: true,
-            is_active: true
+            is_active: true,
+            fitbit_metric_type: null,
+            fitbit_goal_value: null,
+            fitbit_goal_operator: null,
+            fitbit_auto_check: false
         },
 
         fitbitTemplates: {
@@ -1775,7 +1788,11 @@ function checklist() {
                 task_type: task.task_type || 'daily',
                 due_date: task.due_date || null,
                 is_required: task.is_required !== false,
-                is_active: task.is_active !== false
+                is_active: task.is_active !== false,
+                fitbit_metric_type: task.fitbit_metric_type || null,
+                fitbit_goal_value: task.fitbit_goal_value ?? null,
+                fitbit_goal_operator: task.fitbit_goal_operator || null,
+                fitbit_auto_check: task.fitbit_auto_check === true
             };
             this.showEditTaskModal = true;
         },
@@ -1791,7 +1808,11 @@ function checklist() {
                 task_type: 'daily',
                 due_date: null,
                 is_required: true,
-                is_active: true
+                is_active: true,
+                fitbit_metric_type: null,
+                fitbit_goal_value: null,
+                fitbit_goal_operator: null,
+                fitbit_auto_check: false
             };
         },
 
@@ -1818,6 +1839,10 @@ function checklist() {
                     payload.due_date = this.editingTaskForm.due_date || null;
                 } else if (taskType !== 'shopping_list') {
                     payload.is_required = this.editingTaskForm.is_required;
+                }
+
+                if (this.editingTaskForm.fitbit_metric_type) {
+                    payload.fitbit_auto_check = this.editingTaskForm.fitbit_auto_check;
                 }
 
                 await api.tasks.update(this.editingTaskForm.id, payload);

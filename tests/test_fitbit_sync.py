@@ -190,6 +190,10 @@ async def test_sync_profile_date_range_no_data(test_db: Session, sample_profiles
         assert result["success_days"] == 0
         assert result["error_days"] == 3
         assert result["total_metrics"] == 0
+        assert "errors" in result
+
+        test_db.refresh(connection)
+        assert connection.last_sync_status == "error"
 
 
 @pytest.mark.asyncio

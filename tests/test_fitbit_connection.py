@@ -139,8 +139,8 @@ async def test_delete_connection_cascades_to_metrics(test_db: Session, sample_pr
 
 
 @pytest.mark.asyncio
-async def test_delete_connection_resets_task_auto_check(test_db: Session, sample_profiles):
-    """Test that deleting connection resets fitbit_auto_check on tasks."""
+async def test_delete_connection_preserves_task_auto_check(test_db: Session, sample_profiles):
+    """Test that deleting connection preserves fitbit_auto_check on tasks."""
     # Create connection
     connection = FitbitConnection(
         user_id=1,
@@ -173,9 +173,9 @@ async def test_delete_connection_resets_task_auto_check(test_db: Session, sample
     # Delete connection
     await fitbit_connection.delete_connection(test_db, profile_id=1)
 
-    # Verify fitbit_auto_check was reset to False
+    # Verify fitbit_auto_check is preserved for reconnection
     test_db.refresh(task)
-    assert task.fitbit_auto_check is False
+    assert task.fitbit_auto_check is True
     # Other Fitbit fields should remain
     assert task.fitbit_metric_type == "steps"
     assert task.fitbit_goal_value == 10000

@@ -267,8 +267,8 @@ def test_post_fitbit_sync_triggers_sync(client: TestClient, test_db, sample_prof
     test_db.commit()
 
     # Mock the sync service
-    with patch("app.services.fitbit_sync.sync_profile_recent") as mock_sync:
-        mock_sync.return_value = {"success": 2, "errors": 0}
+    with patch("app.services.fitbit_sync.sync_profile_smart") as mock_sync:
+        mock_sync.return_value = {"success_days": 2, "error_days": 0, "total_metrics": 12}
 
         response = client.post("/api/fitbit/sync")
 
@@ -276,6 +276,7 @@ def test_post_fitbit_sync_triggers_sync(client: TestClient, test_db, sample_prof
         data = response.json()
         assert data["status"] == "success"
         assert "sync completed" in data["message"].lower()
+        assert data["details"]["total_metrics"] == 12
 
 
 def test_post_fitbit_sync_not_connected(client: TestClient, sample_profiles):
@@ -426,6 +427,35 @@ def test_manual_sync_failure(client: TestClient, test_db, sample_profiles):
         assert response.status_code == 500
         assert "Sync failed" in response.json()["detail"]
         assert "Sync service failed" in response.json()["detail"]
+
+
+def test_manual_sync_returns_502_when_no_days_succeed(client: TestClient, test_db, sample_profiles):
+    """Test manual sync returns 502 when every requested day fails."""
+    connection = FitbitConnection(
+        user_id=1,
+        fitbit_user_id="FITBIT123",
+        access_token=encrypt_token("access_token"),
+        refresh_token=encrypt_token("refresh_token"),
+        token_expires_at=get_now() + timedelta(hours=8),
+        scope="activity heartrate sleep",
+        connected_at=get_now()
+    )
+    test_db.add(connection)
+    test_db.commit()
+
+    with patch("app.services.fitbit_sync.sync_profile_smart") as mock_sync:
+        mock_sync.return_value = {
+            "success_days": 0,
+            "error_days": 2,
+            "total_metrics": 0,
+            "errors": [{"date": "2025-12-14", "error": "Unauthorized after token refresh; reconnect Fitbit"}]
+        }
+
+        response = client.post("/api/fitbit/sync")
+
+        assert response.status_code == 502
+        detail = response.json()["detail"]
+        assert "no data updated" in detail.lower()
 
 
 def test_get_sync_status_not_connected(client: TestClient, sample_profiles):

@@ -4,13 +4,11 @@ Fitbit connection management service.
 Handles:
 - Retrieving connection status
 - Deleting connections
-- Resetting Fitbit task settings
 """
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.models.fitbit_connection import FitbitConnection
-from app.models.task import Task
 from app.services.fitbit_oauth import revoke_token
 
 
@@ -37,7 +35,6 @@ async def delete_connection(db: Session, profile_id: int) -> bool:
     This performs the following actions:
     1. Revokes access token with Fitbit (best-effort)
     2. Deletes FitbitConnection record (CASCADE deletes metrics)
-    3. Resets fitbit_auto_check on all tasks to False
 
     Args:
         db: Database session
@@ -55,12 +52,6 @@ async def delete_connection(db: Session, profile_id: int) -> bool:
 
     # Delete connection (CASCADE will delete metrics)
     db.delete(connection)
-
-    # Reset auto-check on all tasks (keep other Fitbit fields for re-connection)
-    db.query(Task).filter(
-        Task.user_id == profile_id,
-        Task.fitbit_auto_check .is_(True)
-    ).update({"fitbit_auto_check": False})
 
     db.commit()
 

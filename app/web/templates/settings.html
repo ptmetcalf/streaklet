@@ -395,14 +395,20 @@ function settings() {
                 localStorage.setItem('streaklet_fitbit_sync_token', String(Date.now()));
 
                 const totalMetrics = result?.details?.total_metrics;
-                if (Number.isFinite(totalMetrics)) {
+                const successDays = result?.details?.success_days;
+                const errorDays = result?.details?.error_days;
+
+                if (Number.isFinite(totalMetrics) && Number.isFinite(successDays) && Number.isFinite(errorDays) && errorDays > 0) {
+                    toast.warning(`Fitbit sync partially completed (${successDays} day(s) updated, ${errorDays} failed)`);
+                } else if (Number.isFinite(totalMetrics)) {
                     toast.success(`Fitbit sync complete (${totalMetrics} metrics updated)`);
                 } else {
                     toast.success('Fitbit sync complete');
                 }
             } catch (error) {
                 console.error('Error syncing Fitbit:', error);
-                toast.error('Failed to sync Fitbit');
+                const detail = (error && error.message) ? String(error.message) : 'Failed to sync Fitbit';
+                toast.error(detail);
             } finally {
                 this.isSyncing = false;
             }
