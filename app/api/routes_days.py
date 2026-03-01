@@ -127,17 +127,24 @@ async def get_day_info(
     profile_id: int = Depends(get_profile_id)
 ):
     """Get a specific day's checklist with all tasks and completion status for a profile."""
+    from app.models.task import Task as TaskModel
     today = get_today()
     if check_date > today:
         raise HTTPException(status_code=400, detail="Date cannot be in the future")
 
-    check_service.ensure_checks_exist_for_date(db, check_date, profile_id)
+    # For past dates: only show tasks with existing check records (historical snapshot).
+    # Don't call ensure_checks_exist_for_date, which would retroactively add new tasks
+    # to old days whenever the task list changes.
+    checks_for_date = check_service.get_checks_for_date(db, check_date, profile_id)
+    task_ids_with_checks = [c.task_id for c in checks_for_date]
+    checks_map = {c.task_id: c for c in checks_for_date}
 
-    active_tasks = task_service.get_active_tasks(db, profile_id)
-    checks_map = {
-        check.task_id: check
-        for check in check_service.get_checks_for_date(db, check_date, profile_id)
-    }
+    active_tasks = (
+        db.query(TaskModel)
+        .filter(TaskModel.id.in_(task_ids_with_checks), TaskModel.user_id == profile_id)
+        .order_by(TaskModel.sort_order)
+        .all()
+    )
 
     from app.services.fitbit_checks import get_task_fitbit_progress
 

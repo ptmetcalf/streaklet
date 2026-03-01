@@ -95,10 +95,19 @@
             </div>
 
             <div class="checklist" x-show="selectedDay">
-                <template x-for="task in selectedDay.tasks" :key="task.id">
+                <!-- Completed tasks summary -->
+                <div x-show="completedTasks.length > 0" class="completed-summary">
+                    <span x-text="`${completedTasks.length} task${completedTasks.length === 1 ? '' : 's'} completed`"></span>
+                </div>
+
+                <!-- Incomplete/missed tasks -->
+                <div x-show="incompleteTasks.length === 0 && completedTasks.length > 0" class="all-complete-msg">
+                    All tasks completed!
+                </div>
+                <template x-for="task in incompleteTasks" :key="task.id">
                     <div
                         class="task-item"
-                        :class="{ 'checked': task.checked, 'disabled': !isSelectedDateEditable }"
+                        :class="{ 'disabled': !isSelectedDateEditable }"
                         @click="toggleTask(task)"
                     >
                         <div class="checkbox">
@@ -281,6 +290,14 @@ function calendar() {
             return this.selectedDate && this.maxSelectableDate && this.selectedDate <= this.maxSelectableDate;
         },
 
+        get completedTasks() {
+            return this.selectedDay ? this.selectedDay.tasks.filter(t => t.checked) : [];
+        },
+
+        get incompleteTasks() {
+            return this.selectedDay ? this.selectedDay.tasks.filter(t => !t.checked) : [];
+        },
+
         formatDateInput(date) {
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -360,6 +377,28 @@ function calendar() {
 <style>
 .calendar-day {
     position: relative;
+}
+
+.completed-summary {
+    font-size: 13px;
+    color: var(--success-color, #4caf50);
+    padding: 6px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.completed-summary::before {
+    content: '✓';
+    font-weight: bold;
+}
+
+.all-complete-msg {
+    font-size: 14px;
+    color: var(--success-color, #4caf50);
+    padding: 12px 0;
+    text-align: center;
+    font-weight: 500;
 }
 </style>
 {% endblock %}
