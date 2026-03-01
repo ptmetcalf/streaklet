@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.4](https://github.com/ptmetcalf/streaklet/compare/v1.11.3...v1.11.4) (2026-03-01)
+
+
+### Bug Fixes
+
+* remove duplicate empty-state base rules from components.css ([a029346](https://github.com/ptmetcalf/streaklet/commit/a02934653276535c6f90454971d95ce0ef245d28))
+
 ## [1.11.3](https://github.com/ptmetcalf/streaklet/compare/v1.11.2...v1.11.3) (2026-03-01)
 
 
