@@ -667,8 +667,8 @@ def undo_last_completion(db: Session, task_id: int) -> bool:
             else:
                 task.next_due_date = None
         else:
-            # Calendar mode: Calculate from previous due date
-            base_date = task.next_due_date or get_today()
+            # Calendar mode: Calculate from the day after the previous completion
+            base_date = previous_completion.completed_at.date() + timedelta(days=1)
             task.next_due_date = calculate_next_due_date(task, from_date=base_date)
     else:
         # No previous completions - task needs to be manually rescheduled or reset

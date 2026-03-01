@@ -788,14 +788,6 @@ function householdMaintenance() {
             const today = new Date().toISOString().split('T')[0];
 
             return this.allTasksForCalendar.filter(task => {
-                // Check if task was completed on this date
-                if (task.last_completed_at) {
-                    const completedDate = new Date(task.last_completed_at).toISOString().split('T')[0];
-                    if (completedDate === dateStr) {
-                        return true; // Show tasks completed on this date
-                    }
-                }
-
                 // Handle to-do items
                 if (task.frequency === 'todo') {
                     if (task.due_date && !task.is_completed) {
@@ -807,47 +799,47 @@ function householdMaintenance() {
                     return false;
                 }
 
+                // For recurring tasks, only show from next_due_date onward (after completion,
+                // next_due_date advances to the next occurrence, hiding the just-completed period)
+                const showFromDate = task.next_due_date || today;
+
                 // For recurring tasks, calculate if this date matches the recurrence pattern
                 if (task.schedule_mode === 'calendar') {
                     // Weekly: Check if day of week matches
                     if (task.frequency === 'weekly' && task.recurrence_day_of_week !== null) {
-                        // Get day of week (0=Monday, 6=Sunday)
                         const dayOfWeek = taskDate.getDay() === 0 ? 6 : taskDate.getDay() - 1;
-                        return dayOfWeek === task.recurrence_day_of_week && dateStr >= today;
+                        return dayOfWeek === task.recurrence_day_of_week && dateStr >= showFromDate;
                     }
 
-                    // Bi-weekly: Check if day of week matches (more complex - needs to check interval)
+                    // Bi-weekly: Check if day of week matches and interval is correct
                     if (task.frequency === 'biweekly' && task.recurrence_day_of_week !== null) {
                         const dayOfWeek = taskDate.getDay() === 0 ? 6 : taskDate.getDay() - 1;
-                        if (dayOfWeek !== task.recurrence_day_of_week || dateStr < today) return false;
-
-                        // Check if it's the right interval (every 2 weeks)
-                        // Use next_due_date as reference point
+                        if (dayOfWeek !== task.recurrence_day_of_week || dateStr < showFromDate) return false;
                         if (task.next_due_date) {
                             const nextDue = new Date(task.next_due_date + 'T00:00:00');
                             const daysDiff = Math.floor((taskDate - nextDue) / (1000 * 60 * 60 * 24));
-                            return daysDiff % 14 === 0 && dateStr >= today;
+                            return daysDiff % 14 === 0;
                         }
                         return false;
                     }
 
                     // Monthly: Check if day of month matches
                     if (task.frequency === 'monthly' && task.recurrence_day_of_month !== null) {
-                        return taskDate.getDate() === task.recurrence_day_of_month && dateStr >= today;
+                        return taskDate.getDate() === task.recurrence_day_of_month && dateStr >= showFromDate;
                     }
 
                     // Quarterly: Check if it's the right month and day
                     if (task.frequency === 'quarterly' && task.recurrence_month !== null && task.recurrence_day !== null) {
                         const month = taskDate.getMonth() + 1;
                         const isQuarterMonth = (month - task.recurrence_month) % 3 === 0;
-                        return isQuarterMonth && taskDate.getDate() === task.recurrence_day && dateStr >= today;
+                        return isQuarterMonth && taskDate.getDate() === task.recurrence_day && dateStr >= showFromDate;
                     }
 
                     // Annual: Check if month and day match
                     if (task.frequency === 'annual' && task.recurrence_month !== null && task.recurrence_day !== null) {
                         return taskDate.getMonth() + 1 === task.recurrence_month &&
                                taskDate.getDate() === task.recurrence_day &&
-                               dateStr >= today;
+                               dateStr >= showFromDate;
                     }
                 }
 

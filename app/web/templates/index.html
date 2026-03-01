@@ -548,11 +548,7 @@ function checklist() {
                     this.celebrateTaskMilestone(updatedTask, newStreak);
                 }
 
-                // Update overall celebration
-                const streakData = await api.streak.get();
-                this.streak = streakData.current_streak;
-                this.todayComplete = streakData.today_complete;
-                this.lastCompletedDate = streakData.last_completed_date;
+                // Trigger celebration effects with data already loaded by loadDailyTasks()
                 this.updateCelebration(true);
             } catch (error) {
                 console.error('Error updating task:', error);
@@ -574,8 +570,7 @@ function checklist() {
 
         isOverdue(task) {
             if (!task.due_date || task.completed_at) return false;
-            const today = new Date().toISOString().split('T')[0];
-            return task.due_date < today;
+            return task.due_date < this.date;
         },
 
         // Modal handling methods
