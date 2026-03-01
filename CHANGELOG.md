@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.3](https://github.com/ptmetcalf/streaklet/compare/v1.11.2...v1.11.3) (2026-03-01)
+
+
+### Bug Fixes
+
+* correct undo next_due_date, timeline completed tasks, nav order, and timezone ([ec7a7e3](https://github.com/ptmetcalf/streaklet/commit/ec7a7e3e4e78638d2fbf988e77760d5d5030e839))
+
 ## [1.11.2](https://github.com/ptmetcalf/streaklet/compare/v1.11.1...v1.11.2) (2026-03-01)
 
 
