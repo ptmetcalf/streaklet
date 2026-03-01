@@ -1,5 +1,5 @@
 // Service Worker for Streaklet PWA
-const SW_VERSION = 'v5-20260301';
+const SW_VERSION = 'v6-20260301';
 const STATIC_CACHE = `streaklet-static-${SW_VERSION}`;
 const SAME_ORIGIN = self.location.origin;
 
@@ -8,18 +8,6 @@ const STATIC_ASSETS = [
   '/static/css/components.css',
   '/static/manifest.json'
 ];
-
-const NON_CACHEABLE_API_PREFIXES = [
-  '/api/days/',
-  '/api/streak',
-  '/api/fitbit/connection',
-  '/api/fitbit/connect',
-  '/api/fitbit/callback'
-];
-
-function shouldBypassApiCache(pathname) {
-  return NON_CACHEABLE_API_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-}
 
 function isStaticRequest(request, url) {
   if (url.origin !== SAME_ORIGIN) return false;
@@ -122,7 +110,8 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request, { cache: shouldBypassApiCache(url.pathname) ? 'no-store' : 'default' })
+      // API responses are dynamic/profile-specific. Never use HTTP cache here.
+      fetch(request, { cache: 'no-store' })
         .catch((error) => {
           console.warn('[SW] API fetch failed:', url.pathname, error);
           return new Response(

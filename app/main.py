@@ -176,6 +176,8 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
             "id": task.id,
             "title": task.title,
             "icon": task.icon,
+            "task_type": task.task_type,
+            "is_active": task.is_active,
             "sort_order": task.sort_order,
             "completed_at": task.completed_at.isoformat() if task.completed_at else None,
             "due_date": task.due_date.isoformat() if task.due_date else None
@@ -197,6 +199,8 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
             "id": task.id,
             "title": task.title,
             "icon": task.icon,
+            "task_type": task.task_type,
+            "is_active": task.is_active,
             "sort_order": task.sort_order,
             "completed_at": task.completed_at.isoformat() if task.completed_at else None,
         }

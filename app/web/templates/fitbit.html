@@ -84,17 +84,26 @@
         <!-- Daily View Tab -->
         <div x-show="currentTab === 'daily'">
             <div class="fitbit-focus-strip" x-show="weeklyActions.length > 0">
-                <div class="fitbit-focus-strip__score"
-                     :class="{
-                        'fitbit-focus-strip__score--strong': weeklyScore >= 80,
-                        'fitbit-focus-strip__score--medium': weeklyScore >= 60 && weeklyScore < 80,
-                        'fitbit-focus-strip__score--low': weeklyScore < 60
-                     }">
-                    <span x-text="weeklyScore"></span>
+                <div class="fitbit-focus-strip__score-wrap">
+                    <div class="fitbit-focus-strip__score"
+                         :class="{
+                            'fitbit-focus-strip__score--strong': weeklyScore >= 80,
+                            'fitbit-focus-strip__score--medium': weeklyScore >= 60 && weeklyScore < 80,
+                            'fitbit-focus-strip__score--low': weeklyScore < 60
+                         }">
+                        <span x-text="weeklyScore"></span>
+                    </div>
+                    <div class="fitbit-focus-strip__score-label">Overall</div>
                 </div>
                 <div class="fitbit-focus-strip__content">
                     <div class="fitbit-focus-strip__title">7-Day Focus</div>
-                    <div class="fitbit-focus-strip__subtitle" x-text="weeklyActions[0]?.detail || 'Keep your current momentum.'"></div>
+                    <div class="fitbit-focus-strip__subtitle" x-text="`Overall score: ${weeklyScore}/100 (${weeklyScoreLabel})`"></div>
+                    <div class="fitbit-focus-strip__detail"
+                         x-show="visibleMetrics.steps"
+                         x-text="`Steps goal: ${goalPercent(stats.week_steps, weeklyStepsGoal)}% of ${formatNumber(weeklyStepsGoal)} this week`"></div>
+                    <div class="fitbit-focus-strip__detail"
+                         x-show="!visibleMetrics.steps"
+                         x-text="weeklyActions[0]?.detail || 'Keep your current momentum.'"></div>
                 </div>
                 <button class="btn btn--secondary btn--sm" @click="currentTab = 'insights'; loadInsightsHubData()">
                     View insights
@@ -491,6 +500,7 @@ function fitbitMetrics() {
         goals: {
             weekly_steps: 70000
         },
+        lastFitbitSyncToken: null,
 
         goalPercent(currentValue, goalValue) {
             if (!goalValue || goalValue <= 0) return 0;
@@ -603,6 +613,28 @@ function fitbitMetrics() {
             if (this.fitbitConnected) {
                 await this.loadPreferences();
                 await this.loadMetricsForDate();
+                await this.loadInsightsHubData();
+            }
+
+            this.lastFitbitSyncToken = localStorage.getItem('streaklet_fitbit_sync_token');
+            window.addEventListener('focus', () => this.checkForSyncRefresh());
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    this.checkForSyncRefresh();
+                }
+            });
+        },
+
+        async checkForSyncRefresh() {
+            const token = localStorage.getItem('streaklet_fitbit_sync_token');
+            if (!token || token === this.lastFitbitSyncToken) return;
+
+            this.lastFitbitSyncToken = token;
+            await this.loadMetricsForDate();
+
+            if (this.currentTab === 'trends') {
+                await this.loadTrendData();
+            } else if (this.currentTab === 'insights') {
                 await this.loadInsightsHubData();
             }
         },

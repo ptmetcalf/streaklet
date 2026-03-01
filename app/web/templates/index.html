@@ -82,12 +82,13 @@
                     <div class="task-card-actions">
                         <button @click="toggleTask(task)"
                                 class="btn-task-action btn-task-complete"
+                                :data-mobile-icon="task.checked ? '↶' : '✓'"
                                 :class="{ 'task-card-checked': task.checked }">
                             <span x-show="!task.checked">✓ Mark Complete</span>
                             <span x-show="task.checked">↶ Undo</span>
                         </button>
-                        <button @click="showTaskHistory(task)" class="btn-task-action btn-task-secondary">History</button>
-                        <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary">Edit</button>
+                        <button @click="showTaskHistory(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
+                        <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
                     </div>
                 </div>
             </template>
@@ -243,12 +244,13 @@
                     <div class="task-card-actions">
                         <button @click="toggleTask(task)"
                                 class="btn-task-action btn-task-complete"
+                                :data-mobile-icon="task.checked ? '↶' : '✓'"
                                 :class="{ 'task-card-checked': task.checked }">
                             <span x-show="!task.checked">✓ Mark Complete</span>
                             <span x-show="task.checked">↶ Undo</span>
                         </button>
-                        <button @click="showTaskHistory(task)" class="btn-task-action btn-task-secondary">History</button>
-                        <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary">Edit</button>
+                        <button @click="showTaskHistory(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
+                        <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
                     </div>
                 </div>
             </template>
@@ -267,11 +269,11 @@
                     </div>
 
                     <div class="task-card-actions">
-                        <button @click="togglePunchListTask(task)" class="btn-task-action btn-task-complete">
+                        <button @click="togglePunchListTask(task)" class="btn-task-action btn-task-complete" data-mobile-icon="✓">
                             ✓ Mark Complete
                         </button>
-                        <button @click="showTaskHistory(task)" class="btn-task-action btn-task-secondary">History</button>
-                        <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary">Edit</button>
+                        <button @click="showTaskHistory(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
+                        <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
                     </div>
                 </div>
             </template>
@@ -361,11 +363,11 @@
                         <div class="task-card-title" x-text="item.title"></div>
                     </div>
                     <div class="task-card-actions">
-                        <button @click="toggleShoppingItem(item)" class="btn-task-action btn-task-complete">
+                        <button @click="toggleShoppingItem(item)" class="btn-task-action btn-task-complete" data-mobile-icon="✓">
                             ✓ Mark Purchased
                         </button>
-                        <button @click="showTaskHistory(item)" class="btn-task-action btn-task-secondary">History</button>
-                        <button @click="openEditTaskModal(item)" class="btn-task-action btn-task-secondary">Edit</button>
+                        <button @click="showTaskHistory(item)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
+                        <button @click="openEditTaskModal(item)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
                     </div>
                 </div>
             </template>
@@ -756,7 +758,7 @@
                             <span>Required for daily completion</span>
                         </label>
                     </div>
-                    <div class="form-field">
+                    <div class="form-field" x-show="editingTaskForm?.task_type !== 'shopping_list'">
                         <label class="form-field__checkbox-label">
                             <input type="checkbox" class="form-field__checkbox" x-model="editingTaskForm.is_active">
                             <span>Active (uncheck to archive)</span>
@@ -764,8 +766,10 @@
                     </div>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
                         <button type="button" class="btn btn--danger" x-show="editingTaskForm?.id"
-                                @click="deleteEditingTaskFromModal()">Delete Task</button>
-                        <button type="submit" class="btn btn--primary" :disabled="!editingTaskForm?.title?.trim()">Update Task</button>
+                                @click="deleteEditingTaskFromModal()"
+                                x-text="`Delete ${taskEntityNoun(editingTaskForm?.task_type)}`"></button>
+                        <button type="submit" class="btn btn--primary" :disabled="!editingTaskForm?.title?.trim()"
+                                x-text="`Update ${taskEntityNoun(editingTaskForm?.task_type)}`"></button>
                         <button type="button" class="btn btn--secondary" @click="closeEditTaskModal()">Cancel</button>
                     </div>
                 </form>
@@ -781,12 +785,12 @@
          @keydown.escape.window="showDeleteTaskConfirmModal && closeDeleteTaskConfirmModal()">
         <div class="modal-content modal-content--sm">
             <div class="modal-header">
-                <h2>Delete Task?</h2>
+                <h2 x-text="`Delete ${taskEntityNoun(pendingDeleteTask?.task_type)}?`"></h2>
                 <button @click="closeDeleteTaskConfirmModal()" class="btn-close" :disabled="deletingTaskInProgress">✕</button>
             </div>
             <div class="modal-body">
                 <p>
-                    Delete "<strong x-text="pendingDeleteTask?.title || 'this task'"></strong>"?
+                    Delete "<strong x-text="pendingDeleteTask?.title || `this ${taskEntityNoun(pendingDeleteTask?.task_type).toLowerCase()}`"></strong>"?
                 </p>
                 <p style="margin-top: 8px; color: #666; font-size: 14px;" x-show="pendingDeleteTask?.task_type === 'punch_list'">
                     This removes the to-do item permanently.
@@ -801,7 +805,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn--secondary" @click="closeDeleteTaskConfirmModal()" :disabled="deletingTaskInProgress">Cancel</button>
                 <button type="button" class="btn btn--danger" @click="confirmDeleteTask()" :disabled="deletingTaskInProgress">
-                    <span x-show="!deletingTaskInProgress">Delete Task</span>
+                    <span x-show="!deletingTaskInProgress" x-text="`Delete ${taskEntityNoun(pendingDeleteTask?.task_type)}`"></span>
                     <span x-show="deletingTaskInProgress">Deleting...</span>
                 </button>
             </div>
@@ -1481,6 +1485,12 @@ function checklist() {
             return 'Daily';
         },
 
+        taskEntityNoun(taskType) {
+            if (taskType === 'punch_list') return 'To-Do';
+            if (taskType === 'shopping_list') return 'Shopping Item';
+            return 'Task';
+        },
+
         async restoreArchivedTask(task) {
             if (!task || !task.id) return;
 
@@ -1795,8 +1805,9 @@ function checklist() {
         async submitEditTask() {
             if (!this.editingTaskForm || !this.editingTaskForm.title.trim()) return;
 
+            const taskType = this.editingTaskForm.task_type;
+            const entityName = this.taskEntityNoun(taskType);
             try {
-                const taskType = this.editingTaskForm.task_type;
                 const payload = {
                     title: this.editingTaskForm.title,
                     icon: this.editingTaskForm.icon,
@@ -1812,14 +1823,15 @@ function checklist() {
                 await api.tasks.update(this.editingTaskForm.id, payload);
                 this.closeEditTaskModal();
                 await this.refreshPersonalTaskViews();
-                toast.success('Task updated successfully');
+                toast.success(`${entityName} updated successfully`);
             } catch (error) {
                 console.error('Error updating task:', error);
-                toast.error('Failed to update task');
+                toast.error(`Failed to update ${entityName.toLowerCase()}`);
             }
         },
 
         async deleteTaskFromToday(task) {
+            const entityName = this.taskEntityNoun(task.task_type);
             try {
                 if (task.task_type === 'punch_list') {
                     await api.punchList.delete(task.id);
@@ -1829,11 +1841,11 @@ function checklist() {
                     await api.tasks.delete(task.id);
                 }
                 await this.refreshPersonalTaskViews();
-                toast.success('Task deleted successfully');
+                toast.success(`${entityName} deleted successfully`);
                 return true;
             } catch (error) {
                 console.error('Error deleting task:', error);
-                toast.error('Failed to delete task');
+                toast.error(`Failed to delete ${entityName.toLowerCase()}`);
                 return false;
             }
         },

@@ -388,15 +388,23 @@ function settings() {
         async manualSync() {
             this.isSyncing = true;
             try {
-                await api.fitbit.sync();
-                setTimeout(async () => {
-                    await this.loadFitbitStatus();
-                    this.isSyncing = false;
-                }, 3000);
+                const result = await api.fitbit.sync();
+                await this.loadFitbitStatus();
+
+                // Signal other pages (e.g., Fitbit dashboard) to refresh data.
+                localStorage.setItem('streaklet_fitbit_sync_token', String(Date.now()));
+
+                const totalMetrics = result?.details?.total_metrics;
+                if (Number.isFinite(totalMetrics)) {
+                    toast.success(`Fitbit sync complete (${totalMetrics} metrics updated)`);
+                } else {
+                    toast.success('Fitbit sync complete');
+                }
             } catch (error) {
                 console.error('Error syncing Fitbit:', error);
-                this.isSyncing = false;
                 toast.error('Failed to sync Fitbit');
+            } finally {
+                this.isSyncing = false;
             }
         },
 

@@ -44,12 +44,13 @@
                     </div>
                     <div class="task-card-actions">
                         <button @click="markComplete(task)" :disabled="isCompleting(task.id)"
+                                :data-mobile-icon="isCompleting(task.id) ? '⏳' : '✓'"
                                 class="btn-task-action btn-task-complete" :class="{ 'disabled': isCompleting(task.id) }">
                             <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
                             <span x-show="isCompleting(task.id)">⏳</span>
                         </button>
-                        <button @click="openEditHouseholdTaskModal(task)" class="btn-task-action btn-task-secondary">Edit</button>
-                        <button @click="showHistory(task)" class="btn-task-action btn-task-secondary">History</button>
+                        <button @click="openEditHouseholdTaskModal(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
+                        <button @click="showHistory(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
                     </div>
                 </div>
             </template>

@@ -115,14 +115,4 @@
 
 /* History list + stats styles now in components.css */
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
-    .task-card-actions {
-        flex-direction: column;
-    }
-
-    .btn-task-complete {
-        flex: none;
-    }
-}
-
+/* Mobile card action layout is handled in shared style.css */

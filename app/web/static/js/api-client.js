@@ -101,13 +101,20 @@ class ApiClient {
             skipJsonParse = false,
             ...fetchOptions
         } = options;
+        const requestOptions = { ...fetchOptions };
+        const method = String(requestOptions.method || 'GET').toUpperCase();
+
+        // Dynamic API reads should not use browser HTTP cache.
+        if ((method === 'GET' || method === 'HEAD') && requestOptions.cache === undefined) {
+            requestOptions.cache = 'no-store';
+        }
 
         try {
             // Use fetchWithProfile only when it is actually a function.
             // Some browser extensions/privacy layers can inject non-function globals.
             const profileFetch = window.fetchWithProfile;
             const fetchFn = useProfile && typeof profileFetch === 'function' ? profileFetch : fetch;
-            const response = await fetchFn(url, fetchOptions);
+            const response = await fetchFn(url, requestOptions);
 
             // Handle non-OK responses
             if (!response.ok) {
@@ -144,7 +151,7 @@ class ApiClient {
             return data;
         } catch (error) {
             // Network or parsing errors
-            console.error(`API Error [${fetchOptions.method || 'GET'} ${url}]:`, error);
+            console.error(`API Error [${method} ${url}]:`, error);
             if (onError && error !== 'handled') {
                 onError(error);
             }

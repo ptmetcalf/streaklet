@@ -1834,7 +1834,27 @@ button:active {
     }
 
     .task-card-actions {
-        flex-direction: column;
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .task-card-actions .btn-task-action {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+        min-height: 40px;
+        padding: 10px 8px;
+    }
+
+    .task-card-actions .btn-task-action[data-mobile-icon] {
+        font-size: 0;
+    }
+
+    .task-card-actions .btn-task-action[data-mobile-icon]::before {
+        content: attr(data-mobile-icon);
+        font-size: 18px;
+        line-height: 1;
+        font-weight: 700;
     }
 
     /* Mobile button styles moved to components.css */
