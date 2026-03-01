@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.2](https://github.com/ptmetcalf/streaklet/compare/v1.11.1...v1.11.2) (2026-03-01)
+
+
+### Bug Fixes
+
+* trigger release for refactor ([364f97c](https://github.com/ptmetcalf/streaklet/commit/364f97ce3b4bf30c5053601ab905614b70e442eb))
+
 ## [1.11.1](https://github.com/ptmetcalf/streaklet/compare/v1.11.0...v1.11.1) (2026-02-25)
 
 
