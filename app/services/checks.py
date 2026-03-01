@@ -34,7 +34,7 @@ def ensure_checks_exist_for_date(db: Session, check_date: date, profile_id: int)
     Create TaskCheck records for applicable tasks on a date.
     - Daily tasks: always
     - Scheduled tasks: only if due on this date
-    - Punch list: never (created on completion)
+    - Punch/shopping list: never (created on completion)
     """
     # Get daily tasks
     daily_tasks = db.query(Task).filter(
@@ -108,8 +108,8 @@ def update_task_check(db: Session, check_date: date, task_id: int, checked: bool
         from app.services.scheduled_tasks import complete_scheduled_occurrence
         complete_scheduled_occurrence(db, task_id, check_date, profile_id)
 
-    # Recompute daily completion (punch list tasks don't affect this)
-    if task.task_type != 'punch_list':
+    # Recompute daily completion (one-off list tasks don't affect this)
+    if task.task_type not in ('punch_list', 'shopping_list'):
         recompute_daily_completion(db, check_date, profile_id)
 
     return check
@@ -121,7 +121,7 @@ def recompute_daily_completion(db: Session, check_date: date, profile_id: int) -
     Only considers:
     - Daily tasks (always)
     - Scheduled tasks (if due on this date)
-    Does NOT consider punch list tasks.
+    Does NOT consider one-off list tasks (punch/shopping).
 
     Also filters by active_since: only tasks with active_since <= check_date count.
     """

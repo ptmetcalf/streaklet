@@ -1,8 +1,9 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 from app.models.profile import Profile
 from app.models.task import Task
-from app.schemas.profile import ProfileCreate, ProfileUpdate
+from app.schemas.profile import ProfileCreate, ProfileUpdate, ProfilePreferencesUpdate
 from typing import List, Optional
 
 
@@ -15,8 +16,41 @@ DEFAULT_TASKS_FOR_NEW_PROFILE = [
 ]
 
 
+def ensure_profile_preferences_columns(db: Session) -> None:
+    """
+    Ensure profile preference columns exist for older SQLite databases.
+
+    This keeps startup compatible for existing installs that have not run
+    Alembic migrations yet.
+    """
+    columns = {
+        row[1]
+        for row in db.execute(text("PRAGMA table_info(profiles)")).fetchall()
+    }
+
+    altered = False
+    if "confetti_enabled" not in columns:
+        db.execute(text(
+            "ALTER TABLE profiles "
+            "ADD COLUMN confetti_enabled BOOLEAN NOT NULL DEFAULT 1"
+        ))
+        altered = True
+
+    if "show_shopping_list" not in columns:
+        db.execute(text(
+            "ALTER TABLE profiles "
+            "ADD COLUMN show_shopping_list BOOLEAN NOT NULL DEFAULT 0"
+        ))
+        altered = True
+
+    if altered:
+        db.commit()
+
+
 def seed_default_profile(db: Session) -> None:
     """Seed default profile if profiles table is empty."""
+    ensure_profile_preferences_columns(db)
+
     existing = db.query(Profile).filter(Profile.id == 1).first()
     if not existing:
         profile = Profile(id=1, name="Default Profile", color="#3b82f6")
@@ -77,6 +111,25 @@ def update_profile(db: Session, profile_id: int, profile_update: ProfileUpdate) 
     except IntegrityError:
         db.rollback()
         return None  # Duplicate name
+
+
+def update_profile_preferences(
+    db: Session,
+    profile_id: int,
+    preferences: ProfilePreferencesUpdate
+) -> Optional[Profile]:
+    """Update current profile UI preferences."""
+    db_profile = get_profile_by_id(db, profile_id)
+    if not db_profile:
+        return None
+
+    update_data = preferences.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_profile, key, value)
+
+    db.commit()
+    db.refresh(db_profile)
+    return db_profile
 
 
 def delete_profile(db: Session, profile_id: int) -> bool:

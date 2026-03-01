@@ -11,6 +11,20 @@ from app.main import app
 from app.core.config import settings
 
 
+class CookieCompatTestClient(TestClient):
+    """Compatibility wrapper that applies per-request cookies to the client jar."""
+
+    def request(self, method, url, *args, **kwargs):
+        request_cookies = kwargs.pop("cookies", None)
+        if request_cookies:
+            for key, value in request_cookies.items():
+                if value is None:
+                    self.cookies.pop(key, None)
+                else:
+                    self.cookies.set(key, str(value))
+        return super().request(method, url, *args, **kwargs)
+
+
 # Freeze time to a consistent datetime for all tests
 # Using 2025-12-14 12:00 PM America/Chicago timezone
 @pytest.fixture(scope="function", autouse=True)
@@ -68,7 +82,7 @@ def client(test_db: Session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
-    client = TestClient(app)
+    client = CookieCompatTestClient(app)
     yield client
     app.dependency_overrides.clear()
 

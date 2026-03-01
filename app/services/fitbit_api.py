@@ -7,6 +7,8 @@ Handles fetching data from Fitbit REST API:
 - Heart rate summary (resting heart rate)
 """
 import httpx
+import logging
+import re
 from datetime import date
 from typing import Dict
 from sqlalchemy.orm import Session
@@ -17,11 +19,40 @@ from app.services.fitbit_oauth import ensure_valid_token, refresh_access_token, 
 
 # Fitbit API base URL
 FITBIT_API_BASE = "https://api.fitbit.com"
+logger = logging.getLogger(__name__)
 
 
 class FitbitAPIError(Exception):
     """Exception raised when Fitbit API request fails."""
     pass
+
+
+def _parse_fitbit_numeric_value(value) -> float | None:
+    """
+    Parse Fitbit numeric values that may arrive as numbers, numeric strings,
+    or ranges like "43-47". Range values return their midpoint.
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    if isinstance(value, str):
+        raw_value = value.strip()
+        if not raw_value:
+            return None
+
+        try:
+            return float(raw_value)
+        except ValueError:
+            range_match = re.fullmatch(r"(-?\d+(?:\.\d+)?)\s*-\s*(-?\d+(?:\.\d+)?)", raw_value)
+            if range_match:
+                low = float(range_match.group(1))
+                high = float(range_match.group(2))
+                return (low + high) / 2
+
+    return None
 
 
 async def _make_fitbit_request(
@@ -223,7 +254,7 @@ async def fetch_sleep_summary(
 
     except Exception as e:
         # Sleep data might not be available for all dates, don't raise error
-        print(f"Failed to fetch sleep summary for {target_date}: {e}")
+        logger.warning("Failed to fetch sleep summary for %s: %s", target_date, e)
         return {}
 
 
@@ -265,7 +296,7 @@ async def fetch_heart_rate_summary(
 
     except Exception as e:
         # Heart rate data might not be available, don't raise error
-        print(f"Failed to fetch heart rate for {target_date}: {e}")
+        logger.warning("Failed to fetch heart rate for %s: %s", target_date, e)
         return {}
 
 
@@ -313,7 +344,7 @@ async def fetch_active_zone_minutes(
 
     except Exception as e:
         # AZM not available (older devices or API error)
-        print(f"Failed to fetch Active Zone Minutes for {target_date}: {e}")
+        logger.warning("Failed to fetch active zone minutes for %s: %s", target_date, e)
         return {}
 
 
@@ -364,7 +395,7 @@ async def fetch_hrv_summary(
         return metrics
 
     except Exception as e:
-        print(f"Failed to fetch HRV for {target_date}: {e}")
+        logger.warning("Failed to fetch HRV for %s: %s", target_date, e)
         return {}
 
 
@@ -401,13 +432,14 @@ async def fetch_cardio_fitness(
         if cardio_data:
             for record in cardio_data:
                 vo2_max = record.get("value", {}).get("vo2Max")
-                if vo2_max is not None:
-                    metrics["cardio_fitness_score"] = float(vo2_max)
+                parsed_vo2 = _parse_fitbit_numeric_value(vo2_max)
+                if parsed_vo2 is not None:
+                    metrics["cardio_fitness_score"] = parsed_vo2
 
         return metrics
 
     except Exception as e:
-        print(f"Failed to fetch cardio fitness for {target_date}: {e}")
+        logger.warning("Failed to fetch cardio fitness for %s: %s", target_date, e)
         return {}
 
 
@@ -450,7 +482,7 @@ async def fetch_breathing_rate(
         return metrics
 
     except Exception as e:
-        print(f"Failed to fetch breathing rate for {target_date}: {e}")
+        logger.warning("Failed to fetch breathing rate for %s: %s", target_date, e)
         return {}
 
 
@@ -504,7 +536,7 @@ async def fetch_spo2(
         return metrics
 
     except Exception as e:
-        print(f"Failed to fetch SpO2 for {target_date}: {e}")
+        logger.warning("Failed to fetch SpO2 for %s: %s", target_date, e)
         return {}
 
 
@@ -547,7 +579,7 @@ async def fetch_temperature(
         return metrics
 
     except Exception as e:
-        print(f"Failed to fetch temperature for {target_date}: {e}")
+        logger.warning("Failed to fetch temperature for %s: %s", target_date, e)
         return {}
 
 
@@ -629,7 +661,7 @@ async def fetch_sleep_stages(
         return metrics
 
     except Exception as e:
-        print(f"Failed to fetch sleep stages for {target_date}: {e}")
+        logger.warning("Failed to fetch sleep stages for %s: %s", target_date, e)
         return {}
 
 
@@ -675,7 +707,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except FitbitAPIError as e:
-        print(f"Activity fetch failed: {e}")
+        logger.warning("Activity fetch failed for %s: %s", target_date, e)
 
     # Fetch Active Zone Minutes (modern metric)
     try:
@@ -702,7 +734,7 @@ async def fetch_all_metrics(
                 "unit": "minutes",
                 "metadata": {"source": "legacy_fairly_very_active"}
             }
-        print(f"Active minutes fetch failed: {e}")
+        logger.warning("Active minutes fetch failed for %s: %s", target_date, e)
 
     # Fetch sleep metrics
     try:
@@ -719,7 +751,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"Sleep fetch failed: {e}")
+        logger.warning("Sleep fetch failed for %s: %s", target_date, e)
 
     # Fetch heart rate metrics
     try:
@@ -733,7 +765,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"Heart rate fetch failed: {e}")
+        logger.warning("Heart rate fetch failed for %s: %s", target_date, e)
 
     # Fetch HRV metrics
     try:
@@ -745,7 +777,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"HRV fetch failed: {e}")
+        logger.warning("HRV fetch failed for %s: %s", target_date, e)
 
     # Fetch Cardio Fitness (VO2 Max)
     try:
@@ -757,7 +789,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"Cardio fitness fetch failed: {e}")
+        logger.warning("Cardio fitness fetch failed for %s: %s", target_date, e)
 
     # Fetch Breathing Rate
     try:
@@ -769,7 +801,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"Breathing rate fetch failed: {e}")
+        logger.warning("Breathing rate fetch failed for %s: %s", target_date, e)
 
     # Fetch SpO2
     try:
@@ -781,7 +813,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"SpO2 fetch failed: {e}")
+        logger.warning("SpO2 fetch failed for %s: %s", target_date, e)
 
     # Fetch Temperature
     try:
@@ -793,7 +825,7 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"Temperature fetch failed: {e}")
+        logger.warning("Temperature fetch failed for %s: %s", target_date, e)
 
     # Fetch Sleep Stages
     try:
@@ -805,6 +837,6 @@ async def fetch_all_metrics(
                 "metadata": None
             }
     except Exception as e:
-        print(f"Sleep stages fetch failed: {e}")
+        logger.warning("Sleep stages fetch failed for %s: %s", target_date, e)
 
     return all_metrics

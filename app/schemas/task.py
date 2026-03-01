@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict, model_validator
 from datetime import datetime, date
-from typing import Optional, Literal, Dict, Any
+from typing import Optional, Literal, Dict, Any, List
 
 
 class TaskBase(BaseModel):
@@ -11,7 +11,7 @@ class TaskBase(BaseModel):
     is_active: bool = True
 
     # Task type
-    task_type: Literal['daily', 'punch_list', 'scheduled'] = 'daily'
+    task_type: Literal['daily', 'punch_list', 'shopping_list', 'scheduled'] = 'daily'
 
     # Active since - only counts toward completion on dates >= this
     active_since: Optional[date] = None
@@ -72,7 +72,7 @@ class TaskUpdate(BaseModel):
     sort_order: Optional[int] = None
     is_required: Optional[bool] = None
     is_active: Optional[bool] = None
-    task_type: Optional[Literal['daily', 'punch_list', 'scheduled']] = None
+    task_type: Optional[Literal['daily', 'punch_list', 'shopping_list', 'scheduled']] = None
     active_since: Optional[date] = None
     due_date: Optional[date] = None
     recurrence_pattern: Optional[Dict[str, Any]] = None
@@ -94,3 +94,24 @@ class TaskResponse(TaskBase):
     archived_at: Optional[datetime] = None
     last_occurrence_date: Optional[date] = None
     next_occurrence_date: Optional[date] = None
+
+
+class TaskHistoryEntry(BaseModel):
+    date: date
+    completed_at: Optional[datetime] = None
+    source: Literal['check', 'punch_list', 'shopping_list'] = 'check'
+
+
+class TaskHistoryStats(BaseModel):
+    total_completions: int
+    completions_last_30_days: int
+    current_streak: int
+    best_streak: int
+    last_completed_at: Optional[datetime] = None
+
+
+class TaskHistoryResponse(BaseModel):
+    task_id: int
+    task_type: Literal['daily', 'punch_list', 'shopping_list', 'scheduled']
+    stats: TaskHistoryStats
+    history: List[TaskHistoryEntry]

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Streaklet - History{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/css/pages/history.css?v={{ cache_bust }}">{% endblock %}
 
 {% block content %}
 <div class="container" x-data="calendar()" x-cloak>
@@ -374,31 +375,4 @@ function calendar() {
 }
 </script>
 
-<style>
-.calendar-day {
-    position: relative;
-}
-
-.completed-summary {
-    font-size: 13px;
-    color: var(--success-color, #4caf50);
-    padding: 6px 0 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.completed-summary::before {
-    content: '✓';
-    font-weight: bold;
-}
-
-.all-complete-msg {
-    font-size: 14px;
-    color: var(--success-color, #4caf50);
-    padding: 12px 0;
-    text-align: center;
-    font-weight: 500;
-}
-</style>
 {% endblock %}

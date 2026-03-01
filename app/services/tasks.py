@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.task import Task
+from app.models.task_check import TaskCheck
 from app.schemas.task import TaskCreate, TaskUpdate
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+from datetime import timedelta, datetime, time
 
 
 # Default icon mappings for personal tasks
@@ -241,3 +243,120 @@ def delete_task(db: Session, task_id: int, profile_id: int) -> bool:
     db.delete(db_task)
     db.commit()
     return True
+
+
+def _calculate_best_streak(dates: List) -> int:
+    """Calculate longest consecutive daily streak from a list of dates."""
+    if not dates:
+        return 0
+
+    sorted_dates = sorted(set(dates))
+    best = 1
+    current = 1
+
+    for index in range(1, len(sorted_dates)):
+        if sorted_dates[index] == sorted_dates[index - 1] + timedelta(days=1):
+            current += 1
+        else:
+            current = 1
+        best = max(best, current)
+
+    return best
+
+
+def get_task_history(db: Session, task_id: int, profile_id: int, limit: int = 30) -> Optional[Dict[str, Any]]:
+    """
+    Get completion history and summary stats for a personal task.
+
+    Supports both recurring tasks (via task_checks) and one-off list tasks
+    (single completion timestamp on the task record).
+    """
+    from app.core.time import get_today
+    from app.services import streaks as streak_service
+
+    task = get_task_by_id(db, task_id, profile_id)
+    if not task:
+        return None
+
+    today = get_today()
+    cutoff_date = today - timedelta(days=29)
+
+    if task.task_type in ('punch_list', 'shopping_list'):
+        history = []
+        total_completions = 0
+        completions_last_30_days = 0
+        last_completed_at = task.completed_at
+
+        if task.completed_at:
+            source = 'punch_list' if task.task_type == 'punch_list' else 'shopping_list'
+            history = [{
+                'date': task.completed_at.date(),
+                'completed_at': task.completed_at,
+                'source': source
+            }]
+            total_completions = 1
+            if task.completed_at.date() >= cutoff_date:
+                completions_last_30_days = 1
+
+        return {
+            'task_id': task.id,
+            'task_type': task.task_type,
+            'stats': {
+                'total_completions': total_completions,
+                'completions_last_30_days': completions_last_30_days,
+                'current_streak': 0,
+                'best_streak': 0,
+                'last_completed_at': last_completed_at
+            },
+            'history': history
+        }
+
+    recent_checks = db.query(TaskCheck).filter(
+        TaskCheck.task_id == task.id,
+        TaskCheck.user_id == profile_id,
+        TaskCheck.checked.is_(True)
+    ).order_by(TaskCheck.date.desc()).limit(limit).all()
+
+    all_check_dates = [
+        row[0] for row in db.query(TaskCheck.date).filter(
+            TaskCheck.task_id == task.id,
+            TaskCheck.user_id == profile_id,
+            TaskCheck.checked.is_(True)
+        ).all()
+    ]
+
+    total_completions = len(all_check_dates)
+    completions_last_30_days = db.query(TaskCheck).filter(
+        TaskCheck.task_id == task.id,
+        TaskCheck.user_id == profile_id,
+        TaskCheck.checked.is_(True),
+        TaskCheck.date >= cutoff_date
+    ).count()
+
+    current_streak, _ = streak_service.calculate_task_streak(db, task.id, profile_id)
+    best_streak = _calculate_best_streak(all_check_dates)
+    last_completed_at = recent_checks[0].checked_at if recent_checks else None
+    if recent_checks and last_completed_at is None:
+        last_completed_at = datetime.combine(recent_checks[0].date, time.min)
+
+    history = []
+    for check in recent_checks:
+        completed_at = check.checked_at or datetime.combine(check.date, time.min)
+        history.append({
+            'date': check.date,
+            'completed_at': completed_at,
+            'source': 'check'
+        })
+
+    return {
+        'task_id': task.id,
+        'task_type': task.task_type,
+        'stats': {
+            'total_completions': total_completions,
+            'completions_last_30_days': completions_last_30_days,
+            'current_streak': current_streak,
+            'best_streak': best_streak,
+            'last_completed_at': last_completed_at
+        },
+        'history': history
+    }

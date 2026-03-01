@@ -694,7 +694,7 @@ def test_undo_completion_no_completions(test_db, sample_profiles):
 @freeze_time("2026-02-01 12:00:00", tz_offset=-6)
 def test_undo_completion_multiple_completions(test_db, sample_profiles):
     """Test undoing only removes the most recent completion."""
-    from datetime import date, timedelta
+    from datetime import date
     from freezegun import freeze_time as freeze
 
     task = HouseholdTask(
@@ -758,7 +758,7 @@ def test_api_undo_completion_no_completions(client, sample_household_tasks):
 @freeze_time("2026-02-10 12:00:00", tz_offset=-6)
 def test_coming_soon_tasks(test_db, sample_profiles):
     """Test that tasks due within 7 days are marked as coming_soon."""
-    from datetime import date, timedelta
+    from datetime import timedelta
     from app.core.time import get_today
 
     today = get_today()

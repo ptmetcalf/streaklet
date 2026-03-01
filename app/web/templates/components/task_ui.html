@@ -1,0 +1,9 @@
+{% macro add_task_card(click_action, title, subtitle) -%}
+<div class="add-task-card" @click="{{ click_action }}">
+    <i class="mdi mdi-plus-circle add-task-card__icon"></i>
+    <div class="add-task-card__text">
+        <div class="add-task-card__title">{{ title }}</div>
+        <div class="add-task-card__subtitle">{{ subtitle }}</div>
+    </div>
+</div>
+{%- endmacro %}

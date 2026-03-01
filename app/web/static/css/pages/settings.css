@@ -1,0 +1,180 @@
+.settings-header {
+    margin-bottom: 24px;
+}
+
+.settings-card {
+    padding: 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+}
+
+.settings-card p {
+    margin: 0 0 12px;
+    color: #666;
+    font-size: 14px;
+}
+
+.settings-card--center {
+    text-align: center;
+}
+
+.pref-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.pref-toggle input {
+    width: 18px;
+    height: 18px;
+}
+
+.pref-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.pref-description {
+    color: #666;
+    font-size: 14px;
+}
+
+.fitbit-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.fitbit-status-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.fitbit-status-meta {
+    color: #666;
+    font-size: 14px;
+}
+
+.fitbit-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fitbit-link {
+    display: inline-block;
+    margin-top: 10px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.prefs-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.prefs-header-row h3 {
+    margin: 0;
+}
+
+.prefs-description {
+    margin: 0 0 14px;
+    color: #666;
+    font-size: 14px;
+}
+
+.prefs-saved {
+    color: #16a34a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.prefs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+}
+
+.prefs-group {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.prefs-group h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+.prefs-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.prefs-group--highlight {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.prefs-footer {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.goals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.goal-field {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+}
+
+.goal-field__label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #444;
+}
+
+.goal-field__hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .settings-card,
+    .prefs-group {
+        padding: 14px;
+    }
+
+    .fitbit-actions {
+        width: 100%;
+    }
+
+    .fitbit-actions .btn {
+        flex: 1;
+    }
+}

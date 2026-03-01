@@ -260,6 +260,46 @@ async def test_fetch_heart_rate_summary_error(test_db: Session, mock_connection)
 
 
 @pytest.mark.asyncio
+async def test_fetch_cardio_fitness_range_value(test_db: Session, mock_connection):
+    """Test cardio fitness parses range values like '43-47'."""
+    mock_data = {
+        "cardioScore": [
+            {
+                "value": {
+                    "vo2Max": "43-47"
+                }
+            }
+        ]
+    }
+
+    with patch("app.services.fitbit_api._make_fitbit_request", return_value=mock_data):
+        target_date = date(2025, 1, 15)
+        metrics = await fitbit_api.fetch_cardio_fitness(test_db, mock_connection, target_date)
+
+        assert metrics["cardio_fitness_score"] == 45.0
+
+
+@pytest.mark.asyncio
+async def test_fetch_cardio_fitness_invalid_value_ignored(test_db: Session, mock_connection):
+    """Test cardio fitness ignores non-numeric values instead of failing."""
+    mock_data = {
+        "cardioScore": [
+            {
+                "value": {
+                    "vo2Max": "N/A"
+                }
+            }
+        ]
+    }
+
+    with patch("app.services.fitbit_api._make_fitbit_request", return_value=mock_data):
+        target_date = date(2025, 1, 15)
+        metrics = await fitbit_api.fetch_cardio_fitness(test_db, mock_connection, target_date)
+
+        assert metrics == {}
+
+
+@pytest.mark.asyncio
 async def test_fetch_all_metrics_success(test_db: Session, mock_connection):
     """Test fetching all metrics combines activity, sleep, and heart rate."""
     async def mock_activity(*args):

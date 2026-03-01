@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import logging
@@ -9,7 +9,18 @@ import time
 
 from app.core.db import engine, get_db, Base
 from app.core.profile_context import get_profile_id
-from app.api import routes_tasks, routes_days, routes_streaks, routes_history, routes_profiles, routes_fitbit, routes_punch_list, routes_scheduled, routes_household
+from app.api import (
+    routes_tasks,
+    routes_days,
+    routes_streaks,
+    routes_history,
+    routes_profiles,
+    routes_fitbit,
+    routes_punch_list,
+    routes_scheduled,
+    routes_household,
+    routes_shopping_list,
+)
 from app.services import tasks as task_service, profiles as profile_service
 
 # Cache bust value for static assets (prevents browser caching issues)
@@ -61,6 +72,13 @@ app.include_router(routes_fitbit.router)
 app.include_router(routes_punch_list.router)
 app.include_router(routes_scheduled.router)
 app.include_router(routes_household.router)
+app.include_router(routes_shopping_list.router)
+
+
+@app.get("/sw.js")
+async def service_worker():
+    """Serve service worker from root for proper PWA scope and legacy browser checks."""
+    return FileResponse("app/web/static/sw.js", media_type="application/javascript")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -164,6 +182,26 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
         }
         punch_list_tasks.append(task_dict)
 
+    # Get shopping list items
+    shopping_list_tasks_query = db.query(Task).filter(
+        and_(
+            Task.task_type == 'shopping_list',
+            Task.user_id == profile_id,
+            Task.is_active.is_(True)
+        )
+    ).order_by(Task.completed_at.isnot(None), Task.created_at.desc()).all()
+
+    shopping_list_tasks = []
+    for task in shopping_list_tasks_query:
+        task_dict = {
+            "id": task.id,
+            "title": task.title,
+            "icon": task.icon,
+            "sort_order": task.sort_order,
+            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+        }
+        shopping_list_tasks.append(task_dict)
+
     # Get streak info
     streak_info = streak_service.get_streak_info(db, profile_id)
 
@@ -175,10 +213,11 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
         "today_date": streak_info["today_date"].isoformat() if streak_info["today_date"] else None
     }
 
-    return templates.TemplateResponse("index.html", {
+    return templates.TemplateResponse(request, "index.html", {
         "request": request,
         "daily_tasks": daily_tasks,
         "punch_list_tasks": punch_list_tasks,
+        "shopping_list_tasks": shopping_list_tasks,
         "streak": streak_json,
         "date": today.isoformat(),
         "cache_bust": CACHE_BUST
@@ -187,8 +226,8 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
 
 @app.get("/settings", response_class=HTMLResponse)
 async def settings(request: Request):
-    """Settings page for managing tasks."""
-    return templates.TemplateResponse("settings.html", {
+    """Settings page for preferences, profiles, and integrations."""
+    return templates.TemplateResponse(request, "settings.html", {
         "request": request,
         "cache_bust": CACHE_BUST
     })
@@ -205,7 +244,7 @@ async def fitbit(request: Request, db: Session = Depends(get_db), profile_id: in
     fitbit_connected = connection is not None
     today = get_today()
 
-    return templates.TemplateResponse("fitbit.html", {
+    return templates.TemplateResponse(request, "fitbit.html", {
         "request": request,
         "fitbit_connected": fitbit_connected,
         "today": today.isoformat(),
@@ -218,8 +257,8 @@ async def household(request: Request, db: Session = Depends(get_db)):
     """Household maintenance tracker page."""
     from app.services import household as household_service
 
-    # Fetch initial tasks server-side (household tasks are shared, no profile_id)
-    tasks = household_service.get_all_tasks_with_status(db)
+    # Fetch initial tasks server-side including inactive so archived tasks render immediately
+    tasks = household_service.get_all_tasks_with_status(db, include_inactive=True)
 
     # Convert datetime/date objects to strings for JSON serialization
     tasks_json = []
@@ -238,7 +277,7 @@ async def household(request: Request, db: Session = Depends(get_db)):
             task_copy['next_due_date'] = task_copy['next_due_date'].isoformat()
         tasks_json.append(task_copy)
 
-    return templates.TemplateResponse("household.html", {
+    return templates.TemplateResponse(request, "household.html", {
         "request": request,
         "tasks": tasks_json,
         "cache_bust": CACHE_BUST
@@ -254,7 +293,7 @@ async def history(request: Request):
 @app.get("/profiles", response_class=HTMLResponse)
 async def profiles(request: Request):
     """Profile management page for selecting and managing user profiles."""
-    return templates.TemplateResponse("profiles.html", {
+    return templates.TemplateResponse(request, "profiles.html", {
         "request": request,
         "cache_bust": CACHE_BUST
     })

@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 from app.services import tasks as task_service
 
 
@@ -160,3 +161,39 @@ def test_create_task_with_fitbit_auto_check_all_fields_valid(client: TestClient,
     assert data["fitbit_metric_type"] == "steps"
     assert data["fitbit_goal_value"] == 10000
     assert data["fitbit_goal_operator"] == ">="
+
+
+def test_get_task_history_with_stats(client: TestClient, test_db: Session, sample_tasks):
+    """Task history endpoint returns recent entries and summary stats."""
+    from app.models.task_check import TaskCheck
+    from app.core.time import get_today
+
+    today = get_today()
+    checks = [
+        TaskCheck(date=today, task_id=1, user_id=1, checked=True, checked_at=datetime.utcnow()),
+        TaskCheck(date=today - timedelta(days=1), task_id=1, user_id=1, checked=True, checked_at=datetime.utcnow()),
+        TaskCheck(date=today - timedelta(days=3), task_id=1, user_id=1, checked=True, checked_at=datetime.utcnow()),
+    ]
+    for check in checks:
+        test_db.add(check)
+    test_db.commit()
+
+    response = client.get("/api/tasks/1/history?limit=10")
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["task_id"] == 1
+    assert data["task_type"] == "daily"
+    assert data["stats"]["total_completions"] == 3
+    assert data["stats"]["completions_last_30_days"] == 3
+    assert data["stats"]["current_streak"] == 2
+    assert data["stats"]["best_streak"] == 2
+    assert len(data["history"]) == 3
+    assert data["history"][0]["date"] == today.isoformat()
+
+
+def test_get_task_history_not_found(client: TestClient, sample_tasks):
+    """Task history endpoint returns 404 for missing task."""
+    response = client.get("/api/tasks/999/history")
+    assert response.status_code == 404

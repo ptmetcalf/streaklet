@@ -67,6 +67,35 @@ def test_update_profile(client: TestClient, sample_profiles):
     assert profile["color"] == "#10b981"
 
 
+def test_get_current_profile_preferences(client: TestClient, sample_profiles):
+    """Test reading current profile preferences from cookie context."""
+    response = client.get("/api/profiles/preferences", cookies={"profile_id": "1"})
+    assert response.status_code == 200
+    preferences = response.json()
+    assert preferences["confetti_enabled"] is True
+    assert preferences["show_shopping_list"] is False
+
+
+def test_update_current_profile_preferences(client: TestClient, sample_profiles):
+    """Test updating current profile preferences from cookie context."""
+    update_response = client.put(
+        "/api/profiles/preferences",
+        cookies={"profile_id": "1"},
+        json={"confetti_enabled": False, "show_shopping_list": True}
+    )
+    assert update_response.status_code == 200
+    updated = update_response.json()
+    assert updated["confetti_enabled"] is False
+    assert updated["show_shopping_list"] is True
+
+    # Verify isolation - profile 2 remains unchanged
+    profile_two_response = client.get("/api/profiles/preferences", cookies={"profile_id": "2"})
+    assert profile_two_response.status_code == 200
+    profile_two = profile_two_response.json()
+    assert profile_two["confetti_enabled"] is True
+    assert profile_two["show_shopping_list"] is False
+
+
 def test_update_nonexistent_profile(client: TestClient, sample_profiles):
     """Test updating a profile that doesn't exist."""
     response = client.put("/api/profiles/999", json={

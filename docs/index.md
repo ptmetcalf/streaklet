@@ -50,11 +50,11 @@ Streaklet is a habit tracking application designed for families and personal use
 ### Todo List
 ![Todo List Tab](screenshots/todo-list-tab.png)
 
-### Scheduled Tasks
-![Scheduled Tasks Tab](screenshots/scheduled-tab.png)
+### Shopping List
+![Shopping List Tab](screenshots/shopping-list-tab.png)
 
-### History Calendar
-![History Page](screenshots/history-page.png)
+### Household Tasks
+![Household Page](screenshots/household-page.png)
 
 ### Fitbit Integration
 ![Fitbit Page](screenshots/fitbit-page.png)

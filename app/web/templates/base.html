@@ -20,8 +20,9 @@
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/icon-72x72.png">
 
-    <link rel="stylesheet" href="/static/css/style.css">
-    <link rel="stylesheet" href="/static/css/components.css">
+    <link rel="stylesheet" href="/static/css/style.css?v={{ cache_bust }}">
+    <link rel="stylesheet" href="/static/css/components.css?v={{ cache_bust }}">
+    {% block extra_css %}{% endblock %}
     <!-- Material Design Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
@@ -86,12 +87,11 @@
             });
         });
 
-        // Helper function to fetch (cookies sent automatically, no header needed)
-        function fetchWithProfile(url, options = {}) {
-            // Cookies are sent automatically with every request
-            // No need to manually add headers
+        // Compatibility shim for legacy API clients that still call fetchWithProfile.
+        // Cookies are included automatically by fetch for same-origin requests.
+        window.fetchWithProfile = function(url, options = {}) {
             return fetch(url, options);
-        }
+        };
 
         // Note: parseDateOnly and other utilities are now in /static/js/utils.js
 
@@ -136,16 +136,80 @@
             }
         });
 
-        // Register service worker for PWA support
+        // Register service worker for PWA support with update prompts
         if ('serviceWorker' in navigator) {
+            let swUpdatePromptShown = false;
+            const isLocalDevHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname);
+
+            function promptForServiceWorkerUpdate(registration) {
+                if (swUpdatePromptShown || !registration.waiting) return;
+                swUpdatePromptShown = true;
+
+                const shouldReload = window.confirm(
+                    'A new version of Streaklet is available. Reload now to update?'
+                );
+
+                if (shouldReload) {
+                    registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+            }
+
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/static/sw.js')
+                if (isLocalDevHost) {
+                    Promise.resolve()
+                        .then(async () => {
+                            const registrations = await navigator.serviceWorker.getRegistrations();
+                            await Promise.all(registrations.map((registration) => registration.unregister()));
+
+                            if ('caches' in window) {
+                                const cacheNames = await caches.keys();
+                                const streakletCaches = cacheNames.filter((name) => name.startsWith('streaklet-'));
+                                await Promise.all(streakletCaches.map((name) => caches.delete(name)));
+                            }
+
+                            console.log('[PWA] Service worker disabled on localhost for faster dev refresh.');
+                        })
+                        .catch((error) => {
+                            console.error('[PWA] Failed to disable local service worker:', error);
+                        });
+                    return;
+                }
+
+                navigator.serviceWorker.register('/sw.js?v={{ cache_bust }}')
                     .then((registration) => {
                         console.log('[PWA] Service Worker registered:', registration.scope);
+
+                        if (registration.waiting) {
+                            promptForServiceWorkerUpdate(registration);
+                        }
+
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            if (!newWorker) return;
+
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    promptForServiceWorkerUpdate(registration);
+                                }
+                            });
+                        });
+
+                        // Check for updates periodically while the app is open.
+                        window.setInterval(() => {
+                            registration.update().catch(() => {});
+                        }, 60 * 60 * 1000);
                     })
                     .catch((error) => {
                         console.error('[PWA] Service Worker registration failed:', error);
                     });
+            });
+
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (isLocalDevHost) return;
+                if (refreshing) return;
+                refreshing = true;
+                window.location.reload();
             });
         }
     </script>

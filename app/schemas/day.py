@@ -16,7 +16,7 @@ class TaskWithCheck(BaseModel):
     checked_at: Optional[datetime]
 
     # Task type
-    task_type: Literal['daily', 'punch_list', 'scheduled'] = 'daily'
+    task_type: Literal['daily', 'punch_list', 'shopping_list', 'scheduled'] = 'daily'
 
     # Fitbit fields
     fitbit_metric_type: Optional[str] = None

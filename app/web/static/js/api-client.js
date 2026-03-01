@@ -103,8 +103,10 @@ class ApiClient {
         } = options;
 
         try {
-            // Use fetchWithProfile or regular fetch
-            const fetchFn = useProfile ? window.fetchWithProfile : fetch;
+            // Use fetchWithProfile only when it is actually a function.
+            // Some browser extensions/privacy layers can inject non-function globals.
+            const profileFetch = window.fetchWithProfile;
+            const fetchFn = useProfile && typeof profileFetch === 'function' ? profileFetch : fetch;
             const response = await fetchFn(url, fetchOptions);
 
             // Handle non-OK responses
@@ -237,6 +239,7 @@ window.api = {
     tasks: {
         list: () => ApiClient.get('/api/tasks'),
         get: (id) => ApiClient.get(`/api/tasks/${id}`),
+        history: (id, limit = 30) => ApiClient.get(`/api/tasks/${id}/history?limit=${limit}`),
         create: (data) => ApiClient.post('/api/tasks', data),
         update: (id, data) => ApiClient.put(`/api/tasks/${id}`, data),
         delete: (id) => ApiClient.delete(`/api/tasks/${id}`),
@@ -259,6 +262,15 @@ window.api = {
         delete: (id) => ApiClient.delete(`/api/punch-list/${id}`),
     },
 
+    // Shopping list helpers
+    shoppingList: {
+        list: (includeCompleted = true) => ApiClient.get(`/api/shopping-list?include_completed=${includeCompleted}`),
+        create: (data) => ApiClient.post('/api/shopping-list', data),
+        complete: (id) => ApiClient.post(`/api/shopping-list/${id}/complete`),
+        uncomplete: (id) => ApiClient.delete(`/api/shopping-list/${id}/complete`),
+        delete: (id) => ApiClient.delete(`/api/shopping-list/${id}`),
+    },
+
     // Scheduled task helpers
     scheduled: {
         dueToday: () => ApiClient.get('/api/scheduled/due-today'),
@@ -269,7 +281,7 @@ window.api = {
 
     // Household task helpers
     household: {
-        list: () => ApiClient.get('/api/household/tasks', { useProfile: false }),
+        list: (includeInactive = false) => ApiClient.get(`/api/household/tasks?include_inactive=${includeInactive}`, { useProfile: false }),
         get: (id) => ApiClient.get(`/api/household/tasks/${id}`, { useProfile: false }),
         create: (data) => ApiClient.post('/api/household/tasks', data, { useProfile: false }),
         update: (id, data) => ApiClient.put(`/api/household/tasks/${id}`, data, { useProfile: false }),
@@ -303,6 +315,7 @@ window.api = {
             return ApiClient.get(`/api/fitbit/metrics/history?start_date=${startDate}&end_date=${endDate}&metric_types=${types}`);
         },
         visibleMetrics: () => ApiClient.get('/api/fitbit/preferences/visible-metrics'),
+        goals: () => ApiClient.get('/api/fitbit/preferences/goals'),
     },
 
     // Profile helpers
@@ -314,6 +327,12 @@ window.api = {
         delete: (id) => ApiClient.delete(`/api/profiles/${id}`, { useProfile: false }),
         export: (id) => ApiClient.get(`/api/profiles/${id}/export`, { useProfile: false }),
         import: (id, data) => ApiClient.post(`/api/profiles/${id}/import`, data, { useProfile: false }),
+    },
+
+    // Current profile preference helpers
+    profilePreferences: {
+        get: () => ApiClient.get('/api/profiles/preferences'),
+        update: (data) => ApiClient.put('/api/profiles/preferences', data),
     }
 };
 
@@ -325,6 +344,8 @@ if (typeof console !== 'undefined' && console.info) {
         'Task shortcuts': 'api.tasks.list(), api.tasks.create(data)',
         'Daily shortcuts': 'api.daily.today(), api.daily.toggleTask()',
         'Punch list': 'api.punchList.list(), api.punchList.complete(id)',
+        'Shopping list': 'api.shoppingList.list(), api.shoppingList.complete(id)',
+        'Profile prefs': 'api.profilePreferences.get(), api.profilePreferences.update(data)',
         'Household': 'api.household.list(), api.household.complete(id)',
         'Fitbit': 'api.fitbit.connection(), api.fitbit.dailySummary(date)',
         'Low-level': 'ApiClient.request(url, options)'

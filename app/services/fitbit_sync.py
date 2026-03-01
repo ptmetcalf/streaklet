@@ -7,6 +7,7 @@ Handles:
 - Historical data import
 - Hourly sync updates
 """
+import logging
 from sqlalchemy.orm import Session
 from sqlalchemy.dialects.sqlite import insert
 from datetime import date, timedelta
@@ -18,6 +19,8 @@ from app.models.fitbit_connection import FitbitConnection
 from app.models.fitbit_metric import FitbitMetric
 from app.services import fitbit_api, fitbit_connection
 from app.services.fitbit_checks import evaluate_and_apply_auto_checks
+
+logger = logging.getLogger(__name__)
 
 
 async def upsert_metrics(
@@ -119,7 +122,7 @@ async def sync_profile_date_range(
                 error_days += 1
 
         except Exception as e:
-            print(f"Error syncing date {current_date}: {e}")
+            logger.warning("Error syncing Fitbit date %s for profile %s: %s", current_date, profile_id, e)
             error_days += 1
 
         current_date += timedelta(days=1)
@@ -236,7 +239,7 @@ async def sync_all_connected_profiles(db: Session) -> Dict[int, Dict]:
             )
             results[connection.user_id] = result
         except Exception as e:
-            print(f"Sync failed for profile {connection.user_id}: {e}")
+            logger.error("Fitbit sync failed for profile %s: %s", connection.user_id, e)
             results[connection.user_id] = {
                 "error": str(e),
                 "success_days": 0,

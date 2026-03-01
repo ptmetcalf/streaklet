@@ -40,6 +40,7 @@
     --font-lg: 18px;
     --font-xl: 24px;
     --font-2xl: 28px;
+    --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 
     /* Border radius */
     --radius-sm: 4px;
@@ -59,11 +60,18 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-family-base);
     background-color: var(--bg-color);
     color: var(--text-color);
     line-height: 1.6;
     padding-bottom: 80px;
+}
+
+input,
+select,
+textarea,
+button {
+    font-family: inherit;
 }
 
 .container {
@@ -247,6 +255,21 @@ h1 {
 
 .tab-content {
     animation: fadeIn 0.2s ease-in-out;
+}
+
+.tab-content--panel {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.tab-content--panel .checklist {
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
 }
 
 @keyframes fadeIn {
@@ -1111,6 +1134,7 @@ button:active {
 @media (max-width: 480px) {
     .container {
         padding: 12px;
+        padding-top: calc(2.5rem + env(safe-area-inset-top, 0px) + 8px);
     }
 
     /* Better touch targets for mobile */
@@ -1604,8 +1628,10 @@ button:active {
 
 /* Base Card */
 .unified-task-card {
+    --task-card-accent: #d9d9d9;
     background: white;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--task-card-accent);
+    border-left-width: 6px;
     border-radius: 12px;
     padding: 20px;
     margin-bottom: 12px;
@@ -1619,19 +1645,27 @@ button:active {
 
 /* Task Type Variants */
 .task-card-daily {
-    border-left: 4px solid #52c41a;
+    --task-card-accent: #52c41a;
 }
 
 .task-card-punch-list {
-    border-left: 4px solid #fa8c16;
+    --task-card-accent: #fa8c16;
 }
 
 .task-card-scheduled {
-    border-left: 4px solid #722ed1;
+    --task-card-accent: #722ed1;
+}
+
+.task-card-shopping-list {
+    --task-card-accent: #ff4d4f;
 }
 
 .task-card-household {
-    border: 2px solid #52c41a;
+    --task-card-accent: #52c41a;
+}
+
+.task-card-completed {
+    --task-card-accent: #52c41a;
 }
 
 /* State Variants */
@@ -1704,6 +1738,11 @@ button:active {
     color: #722ed1;
 }
 
+.badge-shopping {
+    background: #fff1f0;
+    color: #cf1322;
+}
+
 .badge-frequency {
     text-transform: capitalize;
 }
@@ -1711,6 +1750,11 @@ button:active {
 .badge-frequency.weekly {
     background: #e6f7ff;
     color: #0066cc;
+}
+
+.badge-frequency.biweekly {
+    background: #e0f7fa;
+    color: #0097a7;
 }
 
 .badge-frequency.monthly {

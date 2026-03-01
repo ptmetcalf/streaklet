@@ -3,7 +3,14 @@ from sqlalchemy.orm import Session
 from typing import List
 import json
 from app.core.db import get_db
-from app.schemas.profile import ProfileCreate, ProfileUpdate, ProfileResponse
+from app.core.profile_context import get_profile_id
+from app.schemas.profile import (
+    ProfileCreate,
+    ProfileUpdate,
+    ProfileResponse,
+    ProfilePreferencesResponse,
+    ProfilePreferencesUpdate,
+)
 from app.services import profiles as profile_service
 from app.services import backup as backup_service
 
@@ -23,6 +30,31 @@ def create_profile(profile: ProfileCreate, db: Session = Depends(get_db)):
     if not created_profile:
         raise HTTPException(status_code=409, detail="Profile name already exists")
     return created_profile
+
+
+@router.get("/preferences", response_model=ProfilePreferencesResponse)
+def get_profile_preferences(
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """Get current profile UI preferences."""
+    profile = profile_service.get_profile_by_id(db, profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
+
+
+@router.put("/preferences", response_model=ProfilePreferencesResponse)
+def update_profile_preferences(
+    preferences: ProfilePreferencesUpdate,
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """Update current profile UI preferences."""
+    profile = profile_service.update_profile_preferences(db, profile_id, preferences)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile
 
 
 @router.get("/{profile_id}", response_model=ProfileResponse)

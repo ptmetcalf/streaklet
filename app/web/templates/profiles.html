@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Profiles - Streaklet{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/css/pages/profiles.css?v={{ cache_bust }}">{% endblock %}
 
 {% block content %}
 <div class="container" x-data="profileManager()">
@@ -134,115 +135,6 @@
     </div>
 </div>
 
-<style>
-.backup-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
-    flex-wrap: wrap;
-}
-
-.profile-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
-}
-
-.profile-card {
-    background: white;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.profile-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.profile-card-create {
-    border: 2px dashed #ccc;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    min-height: 180px;
-}
-
-.profile-card-create:hover {
-    border-color: #3b82f6;
-    background: #f8fafc;
-}
-
-.create-icon {
-    font-size: 3rem;
-    color: #3b82f6;
-    margin-bottom: 0.5rem;
-}
-
-.profile-info {
-    margin-bottom: 1rem;
-}
-
-.profile-info h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.25rem;
-}
-
-.profile-color {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #e5e7eb;
-}
-
-.profile-actions {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-}
-
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-content h2 {
-    margin-top: 0;
-}
-
-.form-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
-}
-
-.error {
-    color: #ef4444;
-    margin-top: 0.5rem;
-}
-</style>
 
 <script>
 function profileManager() {

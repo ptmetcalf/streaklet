@@ -15,55 +15,65 @@ Understanding Streaklet's codebase structure and design patterns.
 streaklet/
 ├── app/
 │   ├── api/                 # API route handlers
-│   │   ├── routes_backup.py
 │   │   ├── routes_days.py
 │   │   ├── routes_fitbit.py
 │   │   ├── routes_history.py
+│   │   ├── routes_household.py
 │   │   ├── routes_profiles.py
+│   │   ├── routes_punch_list.py
+│   │   ├── routes_scheduled.py
 │   │   ├── routes_streaks.py
 │   │   └── routes_tasks.py
 │   ├── core/                # Core utilities
-│   │   ├── profile_context.py   # Profile dependency injection
-│   │   └── time.py             # Timezone-aware date/time
+│   │   ├── config.py            # App configuration
+│   │   ├── db.py                # Database session management
+│   │   ├── encryption.py        # Fernet token encryption
+│   │   ├── profile_context.py   # Profile cookie dependency
+│   │   └── time.py              # Timezone-aware date/time
 │   ├── models/              # SQLAlchemy models
 │   │   ├── daily_status.py
 │   │   ├── fitbit_connection.py
-│   │   ├── fitbit_metrics.py
+│   │   ├── fitbit_metric.py
+│   │   ├── fitbit_preferences.py
+│   │   ├── household_completion.py
+│   │   ├── household_task.py
 │   │   ├── profile.py
 │   │   ├── task.py
 │   │   └── task_check.py
 │   ├── schemas/             # Pydantic schemas
-│   │   ├── backup.py
+│   │   ├── check.py
+│   │   ├── day.py
 │   │   ├── fitbit.py
+│   │   ├── household.py
 │   │   ├── profile.py
+│   │   ├── streak.py
 │   │   └── task.py
-│   ├── services/            # Business logic
+│   ├── services/            # Business logic (flat structure)
 │   │   ├── backup.py
 │   │   ├── checks.py
-│   │   ├── days.py
-│   │   ├── fitbit/
-│   │   │   ├── api.py
-│   │   │   ├── checks.py
-│   │   │   ├── connection.py
-│   │   │   ├── encryption.py
-│   │   │   ├── oauth.py
-│   │   │   ├── scheduler.py
-│   │   │   └── sync.py
+│   │   ├── fitbit_api.py
+│   │   ├── fitbit_checks.py
+│   │   ├── fitbit_connection.py
+│   │   ├── fitbit_oauth.py
+│   │   ├── fitbit_preferences.py
+│   │   ├── fitbit_scheduler.py
+│   │   ├── fitbit_sync.py
 │   │   ├── history.py
+│   │   ├── household.py
 │   │   ├── profiles.py
+│   │   ├── punch_list.py
+│   │   ├── scheduled_tasks.py
 │   │   ├── streaks.py
 │   │   └── tasks.py
 │   ├── web/                 # Web routes and templates
 │   │   └── templates/
 │   │       ├── base.html
-│   │       ├── index.html
-│   │       ├── settings.html
 │   │       ├── fitbit.html
-│   │       ├── history.html
-│   │       └── profiles.html
-│   ├── database.py          # Database session management
-│   ├── main.py              # FastAPI app entry point
-│   └── startup.py           # Application startup logic
+│   │       ├── household.html
+│   │       ├── index.html
+│   │       ├── profiles.html
+│   │       └── settings.html
+│   └── main.py              # FastAPI app entry point
 ├── migrations/              # Alembic database migrations
 │   └── versions/
 ├── tests/                   # Pytest test suite
@@ -94,18 +104,18 @@ class Task(Base):
     # ... other fields
 ```
 
-**B. API Level** (HTTP Headers)
+**B. Browser Layer** (Cookies)
 ```python
-# Frontend sends X-Profile-Id with every request
-const response = await fetchWithProfile('/api/tasks');
-// fetchWithProfile() adds: headers: { 'X-Profile-Id': profileId }
+# profile_id cookie set on profile selection, sent automatically with every request
+# No manual header management needed on the frontend
+const response = await fetch('/api/tasks');  // cookie sent automatically
 ```
 
 **C. Dependency Injection** (FastAPI)
 ```python
-# Extract profile ID from header
-def get_profile_id(x_profile_id: int | None = Header(default=None)) -> int:
-    return x_profile_id or 1
+# Extract profile ID from profile_id cookie
+def get_profile_id(profile_id: Optional[int] = Cookie(None)) -> int:
+    return profile_id if profile_id else 1
 
 # Use in routes
 @router.get("/api/tasks")
@@ -269,7 +279,7 @@ def calculate_current_streak(db: Session, profile_id: int) -> int:
 4. Exchange code for access + refresh tokens
 5. Encrypt and store tokens
 
-**B. Token Encryption** (`app/services/fitbit/encryption.py`)
+**B. Token Encryption** (`app/core/encryption.py`)
 ```python
 from cryptography.fernet import Fernet
 
@@ -284,12 +294,12 @@ def decrypt_token(encrypted: str) -> str:
     return f.decrypt(encrypted.encode()).decode()
 ```
 
-**C. API Client** (`app/services/fitbit/api.py`)
+**C. API Client** (`app/services/fitbit_api.py`)
 - Fetches activity, sleep, heart rate data
 - Handles rate limiting (150 requests/hour)
 - Auto-refreshes expired tokens
 
-**D. Scheduled Sync** (`app/services/fitbit/scheduler.py`)
+**D. Scheduled Sync** (`app/services/fitbit_scheduler.py`)
 ```python
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -302,7 +312,7 @@ scheduler.add_job(
 )
 ```
 
-**E. Auto-Complete** (`app/services/fitbit/checks.py`)
+**E. Auto-Complete** (`app/services/fitbit_checks.py`)
 ```python
 def evaluate_and_apply_auto_checks(db: Session, profile_id: int, date: date):
     """Auto-check tasks based on Fitbit metrics"""
@@ -324,9 +334,10 @@ def evaluate_and_apply_auto_checks(db: Session, profile_id: int, date: date):
 ```
 
 **Key Files**:
-- `app/services/fitbit/` - All Fitbit logic
+- `app/services/fitbit_*.py` - All Fitbit logic (flat, not a subdirectory)
 - `app/models/fitbit_connection.py` - OAuth tokens
-- `app/models/fitbit_metrics.py` - Cached metrics
+- `app/models/fitbit_metric.py` - Cached metrics
+- `app/core/encryption.py` - Token encryption
 
 ### 6. Client-Side Data Fetching
 
@@ -393,6 +404,7 @@ CREATE TABLE tasks (
     user_id INTEGER NOT NULL,  -- FK to profiles
     title TEXT NOT NULL,
     description TEXT,
+    task_type TEXT NOT NULL DEFAULT 'daily',  -- 'daily', 'punch_list', 'scheduled'
     required BOOLEAN DEFAULT TRUE,
     active BOOLEAN DEFAULT TRUE,
     fitbit_auto_check BOOLEAN DEFAULT FALSE,
@@ -448,12 +460,12 @@ CREATE TABLE daily_status (
 
 ### Profile Context
 
-All endpoints accept `X-Profile-Id` header:
+All endpoints read the `profile_id` cookie (set automatically by the browser):
 ```bash
-curl -H "X-Profile-Id: 2" http://localhost:8080/api/tasks
+curl --cookie "profile_id=2" http://localhost:8080/api/tasks
 ```
 
-Defaults to profile 1 if omitted.
+Defaults to profile 1 if cookie is absent.
 
 ### Response Format
 
@@ -534,7 +546,7 @@ def test_create_task(test_db, sample_profiles):
 def test_api_create_task(client, sample_profiles):
     response = client.post(
         "/api/tasks",
-        headers={"X-Profile-Id": "1"},
+        cookies={"profile_id": "1"},
         json={"title": "New Task", "required": True}
     )
     assert response.status_code == 200

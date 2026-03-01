@@ -1,1060 +1,207 @@
 {% extends "base.html" %}
 
 {% block title %}Streaklet - Settings{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/css/pages/settings.css?v={{ cache_bust }}">{% endblock %}
 
 {% block content %}
-<div class="container" x-data="settings()">
-    <header>
+<div class="container" x-data="settings()" x-cloak>
+    <header class="settings-header">
         <h1>Settings</h1>
+        <p class="page-subtitle">Preferences, profiles, and Fitbit integration.</p>
     </header>
 
-    <div class="settings-section">
-        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.personalTasks = !sectionsCollapsed.personalTasks">
-            <span>Personal Tasks</span>
-            <span x-text="sectionsCollapsed.personalTasks ? '▼' : '▲'" style="font-size: 14px;"></span>
-        </h2>
-
-        <div x-show="!sectionsCollapsed.personalTasks" x-collapse x-cloak>
-        <!-- Task Type Filter -->
-        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-            <button class="btn" @click="taskFilter = 'all'"
-                    :class="{ 'btn--primary': taskFilter === 'all', 'btn--secondary': taskFilter !== 'all' }"
-                    style="flex: 1; min-width: 80px;">
-                All <span x-text="`(${filteredTaskCount('all')})`"></span>
-            </button>
-            <button class="btn" @click="taskFilter = 'daily'"
-                    :class="{ 'btn--primary': taskFilter === 'daily', 'btn--secondary': taskFilter !== 'daily' }"
-                    style="flex: 1; min-width: 80px;">
-                Daily <span x-text="`(${filteredTaskCount('daily')})`"></span>
-            </button>
-            <button class="btn" @click="taskFilter = 'punch_list'"
-                    :class="{ 'btn--primary': taskFilter === 'punch_list', 'btn--secondary': taskFilter !== 'punch_list' }"
-                    style="flex: 1; min-width: 80px;">
-                Todo <span x-text="`(${filteredTaskCount('punch_list')})`"></span>
-            </button>
-            <button class="btn" @click="taskFilter = 'scheduled'"
-                    :class="{ 'btn--primary': taskFilter === 'scheduled', 'btn--secondary': taskFilter !== 'scheduled' }"
-                    style="flex: 1; min-width: 80px;">
-                Scheduled <span x-text="`(${filteredTaskCount('scheduled')})`"></span>
-            </button>
-        </div>
-
-        <template x-for="task in filteredTasks" :key="task.id">
-            <div class="task-list-item">
-                <div class="task-info">
-                    <div x-text="task.title"></div>
-                    <div style="font-size: 12px; color: #999; margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <span class="task-type-badge"
-                              :class="getTaskTypeBadgeClass(task.task_type)"
-                              x-text="getTaskTypeLabel(task.task_type)"></span>
-                        <span>•</span>
-                        <span x-show="task.is_required">Required</span>
-                        <span x-show="!task.is_required">Optional</span>
-                        <span>•</span>
-                        <span x-show="task.is_active">Enabled</span>
-                        <span x-show="!task.is_active">Disabled</span>
-                    </div>
-                </div>
-                <div class="task-actions">
-                    <button class="btn btn--secondary" @click="editTask(task)">Edit</button>
-                    <button class="btn btn--danger" @click="showDeleteConfirm(task)">Delete</button>
-                </div>            </div>
-        </template>
-
-        <div x-show="filteredTasks.length === 0" class="empty-state empty-state--compact">
-            <p x-text="taskFilter === 'all' ? 'No tasks yet. Add one to get started!' : `No ${getTaskTypeLabel(taskFilter)} tasks yet.`"></p>
-        </div>
-
-        <button class="btn btn--primary btn--block" @click="showAddForm = true; editingTask = null" x-show="!showAddForm && !editingTask" style="margin-top: 16px;">
-            Add New Task
-        </button>
-
-        <div x-show="showAddForm" style="margin-top: 16px; padding: 16px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <h3 style="margin-bottom: 16px;">Add New Task</h3>
-
-            <!-- Task Category Selector -->
-            <div class="form-field" style="margin-bottom: 20px;">
-                <label class="form-field__label">Task Category</label>
-                <div class="form-field__radio-group">
-                    <label class="form-field__radio-label">
-                        <input type="radio" class="form-field__radio" name="taskCategory" value="daily" x-model="newTask.task_type" @change="onTaskCategoryChange">
-                        <span>Daily Recurring</span>
-                    </label>
-                    <label class="form-field__radio-label">
-                        <input type="radio" class="form-field__radio" name="taskCategory" value="punch_list" x-model="newTask.task_type" @change="onTaskCategoryChange">
-                        <span>One-Off (Todo List)</span>
-                    </label>
-                    <label class="form-field__radio-label">
-                        <input type="radio" class="form-field__radio" name="taskCategory" value="scheduled" x-model="newTask.task_type" @change="onTaskCategoryChange">
-                        <span>Scheduled Recurring</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Task Type Selector (Fitbit/Manual) - only for daily tasks -->
-            <div x-show="fitbitConnected && newTask.task_type === 'daily'" class="form-field" style="margin-bottom: 20px;">
-                <label class="form-field__label">Task Type</label>
-                <div class="form-field__radio-group">
-                    <label class="form-field__radio-label">
-                        <input type="radio" class="form-field__radio" name="taskType" value="manual" x-model="newTask.taskType" @change="onTaskTypeChange">
-                        <span>Manual</span>
-                    </label>
-                    <label class="form-field__radio-label">
-                        <input type="radio" class="form-field__radio" name="taskType" value="fitbit" x-model="newTask.taskType" @change="onTaskTypeChange">
-                        <span>Fitbit Goal</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Daily Manual Task Fields -->
-            <div x-show="newTask.task_type === 'daily' && newTask.taskType === 'manual'">
-                <div class="form-field">
-                    <label class="form-field__label form-field__label--required">Title</label>
-                    <input type="text" class="form-field__input" x-model="newTask.title" placeholder="Task title">
-                </div>
-                <div class="form-field">
-                    <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <button type="button" class="btn btn--secondary" @click="showPersonalIconPicker = true">
-                            <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
-                            <span>Choose Icon</span>
-                        </button>
-                        <template x-if="newTask.icon">
-                            <button type="button" class="btn btn--secondary btn--sm" @click="newTask.icon = null">Clear</button>
-                        </template>
-                    </div>
-                </div>
-                <div class="form-field">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_required">
-                        <span>Required for daily completion</span>
-                    </label>
-                </div>
-                <div class="form-field">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
-                        <span>Enabled</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Todo List Task Fields -->
-            <div x-show="newTask.task_type === 'punch_list'">
-                <div class="form-field">
-                    <label class="form-field__label form-field__label--required">Title</label>
-                    <input type="text" class="form-field__input" x-model="newTask.title" placeholder="e.g., Call dentist, Fix faucet">
-                </div>
-                <div class="form-field">
-                    <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <button type="button" class="btn btn--secondary" @click="showPersonalIconPicker = true">
-                            <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
-                            <span>Choose Icon</span>
-                        </button>
-                        <template x-if="newTask.icon">
-                            <button type="button" class="btn btn--secondary btn--sm" @click="newTask.icon = null">Clear</button>
-                        </template>
-                    </div>
-                </div>
-                <div class="form-field">
-                    <label class="form-field__label">Due Date (optional)</label>
-                    <input type="date" class="form-field__input" x-model="newTask.due_date">
-                </div>
-                <div class="form-field">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
-                        <span>Enabled</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Scheduled Task Fields -->
-            <div x-show="newTask.task_type === 'scheduled'">
-                <div class="form-field">
-                    <label class="form-field__label form-field__label--required">Title</label>
-                    <input type="text" class="form-field__input" x-model="newTask.title" placeholder="e.g., Give dog medicine, Change air filter">
-                </div>
-                <div class="form-field">
-                    <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <button type="button" class="btn btn--secondary" @click="showPersonalIconPicker = true">
-                            <i :class="'mdi mdi-' + (newTask.icon || 'check-circle')" style="font-size: 20px;"></i>
-                            <span>Choose Icon</span>
-                        </button>
-                        <template x-if="newTask.icon">
-                            <button type="button" class="btn btn--secondary btn--sm" @click="newTask.icon = null">Clear</button>
-                        </template>
-                    </div>
-                </div>
-
-                <div class="form-field">
-                    <label class="form-field__label">Recurrence Pattern</label>
-                    <select class="form-field__select" x-model="newTask.recurrence_type" @change="onRecurrenceTypeChange">
-                        <option value="days">Every N days</option>
-                        <option value="weekly">Weekly (specific day)</option>
-                        <option value="monthly">Monthly (specific date)</option>
-                    </select>
-                </div>
-
-                <div x-show="newTask.recurrence_type === 'days'" class="form-field">
-                    <label class="form-field__label">Repeat every</label>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <input type="number" class="form-field__input form-field__input--narrow" x-model.number="newTask.interval" min="1">
-                        <span>day(s)</span>
-                    </div>
-                </div>
-
-                <div x-show="newTask.recurrence_type === 'weekly'" class="form-field">
-                    <label class="form-field__label">Day of Week</label>
-                    <select class="form-field__select" x-model.number="newTask.day_of_week">
-                        <option value="0">Monday</option>
-                        <option value="1">Tuesday</option>
-                        <option value="2">Wednesday</option>
-                        <option value="3">Thursday</option>
-                        <option value="4">Friday</option>
-                        <option value="5">Saturday</option>
-                        <option value="6">Sunday</option>
-                    </select>
-                </div>
-
-                <div x-show="newTask.recurrence_type === 'monthly'" class="form-field">
-                    <label class="form-field__label">Day of Month</label>
-                    <input type="number" class="form-field__input form-field__input--narrow" x-model.number="newTask.day_of_month" min="1" max="31" placeholder="1-31">
-                </div>
-
-                <div class="form-field">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_required">
-                        <span>Required for daily completion when due</span>
-                    </label>
-                </div>
-                <div class="form-field">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
-                        <span>Enabled</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Fitbit Task Fields -->
-            <div x-show="newTask.taskType === 'fitbit'">
-                <div class="form-field">
-                    <label class="form-field__label">Select Goal Template</label>
-                    <select class="form-field__select" x-model="newTask.fitbitTemplate" @change="applyFitbitTemplate">
-                        <option value="">-- Choose a goal --</option>
-                        <option value="steps_10k">Walk 10,000 steps</option>
-                        <option value="steps_8k">Walk 8,000 steps</option>
-                        <option value="steps_5k">Walk 5,000 steps</option>
-                        <option value="sleep_7h">Sleep 7+ hours</option>
-                        <option value="sleep_8h">Sleep 8+ hours</option>
-                        <option value="active_30m">30 minutes active</option>
-                        <option value="active_60m">60 minutes active</option>
-                        <option value="floors_10">Climb 10 floors</option>
-                        <option value="calories_2000">Burn 2,000 calories</option>
-                        <option value="distance_3mi">Walk 3 miles</option>
-                        <option value="distance_5mi">Walk 5 miles</option>
-                        <option value="custom">Custom goal...</option>
-                    </select>
-                </div>
-
-                <!-- Custom Fitbit Goal (shown when "Custom goal..." selected) -->
-                <div x-show="newTask.fitbitTemplate === 'custom'" style="margin-top: 16px; padding: 16px; background: #f9f9f9; border-radius: 4px;">
-                    <div class="form-field">
-                        <label class="form-field__label">Metric Type</label>
-                        <select class="form-field__select" x-model="newTask.fitbit_metric_type">
-                            <option value="">Select metric...</option>
-                            <option value="steps">Steps</option>
-                            <option value="active_minutes">Active Minutes</option>
-                            <option value="sleep_minutes">Sleep Minutes</option>
-                            <option value="sleep_score">Sleep Score</option>
-                            <option value="distance">Distance (miles)</option>
-                            <option value="floors">Floors Climbed</option>
-                            <option value="calories_burned">Calories Burned</option>
-                            <option value="resting_heart_rate">Resting Heart Rate</option>
-                        </select>
-                    </div>
-                    <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
-                        <div class="form-field">
-                            <label class="form-field__label">Operator</label>
-                            <select class="form-field__select" x-model="newTask.fitbit_goal_operator">
-                                <option value="gte">At least (≥)</option>
-                                <option value="lte">At most (≤)</option>
-                                <option value="eq">Exactly (=)</option>
-                            </select>
-                        </div>
-                        <div class="form-field">
-                            <label class="form-field__label">Goal Value</label>
-                            <input type="number"
-                                   class="form-field__input"
-                                   x-model="newTask.fitbit_goal_value"
-                                   placeholder="e.g., 10000"
-                                   step="any">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Preview of generated title -->
-                <div x-show="newTask.title" style="margin-top: 12px; padding: 12px; background: #e3f2fd; border-radius: 4px; font-size: 14px;">
-                    <strong>Task will be created as:</strong> <span x-text="newTask.title"></span>
-                </div>
-
-                <div class="form-field" style="margin-top: 16px;">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_required">
-                        <span>Required</span>
-                    </label>
-                </div>
-                <div class="form-field">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.is_active">
-                        <span>Enabled</span>
-                    </label>
-                </div>
-                <div class="form-field">
-                    <label class="form-field__checkbox-label">
-                        <input type="checkbox" class="form-field__checkbox" x-model="newTask.fitbit_auto_check">
-                        <span>Auto-complete when goal met</span>
-                    </label>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 8px; margin-top: 16px;">
-                <button class="btn btn--primary" @click="addTask">Save</button>
-                <button class="btn btn--secondary" @click="showAddForm = false; resetNewTask()">Cancel</button>
-            </div>
-        </div>
-
-        <div x-show="editingTask" style="margin-top: 16px; padding: 16px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <h3 style="margin-bottom: 12px;">Edit Task</h3>
-            <template x-if="editingTask">
+    <section class="settings-section">
+        <h2 class="section-title">General</h2>
+        <div class="settings-card">
+            <label class="pref-toggle">
+                <input type="checkbox" class="form-field__checkbox" x-model="confettiEnabled" @change="saveConfettiPreference">
                 <div>
-                    <div class="form-field">
-                        <label class="form-field__label form-field__label--required">Title</label>
-                        <input type="text" class="form-field__input" x-model="editingTask.title" placeholder="Task title">
-                    </div>
-                    <div class="form-field">
-                        <label class="form-field__label">Icon</label>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <button type="button" class="btn btn--secondary" @click="personalIconTarget = 'edit'; showPersonalIconPicker = true">
-                                <i :class="'mdi mdi-' + (editingTask.icon || 'check-circle')" style="font-size: 20px;"></i>
-                                <span>Choose Icon</span>
-                            </button>
-                            <template x-if="editingTask.icon">
-                                <button type="button" class="btn btn--secondary btn--sm" @click="editingTask.icon = null">Clear</button>
-                            </template>
-                        </div>
-                    </div>
-                    <div class="form-field">
-                        <label class="form-field__checkbox-label">
-                            <input type="checkbox" class="form-field__checkbox" x-model="editingTask.is_required">
-                            <span>Required</span>
-                        </label>
-                    </div>
-                    <div class="form-field">
-                        <label class="form-field__checkbox-label">
-                            <input type="checkbox" class="form-field__checkbox" x-model="editingTask.is_active">
-                            <span>Enabled</span>
-                        </label>
-                    </div>
-
-                    <!-- Fitbit Goal Configuration -->
-                    <div x-show="fitbitConnected" style="margin-top: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 4px; background: #f9f9f9;">
-                        <h4 style="margin-bottom: 12px; font-size: 14px;">Fitbit Goal (Optional)</h4>
-                        <div class="form-field">
-                            <label class="form-field__checkbox-label">
-                                <input type="checkbox" class="form-field__checkbox" x-model="editingTask.fitbit_auto_check">
-                                <span>Auto-complete when goal met</span>
-                            </label>
-                        </div>
-                        <div x-show="editingTask.fitbit_auto_check">
-                            <div class="form-field">
-                                <label class="form-field__label">Metric Type</label>
-                                <select class="form-field__select" x-model="editingTask.fitbit_metric_type">
-                                    <option value="">Select metric...</option>
-                                    <option value="steps">Steps</option>
-                                    <option value="active_minutes">Active Minutes</option>
-                                    <option value="sleep_minutes">Sleep Minutes</option>
-                                    <option value="sleep_score">Sleep Score</option>
-                                    <option value="distance">Distance (miles)</option>
-                                    <option value="floors">Floors Climbed</option>
-                                    <option value="calories_burned">Calories Burned</option>
-                                    <option value="resting_heart_rate">Resting Heart Rate</option>
-                                </select>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 8px;">
-                                <div class="form-field">
-                                    <label class="form-field__label">Operator</label>
-                                    <select class="form-field__select" x-model="editingTask.fitbit_goal_operator">
-                                        <option value="gte">At least (≥)</option>
-                                        <option value="lte">At most (≤)</option>
-                                        <option value="eq">Exactly (=)</option>
-                                    </select>
-                                </div>
-                                <div class="form-field">
-                                    <label class="form-field__label">Goal Value</label>
-                                    <input type="number"
-                                           class="form-field__input"
-                                           x-model="editingTask.fitbit_goal_value"
-                                           placeholder="e.g., 10000"
-                                           step="any">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 8px; margin-top: 16px;">
-                        <button class="btn btn--primary" @click="updateTask">Save</button>
-                        <button class="btn btn--secondary" @click="editingTask = null">Cancel</button>
-                    </div>
+                    <div class="pref-title">Celebration Confetti</div>
+                    <div class="pref-description">Show confetti when all required tasks are completed.</div>
                 </div>
-            </template>
-        </div>
-
-        <!-- Personal Task Icon Picker Modal -->
-        <div x-show="showPersonalIconPicker" class="modal-overlay" x-cloak @click.self="showPersonalIconPicker = false" @keydown.escape.window="showPersonalIconPicker && (showPersonalIconPicker = false)">
-            <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
-                <div class="modal-header">
-                    <h2>Choose an Icon</h2>
-                    <button @click="showPersonalIconPicker = false" class="btn-close">✕</button>
-                </div>
-
-                <div class="modal-body">
-                    <!-- Search Box -->
-                    <input type="text"
-                           x-model="personalIconSearch"
-                           placeholder="Search icons..."
-                           style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-
-                    <!-- Icon Categories -->
-                    <template x-for="(icons, category) in filteredPersonalIconCategories" :key="category">
-                        <div x-show="icons.length > 0" style="margin-bottom: 24px;">
-                            <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px;" x-text="category"></h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
-                                <template x-for="icon in icons" :key="icon">
-                                    <button type="button"
-                                            @click="selectPersonalIcon(icon)"
-                                            :class="{'icon-selected': newTask.icon === icon}"
-                                            style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s; padding: 8px;"
-                                            :style="newTask.icon === icon ? 'border-color: var(--primary-color); background: #e6f7ff;' : ''"
-                                            @mouseenter="$el.style.borderColor = 'var(--primary-color)'"
-                                            @mouseleave="$el.style.borderColor = newTask.icon === icon ? 'var(--primary-color)' : 'var(--border-color)'">
-                                        <i :class="'mdi mdi-' + icon" style="font-size: 28px; color: #333;"></i>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- No Results Message -->
-                    <div x-show="personalIconSearch && !hasVisiblePersonalIcons" style="text-align: center; padding: 40px; color: #999;">
-                        No icons found for "<span x-text="personalIconSearch"></span>"
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-
-    <!-- Household Maintenance Tasks Section -->
-    <div class="settings-section" style="margin-top: 32px;">
-        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.household = !sectionsCollapsed.household">
-            <span>Household Tasks</span>
-            <span x-text="sectionsCollapsed.household ? '▼' : '▲'" style="font-size: 14px;"></span>
-        </h2>
-
-        <div x-show="!sectionsCollapsed.household" x-collapse x-cloak>
-        <p style="color: #666; margin-bottom: 16px; font-size: 14px;">
-            Manage shared household maintenance tasks. These tasks are visible to all profiles.
-        </p>
-
-        <!-- Task Type Filters -->
-        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-            <button @click="householdFilter = 'all'"
-                    :class="{ 'btn-primary': householdFilter === 'all', 'btn-secondary': householdFilter !== 'all' }">
-                All <span x-text="`(${filteredHouseholdCount('all')})`"></span>
-            </button>
-            <button @click="householdFilter = 'todo'"
-                    :class="{ 'btn-primary': householdFilter === 'todo', 'btn-secondary': householdFilter !== 'todo' }">
-                To-Do <span x-text="`(${filteredHouseholdCount('todo')})`"></span>
-            </button>
-            <button @click="householdFilter = 'weekly'"
-                    :class="{ 'btn-primary': householdFilter === 'weekly', 'btn-secondary': householdFilter !== 'weekly' }">
-                Weekly <span x-text="`(${filteredHouseholdCount('weekly')})`"></span>
-            </button>
-            <button @click="householdFilter = 'biweekly'"
-                    :class="{ 'btn-primary': householdFilter === 'biweekly', 'btn-secondary': householdFilter !== 'biweekly' }">
-                Bi-Weekly <span x-text="`(${filteredHouseholdCount('biweekly')})`"></span>
-            </button>
-            <button @click="householdFilter = 'monthly'"
-                    :class="{ 'btn-primary': householdFilter === 'monthly', 'btn-secondary': householdFilter !== 'monthly' }">
-                Monthly <span x-text="`(${filteredHouseholdCount('monthly')})`"></span>
-            </button>
-            <button @click="householdFilter = 'quarterly'"
-                    :class="{ 'btn-primary': householdFilter === 'quarterly', 'btn-secondary': householdFilter !== 'quarterly' }">
-                Quarterly <span x-text="`(${filteredHouseholdCount('quarterly')})`"></span>
-            </button>
-            <button @click="householdFilter = 'annual'"
-                    :class="{ 'btn-primary': householdFilter === 'annual', 'btn-secondary': householdFilter !== 'annual' }">
-                Annual <span x-text="`(${filteredHouseholdCount('annual')})`"></span>
-            </button>
-        </div>
-
-        <!-- Household Task List -->
-        <div x-show="!showAddHouseholdForm && !editingHouseholdTask">
-            <template x-for="task in filteredHouseholdTasks" :key="task.id">
-                <div class="task-list-item" style="border-left: 3px solid #52c41a;">
-                    <div class="task-info">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                            <i :class="'mdi mdi-' + (task.icon || 'checkbox-marked-circle')" style="font-size: 20px; color: #52c41a;"></i>
-                            <div style="font-weight: 600;" x-text="task.title"></div>
-                        </div>
-                        <div x-show="task.description" style="font-size: 13px; color: #666; margin-top: 4px; margin-left: 28px;" x-text="task.description"></div>
-                        <div style="font-size: 12px; color: #999; margin-top: 4px; margin-left: 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span class="task-badge badge-frequency" :class="task.frequency" x-text="formatFrequency(task.frequency)"></span>
-                            <template x-if="task.frequency === 'todo' && task.due_date">
-                                <span style="color: #666;" x-text="'Due: ' + new Date(task.due_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })"></span>
-                            </template>
-                            <span>•</span>
-                            <span x-show="task.is_active">Enabled</span>
-                            <span x-show="!task.is_active" style="color: #ff4d4f;">Disabled</span>
-                        </div>
-                    </div>
-                    <div class="task-actions">
-                        <button class="btn btn--secondary" @click="editHouseholdTask(task)">Edit</button>
-                        <button class="btn btn--danger" @click="deleteHouseholdTask(task)">Delete</button>
-                    </div>
-                </div>
-            </template>
-
-            <div x-show="householdTasks.length === 0" style="padding: 32px; text-align: center; color: #999; border: 1px solid var(--border-color); border-radius: 4px;">
-                No household tasks yet. Add one to get started!
-            </div>
-
-            <button class="btn btn--primary btn--block" @click="showAddHouseholdForm = true" style="margin-top: 16px;">
-                Add Household Task
-            </button>
-        </div>
-
-        <!-- Add/Edit Household Task Form -->
-        <div x-show="showAddHouseholdForm || editingHouseholdTask" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <h3 style="margin-bottom: 16px;" x-text="editingHouseholdTask ? 'Edit Household Task' : 'Add Household Task'"></h3>
-
-            <div class="form-field">
-                <label class="form-field__label form-field__label--required">Title</label>
-                <input type="text" class="form-field__input" x-model="householdForm.title" placeholder="e.g., Clean gutters">
-            </div>
-
-            <div class="form-field">
-                <label class="form-field__label">Description (optional)</label>
-                <textarea class="form-field__textarea" x-model="householdForm.description" rows="2" placeholder="Additional details about this task"></textarea>
-            </div>
-
-            <div class="form-field">
-                <label class="form-field__label form-field__label--required">Frequency</label>
-                <select class="form-field__select" x-model="householdForm.frequency" required>
-                    <option value="todo">To-Do (one-time)</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="biweekly">Bi-Weekly (every 2 weeks)</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="quarterly">Quarterly (every 3 months)</option>
-                    <option value="annual">Annual (once per year)</option>
-                </select>
-            </div>
-
-            <!-- Schedule Mode (for recurring tasks) -->
-            <div x-show="householdForm.frequency !== 'todo'" class="form-field">
-                <label class="form-field__label">Schedule Type</label>
-                <div class="form-field__radio-group">
-                    <label class="form-field__radio-label">
-                        <input type="radio" class="form-field__radio" name="scheduleMode" value="calendar" x-model="householdForm.schedule_mode">
-                        <span>Fixed Schedule - Task appears on specific dates (e.g., every Tuesday)</span>
-                    </label>
-                    <label class="form-field__radio-label">
-                        <input type="radio" class="form-field__radio" name="scheduleMode" value="rolling" x-model="householdForm.schedule_mode">
-                        <span>Rolling Schedule - Task resets from completion date (e.g., every 7 days after done)</span>
-                    </label>
-                </div>
-            </div>
-
-            <!-- Recurrence Configuration -->
-            <div x-show="householdForm.frequency === 'todo'" class="form-field">
-                <label class="form-field__label">Due Date (optional)</label>
-                <input type="date" class="form-field__input" x-model="householdForm.due_date">
-            </div>
-
-            <!-- Weekly/Bi-weekly: Day of Week (calendar mode only) -->
-            <div x-show="(householdForm.frequency === 'weekly' || householdForm.frequency === 'biweekly') && householdForm.schedule_mode === 'calendar'" class="form-field">
-                <label class="form-field__label form-field__label--required">Day of Week</label>
-                <select class="form-field__select" x-model.number="householdForm.recurrence_day_of_week" required>
-                    <option value="0">Monday</option>
-                    <option value="1">Tuesday</option>
-                    <option value="2">Wednesday</option>
-                    <option value="3">Thursday</option>
-                    <option value="4">Friday</option>
-                    <option value="5">Saturday</option>
-                    <option value="6">Sunday</option>
-                </select>
-            </div>
-
-            <!-- Monthly: Day of Month (calendar mode only) -->
-            <div x-show="householdForm.frequency === 'monthly' && householdForm.schedule_mode === 'calendar'" class="form-field">
-                <label class="form-field__label form-field__label--required">Day of Month</label>
-                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day_of_month" min="1" max="31" placeholder="1-31" required>
-                <span style="font-size: 12px; color: #666; margin-top: 4px; display: block;">Task will appear on this day each month</span>
-            </div>
-
-            <!-- Quarterly: Month of Quarter + Day (calendar mode only) -->
-            <div x-show="householdForm.frequency === 'quarterly' && householdForm.schedule_mode === 'calendar'" class="form-field">
-                <label class="form-field__label form-field__label--required">Month of Quarter</label>
-                <select class="form-field__select" x-model.number="householdForm.recurrence_month" required>
-                    <option value="1">1st month (Jan, Apr, Jul, Oct)</option>
-                    <option value="2">2nd month (Feb, May, Aug, Nov)</option>
-                    <option value="3">3rd month (Mar, Jun, Sep, Dec)</option>
-                </select>
-            </div>
-            <div x-show="householdForm.frequency === 'quarterly' && householdForm.schedule_mode === 'calendar'" class="form-field">
-                <label class="form-field__label form-field__label--required">Day of Month</label>
-                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day" min="1" max="31" placeholder="1-31" required>
-            </div>
-
-            <!-- Annual: Month + Day (calendar mode only) -->
-            <div x-show="householdForm.frequency === 'annual' && householdForm.schedule_mode === 'calendar'" class="form-field">
-                <label class="form-field__label form-field__label--required">Month</label>
-                <select class="form-field__select" x-model.number="householdForm.recurrence_month" required>
-                    <option value="1">January</option>
-                    <option value="2">February</option>
-                    <option value="3">March</option>
-                    <option value="4">April</option>
-                    <option value="5">May</option>
-                    <option value="6">June</option>
-                    <option value="7">July</option>
-                    <option value="8">August</option>
-                    <option value="9">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
-                </select>
-            </div>
-            <div x-show="householdForm.frequency === 'annual' && householdForm.schedule_mode === 'calendar'" class="form-field">
-                <label class="form-field__label form-field__label--required">Day of Month</label>
-                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.recurrence_day" min="1" max="31" placeholder="1-31" required>
-            </div>
-
-            <div class="form-field">
-                <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <button type="button" class="btn btn--secondary" @click="showIconPicker = true">
-                        <i :class="'mdi mdi-' + (householdForm.icon || 'checkbox-marked-circle')" style="font-size: 20px;"></i>
-                        <span>Choose Icon</span>
-                    </button>
-                    <template x-if="householdForm.icon">
-                        <button type="button" class="btn btn--secondary btn--sm" @click="householdForm.icon = null">Clear</button>
-                    </template>
-                </div>
-            </div>
-
-            <div class="form-field">
-                <label class="form-field__label">Sort Order</label>
-                <input type="number" class="form-field__input form-field__input--narrow" x-model.number="householdForm.sort_order" placeholder="0">
-            </div>
-
-            <div class="form-field" x-show="editingHouseholdTask">
-                <label class="form-field__checkbox-label">
-                    <input type="checkbox" class="form-field__checkbox" x-model="householdForm.is_active">
-                    <span>Active</span>
-                </label>
-            </div>
-
-            <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button class="btn btn--secondary" @click="cancelHouseholdForm()">Cancel</button>
-                <button class="btn btn--primary" @click="saveHouseholdTask()">
-                    <span x-text="editingHouseholdTask ? 'Update' : 'Add'"></span> Task
-                </button>
-            </div>
-        </div>
-
-        <!-- Icon Picker Modal -->
-        <div x-show="showIconPicker" class="modal-overlay" x-cloak @click.self="showIconPicker = false" @keydown.escape.window="showIconPicker && (showIconPicker = false)">
-            <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
-                <div class="modal-header">
-                    <h2>Choose an Icon</h2>
-                    <button @click="showIconPicker = false" class="btn-close">✕</button>
-                </div>
-
-                <div class="modal-body">
-                    <!-- Search Box -->
-                    <input type="text"
-                           x-model="iconSearch"
-                           placeholder="Search icons..."
-                           style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-
-                    <!-- Icon Categories -->
-                    <template x-for="(icons, category) in filteredIconCategories" :key="category">
-                        <div x-show="icons.length > 0" style="margin-bottom: 24px;">
-                            <h3 style="font-size: 14px; font-weight: 600; color: #666; margin-bottom: 12px;" x-text="category"></h3>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
-                                <template x-for="icon in icons" :key="icon">
-                                    <button type="button"
-                                            @click="selectIcon(icon)"
-                                            :class="{'icon-selected': householdForm.icon === icon}"
-                                            style="aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 2px solid var(--border-color); border-radius: 8px; background: white; cursor: pointer; transition: all 0.2s; padding: 8px;"
-                                            :style="householdForm.icon === icon ? 'border-color: var(--primary-color); background: #e6f7ff;' : ''"
-                                            @mouseenter="$el.style.borderColor = 'var(--primary-color)'"
-                                            @mouseleave="$el.style.borderColor = householdForm.icon === icon ? 'var(--primary-color)' : 'var(--border-color)'">
-                                        <i :class="'mdi mdi-' + icon" style="font-size: 28px; color: #333;"></i>
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- No Results Message -->
-                    <div x-show="iconSearch && !hasVisibleIcons" style="text-align: center; padding: 40px; color: #999;">
-                        No icons found for "<span x-text="iconSearch"></span>"
-                    </div>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-
-    <!-- App Preferences Section -->
-    <div class="settings-section" style="margin-top: 32px;">
-        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.appPreferences = !sectionsCollapsed.appPreferences">
-            <span>App Preferences</span>
-            <span x-text="sectionsCollapsed.appPreferences ? '▼' : '▲'" style="font-size: 14px;"></span>
-        </h2>
-
-        <div x-show="!sectionsCollapsed.appPreferences" x-collapse x-cloak>
-        <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <div class="form-group" style="margin-bottom: 0;">
-                <label style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
-                    <input type="checkbox"
-                           x-model="confettiEnabled"
-                           @change="saveConfettiPreference"
-                           style="width: 20px; height: 20px; cursor: pointer;">
-                    <div>
-                        <div style="font-weight: 600; margin-bottom: 4px;">Celebration Confetti</div>
-                        <div style="font-size: 14px; color: #666;">Show confetti animation when completing all required tasks</div>
-                    </div>
-                </label>
-            </div>
-        </div>
-        </div>
-    </div>
-
-    <!-- Profile Management Section -->
-    <div class="settings-section" style="margin-top: 32px;">
-        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.profileManagement = !sectionsCollapsed.profileManagement">
-            <span>Profile Management</span>
-            <span x-text="sectionsCollapsed.profileManagement ? '▼' : '▲'" style="font-size: 14px;"></span>
-        </h2>
-
-        <div x-show="!sectionsCollapsed.profileManagement" x-collapse x-cloak>
-        <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <p style="margin-bottom: 16px; color: #666;">
-                Manage profiles, switch between users, and backup/restore your data.
-            </p>
-            <a href="/profiles" class="btn btn--primary">
-                Manage Profiles →
-            </a>
-        </div>
-        </div>
-    </div>
-
-    <!-- Fitbit Integration Section -->
-    <div class="settings-section" style="margin-top: 32px;">
-        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.fitbit = !sectionsCollapsed.fitbit">
-            <span>Fitbit Integration</span>
-            <span x-text="sectionsCollapsed.fitbit ? '▼' : '▲'" style="font-size: 14px;"></span>
-        </h2>
-
-        <div x-show="!sectionsCollapsed.fitbit" x-collapse x-cloak>
-
-        <!-- Not Connected State -->
-        <div x-show="!fitbitConnected" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px; text-align: center;">
-            <p style="margin-bottom: 16px; color: #666;">
-                Connect your Fitbit account to automatically track steps, sleep, and activity.
-                Tasks can auto-check when you meet your fitness goals!
-            </p>
-            <button class="btn btn--primary" @click="connectFitbit">
-                Connect to Fitbit
-            </button>
-        </div>
-
-        <!-- Connected State -->
-        <div x-show="fitbitConnected" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+            </label>
+            <label class="pref-toggle" style="margin-top: 14px;">
+                <input type="checkbox" class="form-field__checkbox" x-model="shoppingListEnabled" @change="saveShoppingListPreference">
                 <div>
-                    <div style="font-weight: 600; margin-bottom: 4px;">✓ Connected to Fitbit</div>
-                    <div style="font-size: 14px; color: #666;">
-                        <span x-show="fitbitLastSync">
-                            Last synced: <span x-text="formatSyncTime(fitbitLastSync)"></span>
-                        </span>
+                    <div class="pref-title">Show Shopping List in Today</div>
+                    <div class="pref-description">Add a dedicated shopping tab to track items you want to buy.</div>
+                </div>
+            </label>
+        </div>
+    </section>
+
+    <section class="settings-section">
+        <h2 class="section-title">Profiles</h2>
+        <div class="settings-card">
+            <p>Manage profiles, switch users, and backup or restore profile data.</p>
+            <a href="/profiles" class="btn btn--primary">Manage Profiles</a>
+        </div>
+    </section>
+
+    <section class="settings-section">
+        <h2 class="section-title">Fitbit</h2>
+
+        <div x-show="!fitbitConnected" class="settings-card settings-card--center">
+            <p>Connect your Fitbit account to sync metrics and support Fitbit-based tasks.</p>
+            <button class="btn btn--primary" @click="connectFitbit">Connect to Fitbit</button>
+        </div>
+
+        <div x-show="fitbitConnected" class="settings-card">
+            <div class="fitbit-status-row">
+                <div>
+                    <div class="fitbit-status-title">Connected to Fitbit</div>
+                    <div class="fitbit-status-meta">
+                        <span x-show="fitbitLastSync">Last synced: <span x-text="formatSyncTime(fitbitLastSync)"></span></span>
                         <span x-show="!fitbitLastSync">Never synced</span>
                     </div>
-                    <div style="font-size: 14px; margin-top: 8px;">
-                        <a href="/fitbit" style="color: var(--primary-color); text-decoration: none;">
-                            View Fitbit Metrics & Trends →
-                        </a>
-                    </div>
                 </div>
-                <div style="display: flex; gap: 8px;">
+                <div class="fitbit-actions">
                     <button class="btn btn--secondary" @click="manualSync" :disabled="isSyncing">
                         <span x-show="!isSyncing">Sync Now</span>
                         <span x-show="isSyncing">Syncing...</span>
                     </button>
-                    <button class="btn btn--danger" @click="disconnectFitbit">
-                        Disconnect
-                    </button>
+                    <button class="btn btn--danger" @click="disconnectFitbit">Disconnect</button>
+                </div>
+            </div>
+            <a href="/fitbit" class="fitbit-link">Open Fitbit Metrics</a>
+        </div>
+
+        <div x-show="fitbitConnected" class="settings-card" style="margin-top: 16px;">
+            <div class="prefs-header-row">
+                <h3>Metric Visibility</h3>
+                <span x-show="prefsSaved" x-transition class="prefs-saved">Saved</span>
+            </div>
+            <p class="prefs-description">Choose which Fitbit metrics appear on your Fitbit page.</p>
+
+            <div class="prefs-grid">
+                <div class="prefs-group">
+                    <h4>Activity</h4>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_steps" @change="saveFitbitPreferences"> Steps</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_distance" @change="saveFitbitPreferences"> Distance</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_floors" @change="saveFitbitPreferences"> Floors</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_calories" @change="saveFitbitPreferences"> Calories</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_active_minutes" @change="saveFitbitPreferences"> Active Minutes</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_heart_rate" @change="saveFitbitPreferences"> Resting Heart Rate</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_cardio_fitness" @change="saveFitbitPreferences"> VO2 Max</label>
+                </div>
+
+                <div class="prefs-group prefs-group--highlight">
+                    <h4>Sleep Tracking</h4>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_sleep" @change="saveFitbitPreferences"> Sleep Duration</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_sleep_stages" @change="saveFitbitPreferences"> Sleep Stages</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_hrv" @change="saveFitbitPreferences"> HRV</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_breathing_rate" @change="saveFitbitPreferences"> Breathing Rate</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_spo2" @change="saveFitbitPreferences"> SpO2</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_temperature" @change="saveFitbitPreferences"> Skin Temperature</label>
+                </div>
+
+                <div class="prefs-group">
+                    <h4>Body</h4>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_weight" @change="saveFitbitPreferences"> Weight</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_body_fat" @change="saveFitbitPreferences"> Body Fat %</label>
+                    <label class="form-field__checkbox-label settings-checkbox-label"><input type="checkbox" class="form-field__checkbox" x-model="fitbitPrefs.show_water" @change="saveFitbitPreferences"> Water Intake</label>
+                </div>
+            </div>
+
+            <div class="prefs-footer">
+                <button class="btn btn--secondary" @click="resetFitbitPreferences">Reset to Defaults</button>
+            </div>
+        </div>
+
+        <div x-show="fitbitConnected" class="settings-card" style="margin-top: 16px;">
+            <div class="prefs-header-row">
+                <h3>Goals</h3>
+                <span x-show="prefsSaved" x-transition class="prefs-saved">Saved</span>
+            </div>
+            <p class="prefs-description">Set custom Fitbit goals for your dashboards. Leave blank to use defaults.</p>
+
+            <div class="goals-grid">
+                <div class="goal-field">
+                    <label class="goal-field__label">Weekly Steps Goal</label>
+                    <input
+                        type="number"
+                        min="1"
+                        step="1000"
+                        class="form-field__input"
+                        :value="fitbitPrefs.goal_weekly_steps ?? ''"
+                        placeholder="70000"
+                        @change="updateFitbitGoal('goal_weekly_steps', $event.target.value)"
+                    >
+                    <div class="goal-field__hint">Default: 70000 steps</div>
+                </div>
+
+                <div class="goal-field">
+                    <label class="goal-field__label">Daily Steps Goal</label>
+                    <input
+                        type="number"
+                        min="1"
+                        step="500"
+                        class="form-field__input"
+                        :value="fitbitPrefs.goal_steps ?? ''"
+                        placeholder="10000"
+                        @change="updateFitbitGoal('goal_steps', $event.target.value)"
+                    >
+                    <div class="goal-field__hint">Default: 10000 steps</div>
+                </div>
+
+                <div class="goal-field">
+                    <label class="goal-field__label">Daily Active Minutes Goal</label>
+                    <input
+                        type="number"
+                        min="1"
+                        step="5"
+                        class="form-field__input"
+                        :value="fitbitPrefs.goal_active_minutes ?? ''"
+                        placeholder="30"
+                        @change="updateFitbitGoal('goal_active_minutes', $event.target.value)"
+                    >
+                    <div class="goal-field__hint">Default: 30 minutes</div>
+                </div>
+
+                <div class="goal-field">
+                    <label class="goal-field__label">Nightly Sleep Goal (hours)</label>
+                    <input
+                        type="number"
+                        min="0.5"
+                        step="0.5"
+                        class="form-field__input"
+                        :value="fitbitPrefs.goal_sleep_hours ?? ''"
+                        placeholder="8"
+                        @change="updateFitbitGoal('goal_sleep_hours', $event.target.value, true)"
+                    >
+                    <div class="goal-field__hint">Default: 8 hours</div>
+                </div>
+
+                <div class="goal-field">
+                    <label class="goal-field__label">Daily Water Goal (oz)</label>
+                    <input
+                        type="number"
+                        min="1"
+                        step="8"
+                        class="form-field__input"
+                        :value="fitbitPrefs.goal_water_oz ?? ''"
+                        placeholder="64"
+                        @change="updateFitbitGoal('goal_water_oz', $event.target.value)"
+                    >
+                    <div class="goal-field__hint">Default: 64 oz</div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Fitbit Preferences (only shown when connected) -->
-        <div x-show="fitbitConnected" style="margin-top: 24px;">
-            <h3 style="margin-bottom: 16px;">Display Preferences</h3>
-            <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 4px;">
-                <p style="margin-bottom: 16px; color: #666; font-size: 14px;">
-                    Customize which metrics appear on your Fitbit dashboard. Hide metrics you don't track to reduce clutter.
-                </p>
-
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px;">
-                    <!-- Activity Metrics (No Sleep Required) -->
-                    <div>
-                        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #666;">Activity</h4>
-                        <p style="font-size: 12px; color: #999; margin-bottom: 8px;">Tracked throughout the day</p>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_steps" @change="saveFitbitPreferences">
-                            <span>Steps</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_distance" @change="saveFitbitPreferences">
-                            <span>Distance</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_floors" @change="saveFitbitPreferences">
-                            <span>Floors</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_calories" @change="saveFitbitPreferences">
-                            <span>Calories</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_active_minutes" @change="saveFitbitPreferences">
-                            <span>Active Minutes</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_heart_rate" @change="saveFitbitPreferences">
-                            <span>Resting Heart Rate</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_cardio_fitness" @change="saveFitbitPreferences">
-                            <span>VO2 Max</span>
-                        </label>
-                    </div>
-
-                    <!-- Sleep Tracking Required -->
-                    <div style="background: #fef3c7; padding: 12px; border-radius: 6px; border: 1px solid #fde68a;">
-                        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #92400e; display: flex; align-items: center; gap: 6px;">
-                            <span>😴</span> Sleep Tracking Required
-                        </h4>
-                        <p style="font-size: 12px; color: #78350f; margin-bottom: 8px;">Wear device overnight (3+ hours)</p>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_sleep" @change="saveFitbitPreferences">
-                            <span>Sleep Duration</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_sleep_stages" @change="saveFitbitPreferences">
-                            <span>Sleep Stages</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_hrv" @change="saveFitbitPreferences">
-                            <span>HRV</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_breathing_rate" @change="saveFitbitPreferences">
-                            <span>Breathing Rate</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_spo2" @change="saveFitbitPreferences">
-                            <span>SpO2</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_temperature" @change="saveFitbitPreferences">
-                            <span>Skin Temperature</span>
-                        </label>
-                    </div>
-
-                    <!-- Body Composition (Manual Entry) -->
-                    <div>
-                        <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 4px; color: #666;">Body (Optional)</h4>
-                        <p style="font-size: 12px; color: #999; margin-bottom: 8px;">Manually logged data</p>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_weight" @change="saveFitbitPreferences">
-                            <span>Weight</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_body_fat" @change="saveFitbitPreferences">
-                            <span>Body Fat %</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0;">
-                            <input type="checkbox" x-model="fitbitPrefs.show_water" @change="saveFitbitPreferences">
-                            <span>Water Intake</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div style="display: flex; gap: 8px; justify-content: flex-end; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                    <button class="btn btn--secondary" @click="resetFitbitPreferences">
-                        Reset to Defaults
-                    </button>
-                    <span x-show="prefsSaved" x-transition style="color: #10b981; font-size: 14px; display: flex; align-items: center;">
-                        ✓ Saved
-                    </span>
-                </div>
-            </div>
-        </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div x-show="deleteConfirm.show"
-         x-cloak
-         @click.self="cancelDelete()"
-         @keydown.escape.window="deleteConfirm.show && cancelDelete()"
-         class="modal-overlay" x-cloak>
-        <div class="modal-content">
-            <div class="modal-body">
-                <h3 style="margin: 0 0 16px; font-size: 20px; color: var(--text-color);">Delete Task?</h3>
-                <p style="margin: 0 0 24px; color: #666; line-height: 1.5;">
-                    Are you sure you want to delete <strong x-text="deleteConfirm.taskTitle"></strong>?
-                    <br><br>
-                    This action cannot be undone.
-                </p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn--secondary" @click="cancelDelete()">Cancel</button>
-                <button class="btn btn--danger" @click="confirmDelete()">Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Alert Message -->
-    <div x-show="alertMessage"
-         x-cloak
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0 transform translate-y-2"
-         x-transition:enter-end="opacity-100 transform translate-y-0"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         style="position: fixed; bottom: 24px; right: 24px; background: var(--card-bg); border-left: 4px solid var(--danger-color); padding: 16px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); max-width: 400px; z-index: 10000;">
-        <p x-text="alertMessage" style="margin: 0; color: var(--text-color);"></p>
-    </div>
 </div>
 
-<style>
-.metric-card {
-    padding: 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    text-align: center;
-    background: var(--background-color);
-}
-
-/* Household task frequency badges */
-.frequency-badge {
-    padding: 3px 10px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: capitalize;
-    display: inline-block;
-}
-
-.frequency-badge.weekly {
-    background: #e6f7ff;
-    color: #0066cc;
-}
-
-.frequency-badge.monthly {
-    background: #f0f5ff;
-    color: #5b21b6;
-}
-
-.frequency-badge.quarterly {
-    background: #fff7e6;
-    color: #d46b08;
-}
-
-.frequency-badge.annual {
-    background: #fcffe6;
-    color: #7cb305;
-}
-</style>
 
 <script>
 function settings() {
     return {
-        // Section collapse state
-        sectionsCollapsed: {
-            personalTasks: true,
-            household: true,
-            appPreferences: true,
-            profileManagement: true,
-            fitbit: true
-        },
-
-        tasks: [],
-        taskFilter: 'all',  // 'all', 'daily', 'punch_list', 'scheduled'
-        showAddForm: false,
-        editingTask: null,
-        newTask: {
-            task_type: 'daily',  // 'daily', 'punch_list', or 'scheduled'
-            taskType: 'manual',  // 'manual' or 'fitbit' (for daily tasks)
-            fitbitTemplate: '',
-            title: '',
-            icon: null,  // Material Design Icon name
-            is_required: true,
-            is_active: true,
-            sort_order: 0,
-            // Punch list fields
-            due_date: null,
-            // Scheduled fields
-            recurrence_type: 'days',
-            interval: 7,
-            day_of_week: 0,
-            day_of_month: 1,
-            // Fitbit fields
-            fitbit_metric_type: null,
-            fitbit_goal_value: null,
-            fitbit_goal_operator: 'gte',
-            fitbit_auto_check: false
-        },
-
-        fitbitTemplates: {
-            'steps_10k': { metric: 'steps', operator: 'gte', value: 10000, title: 'Walk 10,000 steps' },
-            'steps_8k': { metric: 'steps', operator: 'gte', value: 8000, title: 'Walk 8,000 steps' },
-            'steps_5k': { metric: 'steps', operator: 'gte', value: 5000, title: 'Walk 5,000 steps' },
-            'sleep_7h': { metric: 'sleep_minutes', operator: 'gte', value: 420, title: 'Sleep 7+ hours' },
-            'sleep_8h': { metric: 'sleep_minutes', operator: 'gte', value: 480, title: 'Sleep 8+ hours' },
-            'active_30m': { metric: 'active_minutes', operator: 'gte', value: 30, title: '30 minutes active' },
-            'active_60m': { metric: 'active_minutes', operator: 'gte', value: 60, title: '60 minutes active' },
-            'floors_10': { metric: 'floors', operator: 'gte', value: 10, title: 'Climb 10 floors' },
-            'calories_2000': { metric: 'calories_burned', operator: 'gte', value: 2000, title: 'Burn 2,000 calories' },
-            'distance_3mi': { metric: 'distance', operator: 'gte', value: 3, title: 'Walk 3 miles' },
-            'distance_5mi': { metric: 'distance', operator: 'gte', value: 5, title: 'Walk 5 miles' }
-        },
-
-        // Fitbit state
         fitbitConnected: false,
         fitbitLastSync: null,
-        fitbitSyncStatus: null,
         isSyncing: false,
-        todayMetrics: {},
+        confettiEnabled: true,
+        shoppingListEnabled: false,
+        prefsSaved: false,
 
-        // Fitbit preferences state
         fitbitPrefs: {
             show_steps: true,
             show_distance: true,
@@ -1071,94 +218,24 @@ function settings() {
             show_temperature: true,
             show_weight: false,
             show_body_fat: false,
-            show_water: false
-        },
-        prefsSaved: false,
-
-        // UI state
-        deleteConfirm: { show: false, taskTitle: '', taskId: null },
-        alertMessage: '',
-        confettiEnabled: true,
-
-        // Household task state
-        householdTasks: [],
-        householdFilter: 'all',
-        showAddHouseholdForm: false,
-        editingHouseholdTask: null,
-        householdForm: {
-            title: '',
-            description: '',
-            frequency: 'todo',
-            due_date: null,
-            icon: null,
-            sort_order: 0,
-            is_active: true,
-            schedule_mode: 'calendar',
-            recurrence_day_of_week: 0,
-            recurrence_day_of_month: 1,
-            recurrence_month: 1,
-            recurrence_day: 1
-        },
-
-        // Icon picker state (household tasks)
-        showIconPicker: false,
-        iconSearch: '',
-        iconCategories: window.iconPickerCategories.household,
-
-        // Icon picker state (personal tasks)
-        showPersonalIconPicker: false,
-        personalIconSearch: '',
-        personalIconCategories: window.iconPickerCategories.personal,
-        personalIconTarget: 'new', // 'new' or 'edit'
-
-        // Computed property: filtered tasks
-        get filteredTasks() {
-            let filtered = this.tasks.filter(task => {
-                // Always exclude completed todo items from settings
-                if (task.task_type === 'punch_list' && task.completed_at) {
-                    return false;
-                }
-                return true;
-            });
-
-            if (this.taskFilter === 'all') {
-                return filtered;
-            }
-            return filtered.filter(task => task.task_type === this.taskFilter);
-        },
-
-        // Helper to get count for filter buttons
-        filteredTaskCount(filterType) {
-            let filtered = this.tasks.filter(task => {
-                // Always exclude completed todo items from settings
-                if (task.task_type === 'punch_list' && task.completed_at) {
-                    return false;
-                }
-                return true;
-            });
-
-            if (filterType === 'all') {
-                return filtered.length;
-            }
-            return filtered.filter(task => task.task_type === filterType).length;
+            show_water: false,
+            goal_steps: null,
+            goal_active_minutes: null,
+            goal_sleep_hours: null,
+            goal_water_oz: null,
+            goal_weekly_steps: null
         },
 
         async init() {
-            // Load confetti preference (default: true)
-            const savedPref = localStorage.getItem('streaklet_confetti_enabled');
-            this.confettiEnabled = savedPref === null ? true : savedPref === 'true';
+            await this.loadProfilePreferences();
+            await this.migrateLegacyPreferencesIfNeeded();
 
-            await this.loadTasks();
-            await this.loadHouseholdTasks();
             await this.loadFitbitStatus();
             await this.loadFitbitPreferences();
 
-            // Check for OAuth callback status
             const params = new URLSearchParams(window.location.search);
             if (params.get('fitbit') === 'connected') {
                 await this.loadFitbitStatus();
-                await this.loadTodayMetrics();
-                // Clean up URL
                 window.history.replaceState({}, document.title, window.location.pathname);
             } else if (params.get('fitbit') === 'error') {
                 toast.error('Failed to connect to Fitbit: ' + (params.get('message') || 'Unknown error'));
@@ -1166,296 +243,39 @@ function settings() {
             }
         },
 
-        async loadTasks() {
-            this.tasks = await api.tasks.list();
-        },
-
-        resetNewTask() {
-            this.newTask = {
-                task_type: 'daily',
-                taskType: 'manual',
-                fitbitTemplate: '',
-                title: '',
-                is_required: true,
-                is_active: true,
-                sort_order: this.tasks.length + 1,
-                due_date: null,
-                recurrence_type: 'days',
-                interval: 7,
-                day_of_week: 0,
-                day_of_month: 1,
-                fitbit_metric_type: null,
-                fitbit_goal_value: null,
-                fitbit_goal_operator: 'gte',
-                fitbit_auto_check: false
-            };
-        },
-
-        onTaskCategoryChange() {
-            // Reset fields when switching task categories
-            this.newTask.title = '';
-            this.newTask.is_required = (this.newTask.task_type !== 'punch_list');
-        },
-
-        onRecurrenceTypeChange() {
-            // Reset recurrence-specific fields
-            if (this.newTask.recurrence_type === 'days') {
-                this.newTask.interval = 7;
-            } else if (this.newTask.recurrence_type === 'weekly') {
-                this.newTask.interval = 1;
-                this.newTask.day_of_week = 0;
-            } else if (this.newTask.recurrence_type === 'monthly') {
-                this.newTask.interval = 1;
-                this.newTask.day_of_month = 1;
-            }
-        },
-
-        onTaskTypeChange() {
-            // Reset task-specific fields when switching types (for daily tasks)
-            if (this.newTask.taskType === 'manual') {
-                this.newTask.fitbitTemplate = '';
-                this.newTask.fitbit_metric_type = null;
-                this.newTask.fitbit_goal_value = null;
-                this.newTask.fitbit_auto_check = false;
-            } else {
-                this.newTask.title = '';
-            }
-        },
-
-        applyFitbitTemplate() {
-            if (this.newTask.fitbitTemplate === 'custom') {
-                // Clear fields for custom entry
-                this.newTask.title = '';
-                this.newTask.fitbit_metric_type = null;
-                this.newTask.fitbit_goal_value = null;
-                this.newTask.fitbit_goal_operator = 'gte';
-                return;
-            }
-
-            const template = this.fitbitTemplates[this.newTask.fitbitTemplate];
-            if (template) {
-                this.newTask.fitbit_metric_type = template.metric;
-                this.newTask.fitbit_goal_operator = template.operator;
-                this.newTask.fitbit_goal_value = template.value;
-                this.newTask.title = template.title;
-                this.newTask.fitbit_auto_check = true;  // Enable auto-complete by default for templates
-            }
-        },
-
-        async addTask() {
-            // Validation based on task category
-            if (this.newTask.task_type === 'daily') {
-                if (this.newTask.taskType === 'manual') {
-                    if (!this.newTask.title.trim()) {
-                        toast.warning('Pleaseenter a task title');
-                        return;
-                    }
-                } else if (this.newTask.taskType === 'fitbit') {
-                    if (!this.newTask.fitbitTemplate) {
-                        toast.warning('Pleaseselect a Fitbit goal template');
-                        return;
-                    }
-                    if (this.newTask.fitbitTemplate === 'custom') {
-                        if (!this.newTask.fitbit_metric_type) {
-                            toast.warning('Pleaseselect a Fitbit metric type');
-                            return;
-                        }
-                        if (!this.newTask.fitbit_goal_value) {
-                            toast.warning('Pleaseenter a goal value');
-                            return;
-                        }
-                        this.newTask.title = this.generateFitbitTitle();
-                    }
-                    if (!this.newTask.title) {
-                        toast.warning('Task title could not be generated');
-                        return;
-                    }
-                }
-            } else if (this.newTask.task_type === 'punch_list') {
-                if (!this.newTask.title.trim()) {
-                    toast.warning('Pleaseenter a task title');
-                    return;
-                }
-            } else if (this.newTask.task_type === 'scheduled') {
-                if (!this.newTask.title.trim()) {
-                    toast.warning('Pleaseenter a task title');
-                    return;
-                }
-                // Build recurrence_pattern
-                this.newTask.recurrence_pattern = {
-                    type: this.newTask.recurrence_type,
-                    interval: this.newTask.interval || 1
-                };
-                if (this.newTask.recurrence_type === 'weekly') {
-                    this.newTask.recurrence_pattern.day_of_week = this.newTask.day_of_week;
-                } else if (this.newTask.recurrence_type === 'monthly') {
-                    this.newTask.recurrence_pattern.day_of_month = this.newTask.day_of_month;
-                }
-            }
-
+        async loadProfilePreferences() {
             try {
-                await api.tasks.create(this.newTask);
-                await this.loadTasks();
-                this.showAddForm = false;
-                this.resetNewTask();
+                const preferences = await api.profilePreferences.get();
+                this.confettiEnabled = preferences.confetti_enabled;
+                this.shoppingListEnabled = preferences.show_shopping_list;
             } catch (error) {
-                console.error('Error adding task:', error);
-                toast.error('Error creating task: ' + error.message);
+                console.error('Error loading profile preferences:', error);
             }
         },
 
-        generateFitbitTitle() {
-            // Generate title based on metric, operator, and value
-            const metricNames = {
-                'steps': 'steps',
-                'active_minutes': 'minutes active',
-                'sleep_minutes': 'hours sleep',
-                'sleep_score': 'sleep score',
-                'distance': 'miles',
-                'floors': 'floors',
-                'calories_burned': 'calories',
-                'resting_heart_rate': 'bpm resting heart rate'
-            };
-
-            const metric = this.newTask.fitbit_metric_type;
-            const value = this.newTask.fitbit_goal_value;
-            const operator = this.newTask.fitbit_goal_operator;
-
-            if (!metric || !value) return '';
-
-            const metricName = metricNames[metric] || metric;
-            let formattedValue = value;
-
-            // Convert sleep minutes to hours for display
-            if (metric === 'sleep_minutes') {
-                formattedValue = Math.floor(value / 60);
-            }
-
-            // Format based on operator
-            if (operator === 'gte') {
-                if (metric === 'steps') return `Walk ${formattedValue.toLocaleString()} ${metricName}`;
-                if (metric === 'sleep_minutes') return `Sleep ${formattedValue}+ hours`;
-                if (metric === 'active_minutes') return `${formattedValue} ${metricName}`;
-                if (metric === 'distance') return `Walk ${formattedValue} ${metricName}`;
-                if (metric === 'floors') return `Climb ${formattedValue} ${metricName}`;
-                if (metric === 'calories_burned') return `Burn ${formattedValue.toLocaleString()} ${metricName}`;
-                return `${formattedValue} ${metricName}`;
-            } else if (operator === 'lte') {
-                return `Max ${formattedValue} ${metricName}`;
-            } else {
-                return `Exactly ${formattedValue} ${metricName}`;
-            }
-        },
-
-        editTask(task) {
-            this.editingTask = { ...task };
-            this.showAddForm = false;
-        },
-
-        async updateTask() {
-            if (!this.editingTask) return;
-
-            if (!this.editingTask.title.trim()) {
-                toast.warning('Pleaseenter a task title');
-                return;
-            }
-
-            // Validate Fitbit fields if auto-check is enabled
-            if (this.editingTask.fitbit_auto_check) {
-                if (!this.editingTask.fitbit_metric_type) {
-                    toast.warning('Pleaseselect a Fitbit metric type');
-                    return;
-                }
-                if (!this.editingTask.fitbit_goal_value) {
-                    toast.warning('Pleaseenter a goal value');
-                    return;
-                }
-            }
-
+        async saveProfilePreferences() {
             try {
-                await api.tasks.update(this.editingTask.id, {
-                    title: this.editingTask.title,
-                    icon: this.editingTask.icon,
-                    is_required: this.editingTask.is_required,
-                    is_active: this.editingTask.is_active,
-                    sort_order: this.editingTask.sort_order,
-                    fitbit_metric_type: this.editingTask.fitbit_metric_type,
-                    fitbit_goal_value: this.editingTask.fitbit_goal_value,
-                    fitbit_goal_operator: this.editingTask.fitbit_goal_operator,
-                    fitbit_auto_check: this.editingTask.fitbit_auto_check
+                const preferences = await api.profilePreferences.update({
+                    confetti_enabled: this.confettiEnabled,
+                    show_shopping_list: this.shoppingListEnabled
                 });
-                await this.loadTasks();
-                this.editingTask = null;
+                this.confettiEnabled = preferences.confetti_enabled;
+                this.shoppingListEnabled = preferences.show_shopping_list;
             } catch (error) {
-                console.error('Error updating task:', error);
-                toast.error('Error updating task: ' + error.message);
+                console.error('Error saving profile preferences:', error);
+                toast.error('Failed to save preferences');
+                await this.loadProfilePreferences();
             }
         },
 
-        showDeleteConfirm(task) {
-            // Show custom confirmation modal
-            this.deleteConfirm = {
-                show: true,
-                taskTitle: task.title,
-                taskId: task.id
-            };
-        },
-
-        async confirmDelete() {
-            const taskId = this.deleteConfirm.taskId;
-            this.deleteConfirm = { show: false, taskTitle: '', taskId: null };
-
-            try {
-                await api.tasks.delete(taskId);
-                await this.loadTasks();
-            } catch (error) {
-                console.error('Error deleting task:', error);
-                if (error.status === 404) {
-                    this.showAlert('Task not found. It may have already been deleted.');
-                    await this.loadTasks();
-                } else {
-                    this.showAlert('Error deleting task: ' + (error.message || 'Please check your connection and try again.'));
-                }
-            }
-        },
-
-        cancelDelete() {
-            this.deleteConfirm = { show: false, taskTitle: '', taskId: null };
-        },
-
-        showAlert(message) {
-            this.alertMessage = message;
-            setTimeout(() => {
-                this.alertMessage = '';
-            }, 5000);
-        },
-
-        // Task type helpers
-        getTaskTypeLabel(taskType) {
-            if (taskType === 'punch_list') return 'Todo';
-            if (taskType === 'scheduled') return 'Scheduled';
-            return 'Daily';
-        },
-
-        getTaskTypeBadgeClass(taskType) {
-            if (taskType === 'punch_list') return 'badge-todo';
-            if (taskType === 'scheduled') return 'badge-scheduled';
-            return 'badge-daily';
-        },
-
-        // Fitbit methods
         async loadFitbitStatus() {
             try {
                 const data = await api.fitbit.connection();
                 this.fitbitConnected = data.connected;
                 this.fitbitLastSync = data.last_sync_at;
-                this.fitbitSyncStatus = data.last_sync_status;
-
-                if (this.fitbitConnected) {
-                    await this.loadTodayMetrics();
-                }
             } catch (error) {
                 console.error('Error loading Fitbit status:', error);
+                this.fitbitConnected = false;
             }
         },
 
@@ -1476,8 +296,7 @@ function settings() {
                 await api.fitbit.disconnect();
                 this.fitbitConnected = false;
                 this.fitbitLastSync = null;
-                this.todayMetrics = {};
-                toast.error('Fitbit disconnected successfully');
+                toast.success('Fitbit disconnected');
             } catch (error) {
                 console.error('Error disconnecting Fitbit:', error);
                 toast.error('Failed to disconnect Fitbit');
@@ -1489,7 +308,6 @@ function settings() {
 
             try {
                 const prefs = await api.fitbit.preferences();
-                // Update fitbitPrefs with loaded data
                 Object.assign(this.fitbitPrefs, {
                     show_steps: prefs.show_steps,
                     show_distance: prefs.show_distance,
@@ -1506,21 +324,48 @@ function settings() {
                     show_temperature: prefs.show_temperature,
                     show_weight: prefs.show_weight,
                     show_body_fat: prefs.show_body_fat,
-                    show_water: prefs.show_water
+                    show_water: prefs.show_water,
+                    goal_steps: prefs.goal_steps,
+                    goal_active_minutes: prefs.goal_active_minutes,
+                    goal_sleep_hours: prefs.goal_sleep_hours,
+                    goal_water_oz: prefs.goal_water_oz,
+                    goal_weekly_steps: prefs.goal_weekly_steps
                 });
             } catch (error) {
                 console.error('Error loading Fitbit preferences:', error);
             }
         },
 
+        async updateFitbitGoal(field, rawValue, allowFloat = false) {
+            const valueStr = String(rawValue || '').trim();
+
+            if (!valueStr) {
+                this.fitbitPrefs[field] = null;
+                await this.saveFitbitPreferences();
+                return;
+            }
+
+            const parsedValue = allowFloat
+                ? Number.parseFloat(valueStr)
+                : Number.parseInt(valueStr, 10);
+
+            if (!Number.isFinite(parsedValue) || parsedValue <= 0) {
+                toast.warning('Use a positive number, or leave blank for default.');
+                await this.loadFitbitPreferences();
+                return;
+            }
+
+            this.fitbitPrefs[field] = parsedValue;
+            await this.saveFitbitPreferences();
+        },
+
         async saveFitbitPreferences() {
             try {
                 await api.fitbit.updatePreferences(this.fitbitPrefs);
-                // Show saved indicator
                 this.prefsSaved = true;
                 setTimeout(() => {
                     this.prefsSaved = false;
-                }, 2000);
+                }, 1500);
             } catch (error) {
                 console.error('Error saving Fitbit preferences:', error);
                 toast.error('Failed to save preferences');
@@ -1533,7 +378,7 @@ function settings() {
             try {
                 await api.fitbit.resetPreferences();
                 await this.loadFitbitPreferences();
-                toast.error('Preferences reset to defaults');
+                toast.success('Preferences reset to defaults');
             } catch (error) {
                 console.error('Error resetting Fitbit preferences:', error);
                 toast.error('Failed to reset preferences');
@@ -1544,175 +389,69 @@ function settings() {
             this.isSyncing = true;
             try {
                 await api.fitbit.sync();
-                // Wait a moment for sync to complete
                 setTimeout(async () => {
                     await this.loadFitbitStatus();
-                    await this.loadTodayMetrics();
                     this.isSyncing = false;
                 }, 3000);
             } catch (error) {
                 console.error('Error syncing Fitbit:', error);
                 this.isSyncing = false;
+                toast.error('Failed to sync Fitbit');
             }
         },
-
-        async loadTodayMetrics() {
-            try {
-                // Get today's date from backend (timezone-aware)
-                const todayData = await api.daily.today();
-                const today = todayData.date;
-
-                const data = await api.fitbit.dailySummary(today);
-                this.todayMetrics = data.metrics || {};
-            } catch (error) {
-                console.error('Error loading today metrics:', error);
-            }
-        },
-
-        // formatSyncTime and formatHours now use global utils.js (formatSyncTime, formatSleepHours)
 
         saveConfettiPreference() {
-            localStorage.setItem('streaklet_confetti_enabled', this.confettiEnabled);
+            this.saveProfilePreferences();
         },
 
-        // Household task methods
-        async loadHouseholdTasks() {
-            try {
-                // NO fetchWithProfile - household tasks are shared
-                this.householdTasks = await api.get('/api/household/tasks?include_inactive=true', {
-                    useProfile: false
-                });
-            } catch (error) {
-                console.error('Error loading household tasks:', error);
-            }
-        },
-
-        resetHouseholdForm() {
-            this.householdForm = {
-                title: '',
-                description: '',
-                frequency: 'todo',
-                due_date: null,
-                icon: null,
-                sort_order: this.householdTasks.length + 1,
-                is_active: true,
-                schedule_mode: 'calendar',
-                recurrence_day_of_week: 0,
-                recurrence_day_of_month: 1,
-                recurrence_month: 1,
-                recurrence_day: 1
-            };
-        },
-
-        // Icon picker methods (using shared iconPickerUtils)
-        get filteredIconCategories() {
-            return window.iconPickerUtils.filterCategories(this.iconCategories, this.iconSearch);
-        },
-
-        selectIcon(icon) {
-            this.householdForm.icon = icon;
-            this.showIconPicker = false;
-            this.iconSearch = '';
-        },
-
-        get hasVisibleIcons() {
-            return window.iconPickerUtils.hasVisibleIcons(this.iconCategories, this.iconSearch);
-        },
-
-        // Personal task icon picker methods (using shared iconPickerUtils)
-        get filteredPersonalIconCategories() {
-            return window.iconPickerUtils.filterCategories(this.personalIconCategories, this.personalIconSearch);
-        },
-
-        selectPersonalIcon(icon) {
-            if (this.personalIconTarget === 'edit' && this.editingTask) {
-                this.editingTask.icon = icon;
-            } else {
-                this.newTask.icon = icon;
-            }
-            this.showPersonalIconPicker = false;
-            this.personalIconSearch = '';
-        },
-
-        get hasVisiblePersonalIcons() {
-            return window.iconPickerUtils.hasVisibleIcons(this.personalIconCategories, this.personalIconSearch);
-        },
-
-        // Household task filtering
-        get filteredHouseholdTasks() {
-            if (this.householdFilter === 'all') {
-                return this.householdTasks;
-            }
-            return this.householdTasks.filter(t => t.frequency === this.householdFilter);
-        },
-
-        filteredHouseholdCount(type) {
-            if (type === 'all') return this.householdTasks.length;
-            return this.householdTasks.filter(t => t.frequency === type).length;
-        },
-
-        // formatFrequency now uses global utils.js
-
-        editHouseholdTask(task) {
-            this.editingHouseholdTask = task;
-            this.householdForm = {
-                title: task.title,
-                description: task.description || '',
-                frequency: task.frequency,
-                due_date: task.due_date || null,
-                icon: task.icon || null,
-                sort_order: task.sort_order,
-                is_active: task.is_active,
-                schedule_mode: task.schedule_mode || 'calendar',
-                recurrence_day_of_week: task.recurrence_day_of_week ?? 0,
-                recurrence_day_of_month: task.recurrence_day_of_month ?? 1,
-                recurrence_month: task.recurrence_month ?? 1,
-                recurrence_day: task.recurrence_day ?? 1
-            };
-            this.showAddHouseholdForm = false;
-        },
-
-        cancelHouseholdForm() {
-            this.showAddHouseholdForm = false;
-            this.editingHouseholdTask = null;
-            this.resetHouseholdForm();
-        },
-
-        async saveHouseholdTask() {
-            if (!this.householdForm.title.trim()) {
-                toast.warning('Pleaseenter a task title');
-                return;
-            }
-
-            try {
-                if (this.editingHouseholdTask) {
-                    // Update existing task
-                    await api.household.update(this.editingHouseholdTask.id, this.householdForm);
-                } else {
-                    // Create new task
-                    await api.household.create(this.householdForm);
+        getShoppingListPreferenceKey() {
+            let profileId = null;
+            if (window.Alpine) {
+                try {
+                    profileId = Alpine.store('profile')?.id;
+                } catch (e) {
+                    profileId = null;
                 }
-
-                await this.loadHouseholdTasks();
-                this.cancelHouseholdForm();
-            } catch (error) {
-                console.error('Error saving household task:', error);
-                toast.error('Failed to save task. Please try again.');
             }
+            profileId = profileId || this.getCookie('profile_id') || 'default';
+            return `streaklet_show_shopping_list_${profileId}`;
         },
 
-        async deleteHouseholdTask(task) {
-            if (!confirm(`Delete "${task.title}"? This will also delete all completion history.`)) {
+        getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        },
+
+        saveShoppingListPreference() {
+            this.saveProfilePreferences();
+        },
+
+        async migrateLegacyPreferencesIfNeeded() {
+            const legacyConfetti = localStorage.getItem('streaklet_confetti_enabled');
+            const legacyShopping = localStorage.getItem(this.getShoppingListPreferenceKey());
+
+            if (legacyConfetti === null && legacyShopping === null) {
                 return;
             }
 
-            try {
-                await api.household.delete(task.id);
+            const payload = {};
+            if (legacyConfetti !== null) {
+                payload.confetti_enabled = legacyConfetti === 'true';
+            }
+            if (legacyShopping !== null) {
+                payload.show_shopping_list = legacyShopping === 'true';
+            }
 
-                await this.loadHouseholdTasks();
+            try {
+                const preferences = await api.profilePreferences.update(payload);
+                this.confettiEnabled = preferences.confetti_enabled;
+                this.shoppingListEnabled = preferences.show_shopping_list;
+                localStorage.removeItem('streaklet_confetti_enabled');
+                localStorage.removeItem(this.getShoppingListPreferenceKey());
             } catch (error) {
-                console.error('Error deleting household task:', error);
-                toast.error('Failed to delete task. Please try again.');
+                console.error('Error migrating legacy preferences:', error);
             }
         }
     }

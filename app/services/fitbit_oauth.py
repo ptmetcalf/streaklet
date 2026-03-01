@@ -9,6 +9,7 @@ Handles:
 """
 import httpx
 import base64
+import logging
 from datetime import timedelta
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,8 @@ from app.core.config import settings
 from app.core.encryption import encrypt_token, decrypt_token
 from app.core.time import get_now, to_timezone_aware
 from app.models.fitbit_connection import FitbitConnection
+
+logger = logging.getLogger(__name__)
 
 
 # Fitbit OAuth endpoints
@@ -220,7 +223,7 @@ async def revoke_token(connection: FitbitConnection) -> None:
             )
     except Exception as e:
         # Log error but don't raise - revocation is best-effort
-        print(f"Token revocation failed (non-fatal): {e}")
+        logger.warning("Fitbit token revocation failed (non-fatal): %s", e)
 
 
 def is_token_expired(connection: FitbitConnection) -> bool:

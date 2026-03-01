@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Streaklet - Fitbit Metrics{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/css/pages/fitbit.css?v={{ cache_bust }}">{% endblock %}
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
@@ -8,6 +9,7 @@
 <div class="container" x-data="fitbitMetrics()" x-cloak>
     <header>
         <h1>Fitbit Metrics</h1>
+        <p class="page-subtitle">Daily stats, trends, and practical insights from your Fitbit data.</p>
     </header>
 
     <!-- Not Connected State -->
@@ -26,20 +28,12 @@
                     @click="currentTab = 'daily'; loadMetricsForDate()">
                 Daily
             </button>
-            <button class="tab-button" :class="{ active: currentTab === 'overview' }"
-                    @click="currentTab = 'overview'; loadOverviewData()">
-                Overview
-            </button>
             <button class="tab-button" :class="{ active: currentTab === 'trends' }"
                     @click="currentTab = 'trends'; loadTrendData()">
                 Trends
             </button>
-            <button class="tab-button" :class="{ active: currentTab === 'compare' }"
-                    @click="currentTab = 'compare'; loadComparisonData()">
-                Compare
-            </button>
             <button class="tab-button" :class="{ active: currentTab === 'insights' }"
-                    @click="currentTab = 'insights'; loadInsightsData()">
+                    @click="currentTab = 'insights'; loadInsightsHubData()">
                 Insights
             </button>
         </div>
@@ -49,7 +43,7 @@
             <!-- Date Range Selector -->
             <div style="margin-bottom: 24px;">
                 <label class="form-field__label">Time Range:</label>
-                <select x-model="trendRange" @change="loadTrendData" class="trend-range-select">
+                <select x-model="trendRange" @change="loadTrendData" class="trend-range-select form-field__select">
                     <option value="7">Last 7 Days</option>
                     <option value="14">Last 14 Days</option>
                     <option value="30">Last 30 Days</option>
@@ -89,13 +83,31 @@
 
         <!-- Daily View Tab -->
         <div x-show="currentTab === 'daily'">
+            <div class="fitbit-focus-strip" x-show="weeklyActions.length > 0">
+                <div class="fitbit-focus-strip__score"
+                     :class="{
+                        'fitbit-focus-strip__score--strong': weeklyScore >= 80,
+                        'fitbit-focus-strip__score--medium': weeklyScore >= 60 && weeklyScore < 80,
+                        'fitbit-focus-strip__score--low': weeklyScore < 60
+                     }">
+                    <span x-text="weeklyScore"></span>
+                </div>
+                <div class="fitbit-focus-strip__content">
+                    <div class="fitbit-focus-strip__title">7-Day Focus</div>
+                    <div class="fitbit-focus-strip__subtitle" x-text="weeklyActions[0]?.detail || 'Keep your current momentum.'"></div>
+                </div>
+                <button class="btn btn--secondary btn--sm" @click="currentTab = 'insights'; loadInsightsHubData()">
+                    View insights
+                </button>
+            </div>
+
             <!-- Date Selector -->
             <div class="date-selector">
                 <input type="date"
                        x-model="selectedDate"
                        @change="loadMetricsForDate"
                        :max="today"
-                       class="date-input">
+                       class="date-input form-field__input">
                 <div class="date-nav-buttons">
                     <button class="btn btn--secondary" @click="previousDay">← Prev</button>
                     <button class="btn btn--secondary" @click="goToToday">Today</button>
@@ -227,29 +239,33 @@
                 </div>
             </div>
 
-            <!-- Detailed Metrics Table -->
-            <div style="margin-top: 32px;">
-                <h2 style="margin-bottom: 16px;">Detailed Metrics</h2>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="border-bottom: 2px solid var(--border-color);">
-                            <th style="text-align: left; padding: 12px;">Metric</th>
-                            <th style="text-align: right; padding: 12px;">Value</th>
-                            <th style="text-align: right; padding: 12px;">Unit</th>
-                            <th style="text-align: right; padding: 12px;">Synced At</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template x-for="[key, data] in Object.entries(metrics).filter(([k]) => visibleMetrics[k] !== false)" :key="key">
-                            <tr style="border-bottom: 1px solid var(--border-color);">
-                                <td style="padding: 12px;" x-text="formatMetricName(key)"></td>
-                                <td style="text-align: right; padding: 12px; font-weight: 600;" x-text="formatMetricValue(data.value, key)"></td>
-                                <td style="text-align: right; padding: 12px; color: #666;" x-text="data.unit || '-'"></td>
-                                <td style="text-align: right; padding: 12px; color: #666; font-size: 12px;" x-text="formatSyncTime(data.synced_at)"></td>
+            <div class="content-card" style="margin-top: 24px;">
+                <button class="btn btn--secondary btn--block" @click="showAdvancedDaily = !showAdvancedDaily">
+                    <span x-show="!showAdvancedDaily">Show Raw Metrics Table</span>
+                    <span x-show="showAdvancedDaily">Hide Raw Metrics Table</span>
+                </button>
+                <div x-show="showAdvancedDaily" x-collapse style="margin-top: 16px;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-color);">
+                                <th style="text-align: left; padding: 12px;">Metric</th>
+                                <th style="text-align: right; padding: 12px;">Value</th>
+                                <th style="text-align: right; padding: 12px;">Unit</th>
+                                <th style="text-align: right; padding: 12px;">Synced At</th>
                             </tr>
-                        </template>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <template x-for="[key, data] in Object.entries(metrics).filter(([k]) => visibleMetrics[k] !== false)" :key="key">
+                                <tr style="border-bottom: 1px solid var(--border-color);">
+                                    <td style="padding: 12px;" x-text="formatMetricName(key)"></td>
+                                    <td style="text-align: right; padding: 12px; font-weight: 600;" x-text="formatMetricValue(data.value, key)"></td>
+                                    <td style="text-align: right; padding: 12px; color: #666;" x-text="data.unit || '-'"></td>
+                                    <td style="text-align: right; padding: 12px; color: #666; font-size: 12px;" x-text="formatSyncTime(data.synced_at)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -261,10 +277,32 @@
             </div>
         </div>
 
-        <!-- Overview Tab -->
-        <div x-show="currentTab === 'overview'">
-            <div x-show="overviewLoading" class="loading-state">Loading overview...</div>
-            <div x-show="!overviewLoading">
+        <!-- Insights Tab -->
+        <div x-show="currentTab === 'insights'">
+            <div x-show="overviewLoading || insightsLoading" class="loading-state">Loading insights...</div>
+            <div x-show="!overviewLoading && !insightsLoading">
+                <div class="content-card snapshot-card">
+                    <div class="snapshot-header">
+                        <h3>7-Day Snapshot</h3>
+                        <div class="snapshot-score"
+                             :class="{
+                                'snapshot-score--strong': weeklyScore >= 80,
+                                'snapshot-score--medium': weeklyScore >= 60 && weeklyScore < 80,
+                                'snapshot-score--low': weeklyScore < 60
+                             }"
+                             x-text="weeklyScore"></div>
+                    </div>
+                    <p class="snapshot-summary" x-text="`7-day score: ${weeklyScore}/100 (${weeklyScoreLabel})`"></p>
+                    <div class="snapshot-actions">
+                        <template x-for="(action, index) in weeklyActions" :key="`action-${index}`">
+                            <div class="snapshot-action-item">
+                                <div class="snapshot-action-title" x-text="action.title"></div>
+                                <div class="snapshot-action-detail" x-text="action.detail"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
                 <!-- Stats Summary Cards -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 32px;">
                     <div class="stats-card" x-show="visibleMetrics.steps || visibleMetrics.sleep_minutes || visibleMetrics.active_minutes">
@@ -302,7 +340,7 @@
                     </div>
 
                     <div class="stats-card" x-show="visibleMetrics.steps || visibleMetrics.sleep_minutes">
-                        <h3>This Week</h3>
+                        <h3>Last 7 Complete Days</h3>
                         <div class="stats-grid">
                             <div class="stat-item" x-show="visibleMetrics.steps">
                                 <div class="stat-label">Total Steps</div>
@@ -318,28 +356,22 @@
                     </div>
                 </div>
 
-                <!-- Multi-Metric Chart -->
-                <div class="content-card">
-                    <h3>Multi-Metric Overview (Last 30 Days)</h3>
-                    <div id="multiMetricChart"></div>
-                </div>
-
                 <!-- Goal Progress -->
                 <div class="content-card">
-                    <h3>Weekly Goals</h3>
+                    <h3>7-Day Goals</h3>
                     <div style="display: grid; gap: 16px;">
                         <div class="goal-progress">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                <span>Steps Goal (70,000/week)</span>
-                                <span x-text="Math.round((stats.week_steps / 70000) * 100) + '%'"></span>
+                                <span x-text="`Steps Goal (${formatNumber(weeklyStepsGoal)} / 7 days)`"></span>
+                                <span x-text="goalPercent(stats.week_steps, weeklyStepsGoal) + '%'"></span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-fill" :style="`width: ${Math.min((stats.week_steps / 70000) * 100, 100)}%`"></div>
+                                <div class="progress-fill" :style="`width: ${goalPercent(stats.week_steps, weeklyStepsGoal)}%`"></div>
                             </div>
                         </div>
                         <div class="goal-progress">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                <span>Active Minutes Goal (150/week)</span>
+                                <span>Active Minutes Goal (150 / 7 days)</span>
                                 <span x-text="Math.round((stats.week_active / 150) * 100) + '%'"></span>
                             </div>
                             <div class="progress-bar">
@@ -348,37 +380,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Compare Tab -->
-        <div x-show="currentTab === 'compare'">
-            <div x-show="compareLoading" class="loading-state">Loading comparison...</div>
-            <div x-show="!compareLoading">
-                <!-- Weekday vs Weekend -->
-                <div class="content-card">
-                    <h3>Weekday vs Weekend Patterns</h3>
-                    <div id="weekdayWeekendChart"></div>
-                </div>
-
-                <!-- Week Over Week -->
-                <div class="content-card">
-                    <h3>Week Over Week Comparison</h3>
-                    <div id="weekOverWeekChart"></div>
-                </div>
-
-                <!-- Month Comparison -->
-                <div class="content-card">
-                    <h3>Monthly Comparison</h3>
-                    <div id="monthComparisonChart"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Insights Tab -->
-        <div x-show="currentTab === 'insights'">
-            <div x-show="insightsLoading" class="loading-state">Analyzing data...</div>
-            <div x-show="!insightsLoading">
                 <!-- Correlation Analysis -->
                 <div x-show="visibleMetrics.steps && visibleMetrics.sleep_minutes" class="content-card">
                     <h3>Sleep vs Activity Correlation</h3>
@@ -418,281 +420,6 @@
     </div>
 </div>
 
-<style>
-.date-selector {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-    flex-wrap: wrap;
-}
-
-.date-input {
-    padding: 12px 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 16px;
-    min-width: 180px;
-}
-
-.date-nav-buttons {
-    display: flex;
-    gap: 8px;
-    flex: 1;
-    justify-content: flex-end;
-}
-
-.date-nav-buttons .btn-secondary {
-    padding: 12px 20px;
-    white-space: nowrap;
-}
-
-.trend-range-select {
-    padding: 12px 16px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 16px;
-    min-width: 200px;
-    background: white;
-}
-
-@media (max-width: 640px) {
-    .date-selector {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .date-input {
-        width: 100%;
-        font-size: 16px; /* Prevents iOS zoom on focus */
-    }
-
-    .date-nav-buttons {
-        width: 100%;
-        justify-content: stretch;
-    }
-
-    .date-nav-buttons .btn-secondary {
-        flex: 1;
-        padding: 14px 12px;
-        font-size: 15px;
-    }
-
-    .trend-range-select {
-        width: 100%;
-        font-size: 16px;
-    }
-}
-
-.daily-metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 32px;
-}
-
-@media (max-width: 768px) {
-    .daily-metrics-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-}
-
-.metric-card-large {
-    padding: 24px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    text-align: center;
-    background: var(--background-color);
-}
-
-@media (max-width: 768px) {
-    .metric-card-large {
-        padding: 16px 12px;
-    }
-}
-
-.metric-icon {
-    font-size: 48px;
-    margin-bottom: 12px;
-}
-
-@media (max-width: 768px) {
-    .metric-icon {
-        font-size: 32px;
-        margin-bottom: 8px;
-    }
-}
-
-.metric-value {
-    font-size: 32px;
-    font-weight: 700;
-    margin-bottom: 8px;
-}
-
-@media (max-width: 768px) {
-    .metric-value {
-        font-size: 24px;
-        margin-bottom: 4px;
-    }
-}
-
-.metric-label {
-    font-size: 14px;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-@media (max-width: 768px) {
-    .metric-label {
-        font-size: 11px;
-        letter-spacing: 0.3px;
-    }
-}
-
-.tab-button {
-    padding: 12px 24px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 500;
-    position: relative;
-    transition: color 0.2s;
-}
-
-.tab-active {
-    color: var(--primary-color);
-}
-
-.tab-active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--primary-color);
-}
-
-.tab-inactive {
-    color: #666;
-}
-
-.tab-inactive:hover {
-    color: #333;
-}
-
-.stats-card {
-    padding: 24px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: white;
-}
-
-.stats-card h3 {
-    margin: 0 0 16px 0;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #666;
-}
-
-.stats-grid {
-    display: grid;
-    gap: 16px;
-}
-
-.stat-item {
-    text-align: center;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 4px;
-}
-
-.stat-value {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-.stat-date {
-    font-size: 11px;
-    color: #999;
-    margin-top: 2px;
-}
-
-.stat-trend {
-    font-size: 14px;
-    font-weight: 600;
-    margin-top: 4px;
-}
-
-.trend-up {
-    color: #10b981;
-}
-
-.trend-down {
-    color: #ef4444;
-}
-
-.progress-bar {
-    width: 100%;
-    height: 24px;
-    background: #e5e7eb;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary-color) 0%, #10b981 100%);
-    transition: width 0.5s ease;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 8px;
-    color: white;
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.goal-progress {
-    padding: 16px;
-    background: #f9fafb;
-    border-radius: 8px;
-}
-
-.insight-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    background: #f9fafb;
-    border-radius: 8px;
-    border-left: 4px solid var(--primary-color);
-}
-
-.insight-icon {
-    font-size: 24px;
-}
-
-@media (max-width: 768px) {
-    .stats-card {
-        padding: 16px;
-    }
-
-    .stat-value {
-        font-size: 20px;
-    }
-}
-</style>
 
 <script>
 function fitbitMetrics() {
@@ -701,6 +428,7 @@ function fitbitMetrics() {
         selectedDate: '{{ today }}',
         today: '{{ today }}',
         metrics: {},
+        showAdvancedDaily: false,
 
         // Trends state
         currentTab: 'daily',
@@ -711,10 +439,6 @@ function fitbitMetrics() {
             sleep: null,
             activeMinutes: null,
             heartRate: null,
-            multiMetric: null,
-            weekdayWeekend: null,
-            weekOverWeek: null,
-            monthComparison: null,
             correlation: null,
             distribution: null
         },
@@ -735,10 +459,6 @@ function fitbitMetrics() {
             week_sleep_trend: 0,
             week_active: 0
         },
-
-        // Compare state
-        compareLoading: false,
-        compareData: {},
 
         // Insights state
         insightsLoading: false,
@@ -768,6 +488,113 @@ function fitbitMetrics() {
             body_fat: false,
             water: false
         },
+        goals: {
+            weekly_steps: 70000
+        },
+
+        goalPercent(currentValue, goalValue) {
+            if (!goalValue || goalValue <= 0) return 0;
+            return Math.max(0, Math.min(100, Math.round((currentValue / goalValue) * 100)));
+        },
+
+        get weeklyStepsGoal() {
+            const goal = Number(this.goals.weekly_steps);
+            if (!Number.isFinite(goal) || goal <= 0) {
+                return 70000;
+            }
+            return goal;
+        },
+
+        get weeklyScore() {
+            const scoreParts = [];
+
+            if (this.visibleMetrics.steps) {
+                scoreParts.push({
+                    value: this.goalPercent(this.stats.week_steps, this.weeklyStepsGoal),
+                    weight: 40
+                });
+                scoreParts.push({
+                    value: Math.max(0, Math.min(100, this.insights.consistency || 0)),
+                    weight: 10
+                });
+            }
+
+            if (this.visibleMetrics.active_minutes) {
+                scoreParts.push({
+                    value: this.goalPercent(this.stats.week_active, 150),
+                    weight: 30
+                });
+            }
+
+            if (this.visibleMetrics.sleep_minutes) {
+                scoreParts.push({
+                    value: this.goalPercent(this.stats.week_sleep_avg, 420),
+                    weight: 20
+                });
+            }
+
+            if (scoreParts.length === 0) return 0;
+
+            const totalWeight = scoreParts.reduce((sum, part) => sum + part.weight, 0);
+            const weightedScore = scoreParts.reduce((sum, part) => sum + (part.value * part.weight), 0) / totalWeight;
+            return Math.round(weightedScore);
+        },
+
+        get weeklyScoreLabel() {
+            if (this.weeklyScore >= 80) return 'on track';
+            if (this.weeklyScore >= 60) return 'needs a push';
+            return 'focus zone';
+        },
+
+        get weeklyActions() {
+            const actions = [];
+
+            if (this.visibleMetrics.steps) {
+                const stepsPct = this.goalPercent(this.stats.week_steps, this.weeklyStepsGoal);
+                if (stepsPct < 100) {
+                    actions.push({
+                        title: 'Increase daily steps',
+                        detail: `You are at ${stepsPct}% of your 7-day steps target.`
+                    });
+                }
+            }
+
+            if (this.visibleMetrics.active_minutes) {
+                const activePct = this.goalPercent(this.stats.week_active, 150);
+                if (activePct < 100) {
+                    actions.push({
+                        title: 'Add active minutes',
+                        detail: `You are at ${activePct}% of your 7-day active minutes target.`
+                    });
+                }
+            }
+
+            if (this.visibleMetrics.sleep_minutes) {
+                const sleepPct = this.goalPercent(this.stats.week_sleep_avg, 420);
+                if (sleepPct < 100) {
+                    actions.push({
+                        title: 'Protect sleep time',
+                        detail: `Average sleep is at ${sleepPct}% of your 7-hour nightly goal.`
+                    });
+                }
+            }
+
+            if (this.visibleMetrics.steps && (this.insights.consistency || 0) < 70) {
+                actions.push({
+                    title: 'Improve consistency',
+                    detail: 'Aim for at least 5,000 steps on more days this week.'
+                });
+            }
+
+            if (actions.length === 0) {
+                actions.push({
+                    title: 'Maintain momentum',
+                    detail: 'You are trending well. Keep your current routine steady.'
+                });
+            }
+
+            return actions.slice(0, 3);
+        },
 
         async init() {
             // Fetch today's date from backend (timezone-aware)
@@ -776,12 +603,21 @@ function fitbitMetrics() {
             if (this.fitbitConnected) {
                 await this.loadPreferences();
                 await this.loadMetricsForDate();
+                await this.loadInsightsHubData();
             }
         },
 
         async loadPreferences() {
             try {
-                this.visibleMetrics = await api.fitbit.visibleMetrics();
+                const [visibleMetrics, goals] = await Promise.all([
+                    api.fitbit.visibleMetrics(),
+                    api.fitbit.goals().catch(() => null)
+                ]);
+
+                this.visibleMetrics = visibleMetrics;
+                if (goals && Number.isFinite(Number(goals.weekly_steps)) && Number(goals.weekly_steps) > 0) {
+                    this.goals.weekly_steps = Number(goals.weekly_steps);
+                }
             } catch (error) {
                 console.error('Error loading preferences:', error);
             }
@@ -873,6 +709,13 @@ function fitbitMetrics() {
             }
         },
 
+        async loadInsightsHubData() {
+            await Promise.all([
+                this.loadOverviewData(),
+                this.loadInsightsData()
+            ]);
+        },
+
         createCharts(metricsData) {
             // Destroy existing charts
             Object.values(this.charts).forEach(chart => {
@@ -956,10 +799,10 @@ function fitbitMetrics() {
                 startDate30.setDate(startDate30.getDate() - 31); // Adjust start to get 30 complete days
 
                 const startDateWeek = parseDateOnly(this.today);
-                startDateWeek.setDate(startDateWeek.getDate() - 8); // Last 7 complete days (excluding today)
+                startDateWeek.setDate(startDateWeek.getDate() - 7); // Last 7 complete days (excluding today)
 
                 const startDatePrevWeek = parseDateOnly(this.today);
-                startDatePrevWeek.setDate(startDatePrevWeek.getDate() - 15); // Previous 7 complete days
+                startDatePrevWeek.setDate(startDatePrevWeek.getDate() - 14); // Previous 7 complete days
 
                 // Fetch 30-day data
                 const data30 = await api.fitbit.metricsHistory(
@@ -1015,266 +858,10 @@ function fitbitMetrics() {
                 this.stats.week_steps_trend = prevWeekStepsTotal > 0 ? ((this.stats.week_steps - prevWeekStepsTotal) / prevWeekStepsTotal) * 100 : 0;
                 this.stats.week_sleep_trend = prevWeekSleepAvg > 0 ? ((this.stats.week_sleep_avg - prevWeekSleepAvg) / prevWeekSleepAvg) * 100 : 0;
 
-                // Create multi-metric chart
-                await this.$nextTick();
-                this.createMultiMetricChart(data30.metrics);
             } catch (error) {
                 console.error('Error loading overview data:', error);
             } finally {
                 this.overviewLoading = false;
-            }
-        },
-
-        createMultiMetricChart(metricsData) {
-            if (this.charts.multiMetric) {
-                this.charts.multiMetric.destroy();
-            }
-
-            const steps = metricsData.steps || [];
-            const sleep = metricsData.sleep_minutes || [];
-            const active = metricsData.active_minutes || [];
-
-            const categories = steps.map(d => {
-                const date = new Date(d.date + 'T00:00:00');
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            });
-
-            const chart = ChartFactory.createMultiSeriesChart('multiMetricChart', {
-                series: [
-                    {
-                        name: 'Steps',
-                        type: 'area',
-                        data: steps.map(d => Math.round(d.value))
-                    },
-                    {
-                        name: 'Active Minutes',
-                        type: 'line',
-                        data: active.map(d => Math.round(d.value))
-                    },
-                    {
-                        name: 'Sleep (hours)',
-                        type: 'line',
-                        data: sleep.map(d => Math.round((d.value / 60) * 10) / 10)
-                    }
-                ],
-                categories,
-                height: 350,
-                colors: [CHART_COLORS.primary, CHART_COLORS.danger, CHART_COLORS.secondary],
-                strokeWidth: [0, 2, 2],
-                fillType: ['gradient', 'solid', 'solid'],
-                enableToolbar: true,
-                yAxisConfig: [
-                    {
-                        title: { text: 'Steps' },
-                        labels: { formatter: (val) => Math.round(val).toLocaleString() }
-                    },
-                    {
-                        opposite: true,
-                        title: { text: 'Minutes / Hours' },
-                        labels: { formatter: (val) => Math.round(val) }
-                    },
-                    { show: false }
-                ]
-            });
-
-            if (chart) {
-                this.charts.multiMetric = chart;
-                chart.render();
-            }
-        },
-
-        getWeekNumber(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        },
-
-        async loadComparisonData() {
-            this.compareLoading = true;
-            try {
-                // Fetch last 60 days for comparisons
-                // Exclude today to avoid incomplete data affecting trends
-                const endDate = parseDateOnly(this.today);
-                endDate.setDate(endDate.getDate() - 1); // Use yesterday as end date
-                const startDate = parseDateOnly(this.today);
-                startDate.setDate(startDate.getDate() - 61); // Adjust to get 60 complete days
-
-                const data = await api.fitbit.metricsHistory(
-                    formatDateLocal(startDate),
-                    formatDateLocal(endDate),
-                    'steps,sleep_minutes,active_minutes'
-                );
-                this.compareData = data.metrics;
-
-                await this.$nextTick();
-                this.createComparisonCharts(data.metrics);
-            } catch (error) {
-                console.error('Error loading comparison data:', error);
-            } finally {
-                this.compareLoading = false;
-            }
-        },
-
-        createComparisonCharts(metricsData) {
-            this.createWeekdayWeekendChart(metricsData);
-            this.createWeekOverWeekChart(metricsData);
-            this.createMonthComparisonChart(metricsData);
-        },
-
-        createWeekdayWeekendChart(metricsData) {
-            if (this.charts.weekdayWeekend) {
-                this.charts.weekdayWeekend.destroy();
-            }
-
-            const steps = metricsData.steps || [];
-
-            // Separate weekday and weekend data
-            const weekdaySteps = [];
-            const weekendSteps = [];
-
-            steps.forEach(d => {
-                const date = new Date(d.date + 'T00:00:00');
-                const dayOfWeek = date.getDay();
-                if (dayOfWeek === 0 || dayOfWeek === 6) {
-                    weekendSteps.push(d.value);
-                } else {
-                    weekdaySteps.push(d.value);
-                }
-            });
-
-            const avgWeekday = weekdaySteps.length > 0 ? weekdaySteps.reduce((sum, v) => sum + v, 0) / weekdaySteps.length : 0;
-            const avgWeekend = weekendSteps.length > 0 ? weekendSteps.reduce((sum, v) => sum + v, 0) / weekendSteps.length : 0;
-
-            const chart = ChartFactory.createBarChart('weekdayWeekendChart', {
-                series: [{ name: 'Average Steps', data: [avgWeekday, avgWeekend] }],
-                categories: ['Weekdays', 'Weekends'],
-                height: 300,
-                colors: [CHART_COLORS.primary]
-            });
-
-            if (chart) {
-                this.charts.weekdayWeekend = chart;
-                chart.render();
-            }
-        },
-
-        createWeekOverWeekChart(metricsData) {
-            if (this.charts.weekOverWeek) {
-                this.charts.weekOverWeek.destroy();
-            }
-
-            const container = document.getElementById('weekOverWeekChart');
-            if (!container) return;
-
-            const steps = metricsData.steps || [];
-
-            // Get the start of the current week (Monday)
-            const today = new Date();
-            const currentDayOfWeek = today.getDay();
-            const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; // Sunday = 6, Monday = 0
-            const currentWeekStart = new Date(today);
-            currentWeekStart.setDate(today.getDate() - daysToMonday);
-            currentWeekStart.setHours(0, 0, 0, 0);
-
-            // Group by week start date (Monday)
-            const weeklyData = {};
-            steps.forEach(d => {
-                const date = new Date(d.date + 'T00:00:00');
-
-                // Calculate Monday of this date's week
-                const dayOfWeek = date.getDay();
-                const daysToMon = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                const weekStart = new Date(date);
-                weekStart.setDate(date.getDate() - daysToMon);
-                weekStart.setHours(0, 0, 0, 0);
-
-                const weekKey = formatDateLocal(weekStart);
-
-                // Skip current week (incomplete data)
-                if (weekStart.getTime() === currentWeekStart.getTime()) {
-                    return;
-                }
-
-                if (!weeklyData[weekKey]) {
-                    weeklyData[weekKey] = {
-                        total: 0,
-                        count: 0,
-                        startDate: weekStart
-                    };
-                }
-                weeklyData[weekKey].total += d.value;
-                weeklyData[weekKey].count += 1;
-            });
-
-            // Sort by week start date and get last 8 complete weeks
-            const weekKeys = Object.keys(weeklyData)
-                .sort((a, b) => new Date(b) - new Date(a))
-                .slice(0, 8)
-                .reverse();
-
-            const weeklyTotals = weekKeys.map(key => weeklyData[key].total);
-            const weekLabels = weekKeys.map(key => {
-                const date = new Date(key);
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            });
-
-            // Transform data for chart factory
-            const data = weeklyTotals.map(total => ({ value: total }));
-
-            const chart = ChartFactory.createLineChart('weekOverWeekChart', {
-                data,
-                categories: weekLabels,
-                label: 'Weekly Steps',
-                color: CHART_COLORS.primary,
-                height: 300,
-                yAxisLabel: 'Total Weekly Steps',
-                formatter: (val) => Math.round(val).toLocaleString() + ' steps'
-            });
-
-            if (chart) {
-                this.charts.weekOverWeek = chart;
-                chart.render();
-            }
-        },
-
-        createMonthComparisonChart(metricsData) {
-            if (this.charts.monthComparison) {
-                this.charts.monthComparison.destroy();
-            }
-
-            const container = document.getElementById('monthComparisonChart');
-            if (!container) return;
-
-            const steps = metricsData.steps || [];
-
-            // Group by month
-            const monthlyData = {};
-            steps.forEach(d => {
-                const date = new Date(d.date + 'T00:00:00');
-                const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-                if (!monthlyData[monthKey]) {
-                    monthlyData[monthKey] = { total: 0, count: 0 };
-                }
-                monthlyData[monthKey].total += d.value;
-                monthlyData[monthKey].count += 1;
-            });
-
-            const months = Object.keys(monthlyData).slice(-3);
-            const monthlyAverages = months.map(month => Math.round(monthlyData[month].total / monthlyData[month].count));
-
-            const chart = ChartFactory.createBarChart('monthComparisonChart', {
-                series: [{ name: 'Daily Average', data: monthlyAverages }],
-                categories: months,
-                height: 300,
-                colors: [CHART_COLORS.success],
-                horizontal: true
-            });
-
-            if (chart) {
-                this.charts.monthComparison = chart;
-                chart.render();
             }
         },
 

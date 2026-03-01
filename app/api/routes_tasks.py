@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.db import get_db
 from app.core.profile_context import get_profile_id
-from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse
+from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse, TaskHistoryResponse
 from app.services import tasks as task_service
 
 router = APIRouter(prefix="/api/tasks", tags=["tasks"])
@@ -80,3 +80,17 @@ def delete_task(
     if not success:
         raise HTTPException(status_code=404, detail="Task not found")
     return None
+
+
+@router.get("/{task_id}/history", response_model=TaskHistoryResponse)
+def get_task_history(
+    task_id: int,
+    limit: int = Query(30, ge=1, le=100),
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """Get completion history and summary stats for a personal task."""
+    history = task_service.get_task_history(db, task_id, profile_id, limit)
+    if not history:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return history
