@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
 import logging
@@ -245,53 +245,10 @@ async def household(request: Request, db: Session = Depends(get_db)):
     })
 
 
-@app.get("/history", response_class=HTMLResponse)
-async def history(request: Request, db: Session = Depends(get_db), profile_id: int = Depends(get_profile_id)):
-    """History page showing calendar of completed days."""
-    from app.services import history as history_service
-    from app.services import streaks as streak_service
-    from app.core.time import get_today
-
-    today = get_today()
-    year_param = request.query_params.get("year")
-    month_param = request.query_params.get("month")
-
-    try:
-        year = int(year_param) if year_param is not None else today.year
-    except ValueError:
-        year = today.year
-
-    try:
-        month = int(month_param) if month_param is not None else today.month
-    except ValueError:
-        month = today.month
-
-    if not (1 <= month <= 12):
-        month = today.month
-
-    if not (2000 <= year <= 2100):
-        year = today.year
-
-    # Fetch real data server-side
-    calendar_data = history_service.get_calendar_month_data(db, year, month, profile_id)
-    streak_info = streak_service.get_streak_info(db, profile_id)
-
-    # Convert date objects to strings for JSON serialization
-    streak_json = {
-        "current_streak": streak_info["current_streak"],
-        "today_complete": streak_info["today_complete"],
-        "last_completed_date": streak_info["last_completed_date"].isoformat() if streak_info["last_completed_date"] else None
-    }
-
-    return templates.TemplateResponse("history.html", {
-        "request": request,
-        "year": year,
-        "month": month,
-        "calendar_data": calendar_data,
-        "streak": streak_json,
-        "today": today.isoformat(),
-        "cache_bust": CACHE_BUST
-    })
+@app.get("/history", response_class=RedirectResponse)
+async def history(request: Request):
+    """Redirect old /history bookmarks to the home page (history is now a tab on the today page)."""
+    return RedirectResponse(url="/", status_code=301)
 
 
 @app.get("/profiles", response_class=HTMLResponse)

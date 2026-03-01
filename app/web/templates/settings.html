@@ -9,7 +9,7 @@
     </header>
 
     <div class="settings-section">
-        <h2 @click="sectionsCollapsed.personalTasks = !sectionsCollapsed.personalTasks" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.personalTasks = !sectionsCollapsed.personalTasks">
             <span>Personal Tasks</span>
             <span x-text="sectionsCollapsed.personalTasks ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
@@ -17,23 +17,23 @@
         <div x-show="!sectionsCollapsed.personalTasks" x-collapse x-cloak>
         <!-- Task Type Filter -->
         <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-            <button @click="taskFilter = 'all'"
-                    :class="{ 'btn-primary': taskFilter === 'all', 'btn-secondary': taskFilter !== 'all' }"
+            <button class="btn" @click="taskFilter = 'all'"
+                    :class="{ 'btn--primary': taskFilter === 'all', 'btn--secondary': taskFilter !== 'all' }"
                     style="flex: 1; min-width: 80px;">
                 All <span x-text="`(${filteredTaskCount('all')})`"></span>
             </button>
-            <button @click="taskFilter = 'daily'"
-                    :class="{ 'btn-primary': taskFilter === 'daily', 'btn-secondary': taskFilter !== 'daily' }"
+            <button class="btn" @click="taskFilter = 'daily'"
+                    :class="{ 'btn--primary': taskFilter === 'daily', 'btn--secondary': taskFilter !== 'daily' }"
                     style="flex: 1; min-width: 80px;">
                 Daily <span x-text="`(${filteredTaskCount('daily')})`"></span>
             </button>
-            <button @click="taskFilter = 'punch_list'"
-                    :class="{ 'btn-primary': taskFilter === 'punch_list', 'btn-secondary': taskFilter !== 'punch_list' }"
+            <button class="btn" @click="taskFilter = 'punch_list'"
+                    :class="{ 'btn--primary': taskFilter === 'punch_list', 'btn--secondary': taskFilter !== 'punch_list' }"
                     style="flex: 1; min-width: 80px;">
                 Todo <span x-text="`(${filteredTaskCount('punch_list')})`"></span>
             </button>
-            <button @click="taskFilter = 'scheduled'"
-                    :class="{ 'btn-primary': taskFilter === 'scheduled', 'btn-secondary': taskFilter !== 'scheduled' }"
+            <button class="btn" @click="taskFilter = 'scheduled'"
+                    :class="{ 'btn--primary': taskFilter === 'scheduled', 'btn--secondary': taskFilter !== 'scheduled' }"
                     style="flex: 1; min-width: 80px;">
                 Scheduled <span x-text="`(${filteredTaskCount('scheduled')})`"></span>
             </button>
@@ -61,7 +61,7 @@
                 </div>            </div>
         </template>
 
-        <div x-show="filteredTasks.length === 0" style="padding: 32px; text-align: center; color: #999;">
+        <div x-show="filteredTasks.length === 0" class="empty-state empty-state--compact">
             <p x-text="taskFilter === 'all' ? 'No tasks yet. Add one to get started!' : `No ${getTaskTypeLabel(taskFilter)} tasks yet.`"></p>
         </div>
 
@@ -333,6 +333,18 @@
                         <input type="text" class="form-field__input" x-model="editingTask.title" placeholder="Task title">
                     </div>
                     <div class="form-field">
+                        <label class="form-field__label">Icon</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button type="button" class="btn btn--secondary" @click="personalIconTarget = 'edit'; showPersonalIconPicker = true">
+                                <i :class="'mdi mdi-' + (editingTask.icon || 'check-circle')" style="font-size: 20px;"></i>
+                                <span>Choose Icon</span>
+                            </button>
+                            <template x-if="editingTask.icon">
+                                <button type="button" class="btn btn--secondary btn--sm" @click="editingTask.icon = null">Clear</button>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="form-field">
                         <label class="form-field__checkbox-label">
                             <input type="checkbox" class="form-field__checkbox" x-model="editingTask.is_required">
                             <span>Required</span>
@@ -445,7 +457,7 @@
 
     <!-- Household Maintenance Tasks Section -->
     <div class="settings-section" style="margin-top: 32px;">
-        <h2 @click="sectionsCollapsed.household = !sectionsCollapsed.household" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.household = !sectionsCollapsed.household">
             <span>Household Tasks</span>
             <span x-text="sectionsCollapsed.household ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
@@ -708,7 +720,7 @@
 
     <!-- App Preferences Section -->
     <div class="settings-section" style="margin-top: 32px;">
-        <h2 @click="sectionsCollapsed.appPreferences = !sectionsCollapsed.appPreferences" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.appPreferences = !sectionsCollapsed.appPreferences">
             <span>App Preferences</span>
             <span x-text="sectionsCollapsed.appPreferences ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
@@ -733,7 +745,7 @@
 
     <!-- Profile Management Section -->
     <div class="settings-section" style="margin-top: 32px;">
-        <h2 @click="sectionsCollapsed.profileManagement = !sectionsCollapsed.profileManagement" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.profileManagement = !sectionsCollapsed.profileManagement">
             <span>Profile Management</span>
             <span x-text="sectionsCollapsed.profileManagement ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
@@ -752,7 +764,7 @@
 
     <!-- Fitbit Integration Section -->
     <div class="settings-section" style="margin-top: 32px;">
-        <h2 @click="sectionsCollapsed.fitbit = !sectionsCollapsed.fitbit" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;">
+        <h2 class="section-title section-title--collapsible" @click="sectionsCollapsed.fitbit = !sectionsCollapsed.fitbit">
             <span>Fitbit Integration</span>
             <span x-text="sectionsCollapsed.fitbit ? '▼' : '▲'" style="font-size: 14px;"></span>
         </h2>
@@ -1097,6 +1109,7 @@ function settings() {
         showPersonalIconPicker: false,
         personalIconSearch: '',
         personalIconCategories: window.iconPickerCategories.personal,
+        personalIconTarget: 'new', // 'new' or 'edit'
 
         // Computed property: filtered tasks
         get filteredTasks() {
@@ -1362,6 +1375,7 @@ function settings() {
             try {
                 await api.tasks.update(this.editingTask.id, {
                     title: this.editingTask.title,
+                    icon: this.editingTask.icon,
                     is_required: this.editingTask.is_required,
                     is_active: this.editingTask.is_active,
                     sort_order: this.editingTask.sort_order,
@@ -1611,7 +1625,11 @@ function settings() {
         },
 
         selectPersonalIcon(icon) {
-            this.newTask.icon = icon;
+            if (this.personalIconTarget === 'edit' && this.editingTask) {
+                this.editingTask.icon = icon;
+            } else {
+                this.newTask.icon = icon;
+            }
             this.showPersonalIconPicker = false;
             this.personalIconSearch = '';
         },

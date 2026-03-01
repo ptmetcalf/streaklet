@@ -23,6 +23,33 @@
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
     --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
     --shadow-lg: 0 8px 16px rgba(0,0,0,0.15);
+
+    /* Spacing scale */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+
+    /* Typography scale */
+    --font-sm: 12px;
+    --font-base: 14px;
+    --font-md: 16px;
+    --font-lg: 18px;
+    --font-xl: 24px;
+    --font-2xl: 28px;
+
+    /* Border radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-pill: 999px;
+
+    /* Muted text */
+    --text-muted: #666;
+    --text-faint: #999;
 }
 
 * {
@@ -50,7 +77,8 @@ header {
     padding: 20px;
     margin-bottom: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-md);
+    border-top: 3px solid var(--primary-color);
 }
 
 .header-content {
@@ -197,7 +225,7 @@ h1 {
     justify-content: center;
     margin-left: 12px;
     padding: 3px 7px;
-    background: #ff4d4f;
+    background: var(--danger-color);
     color: white;
     border-radius: 12px;
     font-size: 11px;
@@ -607,8 +635,160 @@ button:active {
 
 .empty-state {
     text-align: center;
+    padding: 60px 20px;
+    color: var(--text-faint);
+}
+
+.empty-state h2 {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+}
+
+.empty-state p {
+    font-size: var(--font-base);
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.empty-state--compact {
     padding: 40px 20px;
-    color: #999;
+}
+
+/* Standard page subtitle */
+.page-subtitle {
+    font-size: var(--font-sm);
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Section heading inside cards */
+.section-title {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.section-title--collapsible {
+    cursor: pointer;
+}
+
+.section-title--collapsible:hover {
+    color: var(--primary-color);
+}
+
+/* Section header row (title + badge) */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.section-header h2 {
+    font-size: var(--font-lg);
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Count badge (used in section headers) */
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.count-badge--neutral {
+    background: var(--border-color);
+    color: var(--text-color);
+}
+
+/* Standard loading state */
+.loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: var(--font-base);
+}
+
+/* Chart/content card (for Fitbit chart containers) */
+.content-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    margin-bottom: 16px;
+}
+
+.content-card h3 {
+    font-size: var(--font-md);
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-color);
+}
+
+/* Profile indicator */
+.profile-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(135deg, var(--profile-color, #3b82f6) 0%, color-mix(in srgb, var(--profile-color, #3b82f6) 80%, black) 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profile-indicator-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.profile-indicator-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: white;
+    opacity: 0.9;
+}
+
+.container {
+    padding-top: 2.5rem;
+}
+
+@media (min-width: 768px) {
+    body {
+        padding-top: 60px;
+    }
+
+    .container {
+        padding-top: 20px;
+    }
+
+    .profile-indicator {
+        padding: 0.75rem 2rem;
+        font-size: 0.9rem;
+    }
 }
 
 /* Calendar History Styles */
@@ -1192,11 +1372,6 @@ button:active {
         opacity: 0.9;
     }
 
-    /* Profile indicator less intrusive */
-    .profile-indicator {
-        padding: 0.75rem 2rem;
-        font-size: 0.9rem;
-    }
 }
 
 /* ============================================

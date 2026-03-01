@@ -124,6 +124,16 @@ window.formatDateLocal = function(date) {
 };
 
 /**
+ * Get today's date as YYYY-MM-DD in the browser's local timezone.
+ * Use this instead of new Date().toISOString().split('T')[0] which returns UTC
+ * and can be one day off for users in timezones west of UTC.
+ * @returns {string} Today's date as YYYY-MM-DD
+ */
+window.getTodayStr = function() {
+    return window.formatDateLocal(new Date());
+};
+
+/**
  * Parse a date string without UTC timezone conversion
  * @param {string} dateStr - Date string in YYYY-MM-DD format
  * @returns {Date} Date object with local midnight time
@@ -376,8 +386,7 @@ window.getTaskTypeBadgeClass = function(taskType) {
  */
 window.isTaskOverdue = function(task) {
     if (!task || !task.due_date || task.completed_at) return false;
-    const today = new Date().toISOString().split('T')[0];
-    return task.due_date < today;
+    return task.due_date < window.getTodayStr();
 };
 
 /**
@@ -503,20 +512,14 @@ window.iconPickerCategories = {
         'General': ['checkbox-marked-circle', 'check', 'calendar', 'clock', 'bell', 'package', 'gift', 'email', 'phone']
     },
     personal: {
-        'Fitness': ['walk', 'run', 'bike', 'swim', 'dumbbell', 'weight-lifter', 'yoga', 'shoe-print', 'run-fast', 'basketball', 'football', 'soccer', 'tennis', 'golf', 'hiking'],
-        'Health': ['sleep', 'bed', 'meditation', 'pill', 'water', 'cup-water', 'heart-pulse', 'hospital', 'bandage', 'thermometer'],
-        'Food': ['food-apple', 'silverware-fork-knife', 'coffee', 'food', 'food-turkey', 'chef-hat', 'carrot', 'pizza'],
-        'Learning': ['book-open-variant', 'book', 'school', 'head-lightbulb', 'pencil', 'notebook', 'certificate', 'library'],
-        'Creative': ['palette', 'brush', 'music', 'gamepad-variant', 'music-note', 'guitar-acoustic', 'piano', 'camera', 'draw', 'movie'],
-        'Social': ['phone', 'message', 'account-group', 'account-multiple', 'email', 'video'],
-        'Work': ['briefcase', 'laptop', 'calendar-account', 'folder-multiple', 'clipboard-text', 'file-document', 'chart-line', 'calculator'],
-        'Self-care': ['shower', 'face-woman', 'tooth', 'toothbrush', 'spa', 'emoticon-happy'],
-        'Technology': ['cellphone', 'tablet', 'monitor', 'keyboard', 'mouse', 'headphones', 'wifi', 'router', 'hard-drive', 'usb'],
-        'Finance': ['cash', 'credit-card', 'bank', 'wallet', 'chart-line', 'piggy-bank', 'currency-usd'],
-        'Hobbies': ['puzzle', 'chess-knight', 'basketball', 'baseball', 'bowling', 'golf', 'fishing'],
-        'Productivity': ['target', 'trophy', 'diamond', 'rocket', 'brain', 'trending-up', 'bullseye'],
-        'Time & Goals': ['clock-outline', 'clock', 'calendar-today', 'flag-checkered', 'timer', 'alarm', 'calendar-check', 'calendar-star'],
-        'General': ['check-circle', 'check', 'star', 'plus-circle', 'circle-outline', 'heart', 'fire', 'lightning-bolt']
+        'Health & Fitness': ['walk', 'run', 'bike', 'swim', 'dumbbell', 'weight-lifter', 'yoga', 'shoe-print', 'basketball', 'soccer', 'tennis', 'golf', 'hiking', 'sleep', 'bed', 'meditation', 'pill', 'water', 'cup-water', 'heart-pulse', 'bandage', 'thermometer'],
+        'Food & Nutrition': ['food-apple', 'silverware-fork-knife', 'coffee', 'food', 'food-turkey', 'chef-hat', 'carrot', 'pizza'],
+        'Learning & Work': ['book-open-variant', 'book', 'school', 'head-lightbulb', 'pencil', 'notebook', 'certificate', 'library', 'briefcase', 'laptop', 'folder-multiple', 'clipboard-text', 'file-document', 'chart-line', 'calculator'],
+        'Creative & Hobbies': ['palette', 'brush', 'music-note', 'guitar-acoustic', 'piano', 'camera', 'draw', 'movie', 'puzzle', 'chess-knight', 'baseball', 'bowling', 'fish', 'gamepad-variant'],
+        'Self-care & Social': ['shower', 'tooth', 'toothbrush', 'spa', 'emoticon-happy', 'phone', 'message', 'account-group', 'email', 'video'],
+        'Finance & Tech': ['cash', 'credit-card', 'bank', 'wallet', 'piggy-bank', 'currency-usd', 'cellphone', 'tablet', 'monitor', 'headphones', 'wifi', 'harddisk'],
+        'Goals & Productivity': ['target', 'trophy', 'rocket', 'brain', 'trending-up', 'clock-outline', 'timer', 'alarm', 'calendar-check', 'flag-checkered', 'diamond', 'fire', 'lightning-bolt'],
+        'General': ['check-circle', 'check', 'star', 'plus-circle', 'circle-outline', 'heart', 'bell', 'bookmark', 'tag']
     }
 };
 
@@ -758,7 +761,7 @@ window.formValidation = {
 if (typeof console !== 'undefined' && console.info) {
     console.info('%c✨ Streaklet Utils Loaded', 'color: #52c41a; font-weight: bold;');
     console.info('Available functions:', {
-        'Date/Time': ['formatDueDate', 'formatCompletedDate', 'formatDateDisplay', 'formatSyncTime', 'formatDateLocal', 'parseDateOnly'],
+        'Date/Time': ['formatDueDate', 'formatCompletedDate', 'formatDateDisplay', 'formatSyncTime', 'formatDateLocal', 'parseDateOnly', 'getTodayStr'],
         'Metrics': ['formatNumber', 'formatDecimal', 'formatSleepHours', 'formatFitbitProgress', 'formatMetricValue', 'formatMetricName', 'formatTrend'],
         'Tasks': ['formatRecurrence', 'formatFrequency', 'getTaskTypeLabel', 'getTaskTypeBadgeClass'],
         'Validation': ['isTaskOverdue', 'getStreakBadgeClass'],

@@ -11,44 +11,35 @@
     </header>
 
     <!-- Not Connected State -->
-    <div x-show="!fitbitConnected" style="padding: 40px; text-align: center; border: 1px solid var(--border-color); border-radius: 4px;">
-        <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
-        <h2 style="margin-bottom: 8px;">Fitbit Not Connected</h2>
-        <p style="color: #666; margin-bottom: 24px;">
-            Connect your Fitbit account to view your fitness data here.
-        </p>
-        <a href="/settings" class="btn btn--primary">
-            Go to Settings to Connect
-        </a>
+    <div x-show="!fitbitConnected" class="empty-state">
+        <i class="mdi mdi-chart-bar" style="font-size: 48px; color: var(--border-color); margin-bottom: 12px; display: block;"></i>
+        <h2>Fitbit Not Connected</h2>
+        <p>Connect your Fitbit account to view your fitness data here.</p>
+        <a href="/settings" class="btn btn--primary" style="margin-top: 16px;">Go to Settings to Connect</a>
     </div>
 
     <!-- Connected State -->
     <div x-show="fitbitConnected">
         <!-- Tabs -->
-        <div style="display: flex; gap: 16px; margin-bottom: 24px; border-bottom: 2px solid var(--border-color); overflow-x: auto;">
-            <button @click="currentTab = 'daily'; loadMetricsForDate()"
-                    :class="currentTab === 'daily' ? 'tab-active' : 'tab-inactive'"
-                    class="tab-button">
+        <div class="task-tabs" style="margin-bottom: 0;">
+            <button class="tab-button" :class="{ active: currentTab === 'daily' }"
+                    @click="currentTab = 'daily'; loadMetricsForDate()">
                 Daily
             </button>
-            <button @click="currentTab = 'overview'; loadOverviewData()"
-                    :class="currentTab === 'overview' ? 'tab-active' : 'tab-inactive'"
-                    class="tab-button">
+            <button class="tab-button" :class="{ active: currentTab === 'overview' }"
+                    @click="currentTab = 'overview'; loadOverviewData()">
                 Overview
             </button>
-            <button @click="currentTab = 'trends'; loadTrendData()"
-                    :class="currentTab === 'trends' ? 'tab-active' : 'tab-inactive'"
-                    class="tab-button">
+            <button class="tab-button" :class="{ active: currentTab === 'trends' }"
+                    @click="currentTab = 'trends'; loadTrendData()">
                 Trends
             </button>
-            <button @click="currentTab = 'compare'; loadComparisonData()"
-                    :class="currentTab === 'compare' ? 'tab-active' : 'tab-inactive'"
-                    class="tab-button">
+            <button class="tab-button" :class="{ active: currentTab === 'compare' }"
+                    @click="currentTab = 'compare'; loadComparisonData()">
                 Compare
             </button>
-            <button @click="currentTab = 'insights'; loadInsightsData()"
-                    :class="currentTab === 'insights' ? 'tab-active' : 'tab-inactive'"
-                    class="tab-button">
+            <button class="tab-button" :class="{ active: currentTab === 'insights' }"
+                    @click="currentTab = 'insights'; loadInsightsData()">
                 Insights
             </button>
         </div>
@@ -57,7 +48,7 @@
         <div x-show="currentTab === 'trends'">
             <!-- Date Range Selector -->
             <div style="margin-bottom: 24px;">
-                <label style="font-weight: 600; display: block; margin-bottom: 8px;">Time Range:</label>
+                <label class="form-field__label">Time Range:</label>
                 <select x-model="trendRange" @change="loadTrendData" class="trend-range-select">
                     <option value="7">Last 7 Days</option>
                     <option value="14">Last 14 Days</option>
@@ -66,33 +57,31 @@
             </div>
 
             <!-- Loading State -->
-            <div x-show="trendsLoading" style="text-align: center; padding: 40px; color: #666;">
-                Loading trends...
-            </div>
+            <div x-show="trendsLoading" class="loading-state">Loading trends...</div>
 
             <!-- Charts -->
             <div x-show="!trendsLoading" style="display: grid; grid-template-columns: 1fr; gap: 32px;">
                 <!-- Steps Chart -->
-                <div x-show="visibleMetrics.steps" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <h3 style="margin-bottom: 16px;">Steps</h3>
+                <div x-show="visibleMetrics.steps" class="content-card">
+                    <h3>Steps</h3>
                     <div id="stepsChart"></div>
                 </div>
 
                 <!-- Sleep Chart -->
-                <div x-show="visibleMetrics.sleep_minutes" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <h3 style="margin-bottom: 16px;">Sleep</h3>
+                <div x-show="visibleMetrics.sleep_minutes" class="content-card">
+                    <h3>Sleep</h3>
                     <div id="sleepChart"></div>
                 </div>
 
                 <!-- Active Minutes Chart -->
-                <div x-show="visibleMetrics.active_minutes" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <h3 style="margin-bottom: 16px;">Active Minutes</h3>
+                <div x-show="visibleMetrics.active_minutes" class="content-card">
+                    <h3>Active Minutes</h3>
                     <div id="activeMinutesChart"></div>
                 </div>
 
                 <!-- Heart Rate Chart -->
-                <div x-show="visibleMetrics.resting_heart_rate" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <h3 style="margin-bottom: 16px;">Resting Heart Rate</h3>
+                <div x-show="visibleMetrics.resting_heart_rate" class="content-card">
+                    <h3>Resting Heart Rate</h3>
                     <div id="heartRateChart"></div>
                 </div>
             </div>
@@ -265,19 +254,16 @@
         </div>
 
             <!-- No Data State -->
-            <div x-show="Object.keys(metrics).length === 0"
-                 style="text-align: center; padding: 40px; color: #666; border: 1px solid var(--border-color); border-radius: 4px;">
-                <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
-                <p>No Fitbit data available for <span x-text="formatDateDisplay(selectedDate)"></span></p>
-                <p style="font-size: 14px; margin-top: 8px;">Try selecting a different date or sync your Fitbit data.</p>
+            <div x-show="Object.keys(metrics).length === 0" class="empty-state">
+                <i class="mdi mdi-inbox-remove-outline" style="font-size: 48px; color: var(--border-color); display: block; margin-bottom: 12px;"></i>
+                <h2>No Data Available</h2>
+                <p>No Fitbit data for <span x-text="formatDateDisplay(selectedDate)"></span>. Try a different date or sync.</p>
             </div>
         </div>
 
         <!-- Overview Tab -->
         <div x-show="currentTab === 'overview'">
-            <div x-show="overviewLoading" style="text-align: center; padding: 40px; color: #666;">
-                Loading overview...
-            </div>
+            <div x-show="overviewLoading" class="loading-state">Loading overview...</div>
             <div x-show="!overviewLoading">
                 <!-- Stats Summary Cards -->
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin-bottom: 32px;">
@@ -333,14 +319,14 @@
                 </div>
 
                 <!-- Multi-Metric Chart -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
-                    <h3 style="margin-bottom: 16px;">Multi-Metric Overview (Last 30 Days)</h3>
+                <div class="content-card">
+                    <h3>Multi-Metric Overview (Last 30 Days)</h3>
                     <div id="multiMetricChart"></div>
                 </div>
 
                 <!-- Goal Progress -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <h3 style="margin-bottom: 16px;">Weekly Goals</h3>
+                <div class="content-card">
+                    <h3>Weekly Goals</h3>
                     <div style="display: grid; gap: 16px;">
                         <div class="goal-progress">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
@@ -367,25 +353,23 @@
 
         <!-- Compare Tab -->
         <div x-show="currentTab === 'compare'">
-            <div x-show="compareLoading" style="text-align: center; padding: 40px; color: #666;">
-                Loading comparison...
-            </div>
+            <div x-show="compareLoading" class="loading-state">Loading comparison...</div>
             <div x-show="!compareLoading">
                 <!-- Weekday vs Weekend -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
-                    <h3 style="margin-bottom: 16px;">Weekday vs Weekend Patterns</h3>
+                <div class="content-card">
+                    <h3>Weekday vs Weekend Patterns</h3>
                     <div id="weekdayWeekendChart"></div>
                 </div>
 
                 <!-- Week Over Week -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
-                    <h3 style="margin-bottom: 16px;">Week Over Week Comparison</h3>
+                <div class="content-card">
+                    <h3>Week Over Week Comparison</h3>
                     <div id="weekOverWeekChart"></div>
                 </div>
 
                 <!-- Month Comparison -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <h3 style="margin-bottom: 16px;">Monthly Comparison</h3>
+                <div class="content-card">
+                    <h3>Monthly Comparison</h3>
                     <div id="monthComparisonChart"></div>
                 </div>
             </div>
@@ -393,25 +377,23 @@
 
         <!-- Insights Tab -->
         <div x-show="currentTab === 'insights'">
-            <div x-show="insightsLoading" style="text-align: center; padding: 40px; color: #666;">
-                Analyzing data...
-            </div>
+            <div x-show="insightsLoading" class="loading-state">Analyzing data...</div>
             <div x-show="!insightsLoading">
                 <!-- Correlation Analysis -->
-                <div x-show="visibleMetrics.steps && visibleMetrics.sleep_minutes" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
-                    <h3 style="margin-bottom: 16px;">Sleep vs Activity Correlation</h3>
+                <div x-show="visibleMetrics.steps && visibleMetrics.sleep_minutes" class="content-card">
+                    <h3>Sleep vs Activity Correlation</h3>
                     <div id="correlationChart"></div>
                 </div>
 
                 <!-- Distribution Chart -->
-                <div x-show="visibleMetrics.steps" style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white; margin-bottom: 24px;">
-                    <h3 style="margin-bottom: 16px;">Steps Distribution</h3>
+                <div x-show="visibleMetrics.steps" class="content-card">
+                    <h3>Steps Distribution</h3>
                     <div id="distributionChart"></div>
                 </div>
 
                 <!-- Key Insights -->
-                <div style="padding: 20px; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
-                    <h3 style="margin-bottom: 16px;">Key Insights</h3>
+                <div class="content-card">
+                    <h3>Key Insights</h3>
                     <div style="display: grid; gap: 12px;">
                         <div class="insight-item" x-show="insights.best_day && visibleMetrics.steps">
                             <span class="insight-icon">🏆</span>
@@ -812,8 +794,7 @@ function fitbitMetrics() {
                 this.selectedDate = data.date;
             } catch (error) {
                 console.error('Error loading today date:', error);
-                // Fallback to local date (but this will have the timezone issue)
-                const fallback = new Date().toISOString().split('T')[0];
+                const fallback = getTodayStr();
                 this.today = fallback;
                 this.selectedDate = fallback;
             }
@@ -1209,7 +1190,7 @@ function fitbitMetrics() {
                 weekStart.setDate(date.getDate() - daysToMon);
                 weekStart.setHours(0, 0, 0, 0);
 
-                const weekKey = weekStart.toISOString().split('T')[0];
+                const weekKey = formatDateLocal(weekStart);
 
                 // Skip current week (incomplete data)
                 if (weekStart.getTime() === currentWeekStart.getTime()) {

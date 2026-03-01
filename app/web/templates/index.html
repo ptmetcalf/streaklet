@@ -8,7 +8,7 @@
         <div class="header-content">
             <div>
                 <h1>Today's Checklist</h1>
-                <div class="date" x-text="formattedDate"></div>
+                <div class="date page-subtitle" x-text="formattedDate"></div>
             </div>
             <div class="streak-badge" x-text="'Day ' + displayStreakDay"></div>
         </div>
@@ -33,6 +33,11 @@
                 @click="switchTab('punch_list')">
             <span>To-Do</span>
             <span class="badge-count" x-show="todoCount > 0" x-text="todoCount"></span>
+        </button>
+        <button class="tab-button"
+                :class="{ 'active': activeTab === 'history' }"
+                @click="switchTab('history')">
+            <span>History</span>
         </button>
     </div>
 
@@ -197,6 +202,105 @@
                 </template>
             </div>
         </div>
+    </div>
+
+    <!-- History Tab -->
+    <div x-show="activeTab === 'history'" class="tab-content">
+        <div class="history-tab-header">
+            <div class="calendar-nav">
+                <button class="nav-arrow" @click="historyPrevMonth()">‹</button>
+                <div class="calendar-month-year" x-text="historyMonthYearDisplay"></div>
+                <button class="nav-arrow" @click="historyNextMonth()">›</button>
+            </div>
+            <div class="streak-summary-compact">
+                <div class="streak-stat-compact">
+                    <span class="streak-value-compact" x-text="streak"></span>
+                    <span class="streak-label-compact">day streak</span>
+                </div>
+                <div class="streak-divider">•</div>
+                <div class="streak-stat-compact">
+                    <span class="streak-value-compact" x-text="historyCompletionRate + '%'"></span>
+                    <span class="streak-label-compact">this month</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendar-container">
+            <div class="calendar-grid">
+                <template x-for="day in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']" :key="day">
+                    <div class="calendar-header" x-text="day"></div>
+                </template>
+                <template x-for="day in historyCalendarDays" :key="day.key">
+                    <div
+                        class="calendar-day"
+                        :class="{
+                            'empty': day.isEmpty,
+                            'completed': day.isCompleted,
+                            'partial': day.isPartial,
+                            'incomplete': day.isIncomplete,
+                            'streak-break': day.isStreakBreak,
+                            'future': day.isFuture,
+                            'today': day.isToday,
+                            'selectable': day.isPast || day.isToday,
+                            'selected': day.dateStr === historySelectedDate
+                        }"
+                        :style="day.isPartial ? {'--completion-height': day.completionPercentage + '%'} : {}"
+                        @click="historySelectDay(day)"
+                    >
+                        <div class="day-number" x-text="day.dayNumber"></div>
+                    </div>
+                </template>
+            </div>
+
+            <div class="calendar-legend">
+                <div class="legend-item"><div class="legend-box completed"></div><span>Completed</span></div>
+                <div class="legend-item"><div class="legend-box partial" style="background: linear-gradient(to top, var(--success-color) 50%, #f0f0f0 50%);"></div><span>Partial</span></div>
+                <div class="legend-item"><div class="legend-box incomplete" style="position: relative;"><span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: var(--danger-color); font-weight: bold;">✕</span></div><span>Missed</span></div>
+            </div>
+        </div>
+
+        <section class="history-checklist" x-show="historySelectedDate">
+            <div class="history-checklist-header">
+                <div>
+                    <h2>Day Review</h2>
+                    <div class="history-selected-date" x-text="historySelectedDateDisplay"></div>
+                </div>
+            </div>
+            <div class="history-checklist-body">
+                <div class="empty-state" x-show="historySelectedDate && !historySelectedDay && !historyLoadingDay">No data for this date.</div>
+                <div class="empty-state" x-show="historyLoadingDay">Loading...</div>
+                <div class="checklist" x-show="historySelectedDay">
+                    <div x-show="historyCompletedTasks.length > 0" class="completed-summary">
+                        <span x-text="`${historyCompletedTasks.length} task${historyCompletedTasks.length === 1 ? '' : 's'} completed`"></span>
+                    </div>
+                    <div x-show="historyIncompleteTasks.length === 0 && historyCompletedTasks.length > 0" class="all-complete-msg">All tasks completed!</div>
+                    <template x-for="task in historyIncompleteTasks" :key="task.id">
+                        <div class="task-item" :class="{ 'disabled': !historyIsEditable }" @click="historyToggleTask(task)">
+                            <div class="checkbox"><svg viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                            <div class="task-content"><div class="task-title" x-text="task.title"></div></div>
+                            <span class="task-badge required" x-show="task.is_required">Required</span>
+                        </div>
+                    </template>
+                    <div class="task-streaks-summary" x-show="historySelectedDay && historySelectedDay.tasks.length > 0" style="margin-top: 20px;">
+                        <h4 style="font-size: 14px; color: #666; margin-bottom: 12px;">Task Streaks</h4>
+                        <div style="display: grid; gap: 8px;">
+                            <template x-for="task in historySelectedDay.tasks" :key="task.id">
+                                <div x-show="task.task_streak && task.task_streak > 0"
+                                     class="task-streak-summary-item"
+                                     :class="getStreakBadgeClass(task.task_streak)">
+                                    <span x-text="task.title" style="flex: 1; font-weight: 500;"></span>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span class="streak-icon">🔥</span>
+                                        <span x-text="task.task_streak" style="font-weight: 600;"></span>
+                                        <span style="font-size: 11px; opacity: 0.8;">days</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- Add Daily Task Modal -->
@@ -390,6 +494,16 @@ function checklist() {
         // Personal icon categories (shared for both modals)
         personalIconCategories: window.iconPickerCategories.personal,
 
+        // History tab state
+        historyYear: null,
+        historyMonth: null,
+        historyCalendarData: null,
+        historyStats: null,
+        historySelectedDate: null,
+        historySelectedDay: null,
+        historyLoadingDay: false,
+        historyDataLoaded: false,
+
         // Filtered task lists by task_type
         get dailyTasksFiltered() {
             return this.dailyTasks.filter(t => t.task_type === 'daily');
@@ -473,6 +587,9 @@ function checklist() {
         switchTab(tab) {
             this.activeTab = tab;
             localStorage.setItem('streaklet_last_tab', tab);
+            if (tab === 'history' && !this.historyDataLoaded) {
+                this.historyLoadData();
+            }
         },
 
         // Initialize with SSR data (no API calls needed)
@@ -483,8 +600,11 @@ function checklist() {
 
             // Restore last active tab
             const lastTab = localStorage.getItem('streaklet_last_tab');
-            if (lastTab && ['daily', 'punch_list'].includes(lastTab)) {
+            if (lastTab && ['daily', 'punch_list', 'history'].includes(lastTab)) {
                 this.activeTab = lastTab;
+                if (lastTab === 'history') {
+                    this.historyLoadData();
+                }
             }
         },
 
@@ -496,8 +616,11 @@ function checklist() {
 
                 // Restore last active tab
                 const lastTab = localStorage.getItem('streaklet_last_tab');
-                if (lastTab && ['daily', 'punch_list'].includes(lastTab)) {
+                if (lastTab && ['daily', 'punch_list', 'history'].includes(lastTab)) {
                     this.activeTab = lastTab;
+                    if (lastTab === 'history') {
+                        this.historyLoadData();
+                    }
                 }
             } catch (error) {
                 console.error('Error loading tasks:', error);
@@ -764,7 +887,146 @@ function checklist() {
                     colors: ['#52c41a', '#73d13d', '#95de64', '#b7eb8f']
                 });
             }
-        }
+        },
+
+        // History computed properties
+        get historyMonthYearDisplay() {
+            if (!this.historyYear || !this.historyMonth) return '';
+            const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            return `${monthNames[this.historyMonth - 1]} ${this.historyYear}`;
+        },
+
+        get historyCalendarDays() {
+            if (!this.historyCalendarData) return [];
+            const days = [];
+            const firstDay = this.historyCalendarData.first_day_weekday;
+            const daysInMonth = this.historyCalendarData.days_in_month;
+            for (let i = 0; i < firstDay; i++) {
+                days.push({ isEmpty: true, key: `empty-${i}` });
+            }
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${this.historyYear}-${String(this.historyMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayData = this.historyCalendarData.days[dateStr];
+                const completionPct = dayData?.completion_percentage || 0;
+                days.push({
+                    dayNumber: day,
+                    dateStr,
+                    isCompleted: completionPct === 100,
+                    isPartial: completionPct > 0 && completionPct < 100,
+                    isIncomplete: completionPct === 0 && dateStr <= this.date,
+                    isStreakBreak: dayData?.is_streak_break || false,
+                    isFuture: dateStr > this.date,
+                    isToday: dateStr === this.date,
+                    isPast: dateStr < this.date,
+                    isEmpty: false,
+                    completionPercentage: completionPct,
+                    key: dateStr
+                });
+            }
+            return days;
+        },
+
+        get historyCompletionRate() {
+            if (this.historyStats && typeof this.historyStats.completion_rate === 'number') {
+                return Math.round(this.historyStats.completion_rate);
+            }
+            if (!this.historyCalendarData) return 0;
+            const entries = Object.entries(this.historyCalendarData.days);
+            const past = entries.filter(([d]) => d <= this.date);
+            const completed = past.filter(([, data]) => data.completed).length;
+            return past.length > 0 ? Math.round((completed / past.length) * 100) : 0;
+        },
+
+        get historySelectedDateDisplay() {
+            if (!this.historySelectedDate) return '';
+            return parseDateOnly(this.historySelectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        },
+
+        get historyIsEditable() {
+            if (!this.historySelectedDate || !this.date) return false;
+            return this.historySelectedDate < this.date;
+        },
+
+        get historyCompletedTasks() {
+            return this.historySelectedDay ? this.historySelectedDay.tasks.filter(t => t.checked) : [];
+        },
+
+        get historyIncompleteTasks() {
+            return this.historySelectedDay ? this.historySelectedDay.tasks.filter(t => !t.checked) : [];
+        },
+
+        async historyLoadData() {
+            const now = new Date();
+            this.historyYear = this.historyYear || now.getFullYear();
+            this.historyMonth = this.historyMonth || (now.getMonth() + 1);
+            try {
+                const data = await api.history.getMonth(this.historyYear, this.historyMonth);
+                this.historyCalendarData = data.calendar_data;
+                this.historyStats = data.stats;
+                this.historyYear = data.year;
+                this.historyMonth = data.month;
+                this.historyDataLoaded = true;
+            } catch (error) {
+                console.error('Error loading history:', error);
+            }
+        },
+
+        async historyPrevMonth() {
+            if (this.historyMonth === 1) { this.historyYear--; this.historyMonth = 12; }
+            else { this.historyMonth--; }
+            this.historySelectedDate = null;
+            this.historySelectedDay = null;
+            await this.historyLoadData();
+        },
+
+        async historyNextMonth() {
+            if (this.historyMonth === 12) { this.historyYear++; this.historyMonth = 1; }
+            else { this.historyMonth++; }
+            this.historySelectedDate = null;
+            this.historySelectedDay = null;
+            await this.historyLoadData();
+        },
+
+        historySelectDay(day) {
+            if (!day || day.isEmpty || day.isFuture) return;
+            if (day.isToday) {
+                this.switchTab('daily');
+                return;
+            }
+            if (!day.isPast) return;
+            this.historySelectedDate = day.dateStr;
+            this.historyLoadDayData(day.dateStr);
+        },
+
+        async historyLoadDayData(dateStr) {
+            this.historyLoadingDay = true;
+            try {
+                this.historySelectedDay = await api.daily.get(dateStr);
+            } catch (error) {
+                this.historySelectedDay = null;
+            } finally {
+                this.historyLoadingDay = false;
+            }
+        },
+
+        async historyToggleTask(task) {
+            if (!this.historyIsEditable) return;
+            try {
+                await api.daily.toggleTask(this.historySelectedDate, task.id, !task.checked);
+                await this.historyLoadDayData(this.historySelectedDate);
+                await this.historyLoadData();
+                const streakData = await api.streak.get();
+                this.streak = streakData.current_streak;
+                this.todayComplete = streakData.today_complete;
+                this.lastCompletedDate = streakData.last_completed_date;
+            } catch (error) {
+                console.error('Error toggling history task:', error);
+            }
+        },
+
+        getStreakBadgeClass(streak) {
+            return window.getStreakBadgeClass(streak);
+        },
     }
 }
 </script>
@@ -894,6 +1156,32 @@ function checklist() {
     .add-task-card__subtitle {
         font-size: 12px;
     }
+}
+
+.history-tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.history-tab-header .calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.history-tab-header .nav-arrow {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--text-color);
+}
+.history-tab-header .nav-arrow:hover {
+    background: var(--hover-bg, #f5f5f5);
 }
 </style>
 {% endblock %}

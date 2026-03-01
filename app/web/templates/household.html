@@ -27,16 +27,17 @@
     <div x-show="activeView === 'list'">
 
     <!-- All caught up -->
-    <div x-show="!hasVisibleTasks" class="empty-state" style="text-align: center; padding: 60px 20px;">
-        <h2 style="color: #52c41a; margin-bottom: 8px;">All caught up!</h2>
-        <p style="color: #666;">No household tasks need attention right now.</p>
+    <div x-show="!hasVisibleTasks" class="empty-state">
+        <i class="mdi mdi-check-circle-outline" style="font-size: 48px; color: var(--success-color); display: block; margin-bottom: 12px;"></i>
+        <h2>All caught up!</h2>
+        <p>No household tasks need attention right now.</p>
     </div>
 
     <!-- Overdue -->
-    <section x-show="overdueTasks.length > 0" class="household-section overdue-section">
-        <div class="section-header overdue-header">
+    <section x-show="overdueTasks.length > 0" class="settings-section">
+        <div class="section-header">
             <h2>Overdue</h2>
-            <span class="task-count" style="background: #ff4d4f;" x-text="overdueTasks.length"></span>
+            <span class="count-badge" x-text="overdueTasks.length"></span>
         </div>
         <div class="household-tasks">
             <template x-for="task in overdueTasks" :key="task.id">
@@ -71,10 +72,10 @@
     </section>
 
     <!-- Due Now -->
-    <section x-show="dueTasks.length > 0" class="household-section">
+    <section x-show="dueTasks.length > 0" class="settings-section">
         <div class="section-header">
             <h2>Due Now</h2>
-            <span class="task-count" x-text="dueTasks.length"></span>
+            <span class="count-badge" x-text="dueTasks.length"></span>
         </div>
         <div class="household-tasks">
             <template x-for="task in dueTasks" :key="task.id">
@@ -109,10 +110,10 @@
     </section>
 
     <!-- Coming Up (within 7 days) -->
-    <section x-show="comingSoonTasks.length > 0" class="household-section">
+    <section x-show="comingSoonTasks.length > 0" class="settings-section">
         <div class="section-header">
             <h2>Coming Up</h2>
-            <span class="task-count" x-text="comingSoonTasks.length"></span>
+            <span class="count-badge count-badge--neutral" x-text="comingSoonTasks.length"></span>
         </div>
         <div class="household-tasks">
             <template x-for="task in comingSoonTasks" :key="task.id">
@@ -147,10 +148,10 @@
     </section>
 
     <!-- To-Do Items -->
-    <section x-show="todoTasks.length > 0" class="household-section">
+    <section x-show="todoTasks.length > 0" class="settings-section">
         <div class="section-header">
             <h2>To-Do Items</h2>
-            <span class="task-count" x-text="todoTasks.length"></span>
+            <span class="count-badge count-badge--neutral" x-text="todoTasks.length"></span>
         </div>
         <div class="household-tasks">
             <template x-for="task in todoTasks" :key="task.id">
@@ -185,11 +186,11 @@
     </section>
 
     <!-- Recently Completed -->
-    <section x-show="recentlyCompleted.length > 0" class="household-section">
+    <section x-show="recentlyCompleted.length > 0" class="settings-section">
         <div class="section-header">
             <h2>Recently Completed</h2>
-            <span class="task-count" x-text="recentlyCompleted.length"></span>
-            <span class="section-subtitle" style="margin-left: 10px; color: #666; font-size: 14px;">(Last 48 hours)</span>
+            <span class="count-badge count-badge--neutral" x-text="recentlyCompleted.length"></span>
+            <span class="page-subtitle" style="margin-left: 4px;">(Last 48 hours)</span>
         </div>
         <div class="household-tasks">
             <template x-for="task in recentlyCompleted" :key="'completed-' + task.id">
@@ -240,9 +241,10 @@
         <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Next 4 weeks — tap a task to mark it complete.</p>
 
         <!-- Empty state -->
-        <div x-show="timelineIsEmpty" class="empty-state" style="text-align: center; padding: 60px 20px;">
-            <h2 style="color: #52c41a; margin-bottom: 8px;">Nothing scheduled</h2>
-            <p style="color: #666;">No tasks due in the next 4 weeks.</p>
+        <div x-show="timelineIsEmpty" class="empty-state">
+            <i class="mdi mdi-calendar-check-outline" style="font-size: 48px; color: var(--success-color); display: block; margin-bottom: 12px;"></i>
+            <h2>Nothing scheduled</h2>
+            <p>No tasks due in the next 4 weeks.</p>
         </div>
 
         <!-- Overdue row -->
@@ -581,11 +583,11 @@ function householdMaintenance() {
         // Timeline computed property: next 28 days with tasks per date
         get timelineDays() {
             const days = [];
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getTodayStr();
             for (let i = 0; i <= 28; i++) {
                 const d = new Date();
                 d.setDate(d.getDate() + i);
-                const dateStr = d.toISOString().split('T')[0];
+                const dateStr = formatDateLocal(d);
                 const tasks = this.getTasksForDate(dateStr).filter(t => !t.is_overdue);
                 const isToday = dateStr === todayStr;
                 let label;
@@ -785,7 +787,7 @@ function householdMaintenance() {
 
         getTasksForDate(dateStr) {
             const taskDate = new Date(dateStr + 'T00:00:00');
-            const today = new Date().toISOString().split('T')[0];
+            const today = getTodayStr();
 
             return this.allTasksForCalendar.filter(task => {
                 // Handle to-do items
