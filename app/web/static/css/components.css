@@ -539,16 +539,6 @@
    EMPTY STATES
    ============================================================================ */
 
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #999;
-}
-
-.empty-state--compact {
-    padding: 40px 20px;
-}
-
 .empty-state__icon {
     font-size: 48px;
     margin-bottom: 16px;
