@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/ptmetcalf/streaklet/compare/v2.0.0...v2.1.0) (2026-03-01)
+
+
+### Features
+
+* **ui:** unify task management UX and clarify Fitbit scoring ([f851d8b](https://github.com/ptmetcalf/streaklet/commit/f851d8b9e39c0eb0296b48e523feff546c6d2113))
+
 ## [2.0.0](https://github.com/ptmetcalf/streaklet/compare/v1.11.4...v2.0.0) (2026-03-01)
 
 
