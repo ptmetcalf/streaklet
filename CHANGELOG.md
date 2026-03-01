@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/ptmetcalf/streaklet/compare/v1.11.4...v2.0.0) (2026-03-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* task/navigation structure and settings/task-management flows were redesigned for v2.0.
+
+### Features
+
+* ship streaklet 2.0 UI/UX and task management overhaul ([8077580](https://github.com/ptmetcalf/streaklet/commit/8077580ff1cdfa2294b524a3735ff1bd670a43f2))
+
 ## [1.11.4](https://github.com/ptmetcalf/streaklet/compare/v1.11.3...v1.11.4) (2026-03-01)
 
 
