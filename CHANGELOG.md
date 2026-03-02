@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/ptmetcalf/streaklet/compare/v2.1.1...v2.2.0) (2026-03-02)
+
+
+### Features
+
+* add dedicated custom lists page with mobile quick switch ([261bdd1](https://github.com/ptmetcalf/streaklet/commit/261bdd12d1f404ed6f13f60b725806990f37b5e1))
+
 ## [2.1.1](https://github.com/ptmetcalf/streaklet/compare/v2.1.0...v2.1.1) (2026-03-01)
 
 
