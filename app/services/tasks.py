@@ -281,14 +281,19 @@ def get_task_history(db: Session, task_id: int, profile_id: int, limit: int = 30
     today = get_today()
     cutoff_date = today - timedelta(days=29)
 
-    if task.task_type in ('punch_list', 'shopping_list'):
+    if task.task_type in ('punch_list', 'shopping_list', 'custom_list'):
         history = []
         total_completions = 0
         completions_last_30_days = 0
         last_completed_at = task.completed_at
 
         if task.completed_at:
-            source = 'punch_list' if task.task_type == 'punch_list' else 'shopping_list'
+            if task.task_type == 'punch_list':
+                source = 'punch_list'
+            elif task.task_type == 'custom_list':
+                source = 'custom_list'
+            else:
+                source = 'shopping_list'
             history = [{
                 'date': task.completed_at.date(),
                 'completed_at': task.completed_at,

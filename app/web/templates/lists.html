@@ -1,0 +1,651 @@
+{% extends "base.html" %}
+{% import "components/task_ui.html" as task_ui %}
+
+{% block title %}Streaklet - Custom Lists{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/pages/index.css?v={{ cache_bust }}">
+<style>
+    .lists-quick-switch {
+        display: none;
+        margin-bottom: 12px;
+    }
+
+    .lists-quick-switch__label {
+        display: block;
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 6px;
+    }
+
+    @media (max-width: 768px) {
+        .lists-quick-switch {
+            display: block;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" x-data="listsPage()" x-init="init()" x-cloak>
+    <header>
+        <div class="header-content">
+            <div>
+                <h1>Custom Lists</h1>
+                <div class="date page-subtitle">Organize personal list items by category.</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="task-tabs" x-show="enabledCustomLists.length > 0">
+        <template x-for="list in enabledCustomLists" :key="`custom-list-tab-${list.id}`">
+            <button class="tab-button"
+                    :class="{ 'active': activeCustomListId === list.id }"
+                    @click="switchCustomList(list.id)">
+                <i :class="'mdi mdi-' + (list.icon || 'view-list-outline')"></i>
+                <span x-text="list.name"></span>
+                <span class="badge-count" x-show="getCustomListPendingCount(list.id) > 0" x-text="getCustomListPendingCount(list.id)"></span>
+            </button>
+        </template>
+    </div>
+
+    <div class="lists-quick-switch" x-show="showListQuickSwitch">
+        <label class="lists-quick-switch__label">Quick switch list</label>
+        <select class="form-field__select"
+                :value="activeCustomListId"
+                @change="switchCustomList(Number($event.target.value))">
+            <template x-for="list in enabledCustomLists" :key="`custom-list-select-${list.id}`">
+                <option :value="list.id" x-text="list.name"></option>
+            </template>
+        </select>
+    </div>
+
+    <div class="tab-content">
+        <div class="tab-content--panel">
+            <div class="checklist" x-show="activeCustomListId">
+                <template x-for="item in pendingCustomListItems" :key="item.id">
+                    <div class="unified-task-card task-card-shopping-list">
+                        <div class="task-card-header">
+                            <i :class="'mdi mdi-' + (item.icon || selectedCustomListIcon)" class="task-card-icon"></i>
+                            <div class="task-card-title" x-text="item.title"></div>
+                        </div>
+                        <div class="task-card-actions">
+                            <button @click="toggleCustomListItem(item)" class="btn-task-action btn-task-complete" data-mobile-icon="✓">✓ Mark Complete</button>
+                            <button @click="showTaskHistory(item)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
+                            <button @click="openEditTaskModal(item)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
+                        </div>
+                    </div>
+                </template>
+
+                {{ task_ui.add_task_card('showAddCustomListItemModal = true', 'Add List Item', 'Track something for this list') }}
+
+                <div x-show="pendingCustomListItems.length === 0 && completedCustomListItems.length === 0" class="empty-state">
+                    <p>No items in this list yet.</p>
+                </div>
+            </div>
+
+            <div x-show="!activeCustomListId" class="empty-state">
+                <p>No enabled custom lists. Enable one in Settings.</p>
+                <a href="/settings" class="btn btn--secondary" style="margin-top: 8px;">Open Settings</a>
+            </div>
+
+            <div x-show="completedCustomListItems.length > 0" style="margin-top: 16px;">
+                <button @click="showCompleted = !showCompleted" class="btn btn--secondary btn--block">
+                    <span x-text="`Completed (${completedCustomListItems.length})`"></span>
+                    <svg :style="`width: 16px; height: 16px; transition: transform 0.2s; flex-shrink: 0; ${showCompleted ? 'transform: rotate(180deg);' : ''}`" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div x-show="showCompleted" x-collapse style="margin-top: 8px;">
+                    <template x-for="item in completedCustomListItems" :key="item.id">
+                        <div class="unified-task-card task-card-shopping-list task-card-checked">
+                            <div class="task-card-header">
+                                <i :class="'mdi mdi-' + (item.icon || selectedCustomListIcon)" class="task-card-icon"></i>
+                                <div class="task-card-title" x-text="item.title"></div>
+                            </div>
+                            <div class="task-card-metadata" x-show="item.completed_at">
+                                <span x-text="`Completed ${formatCompletedDate(item.completed_at)}`"></span>
+                            </div>
+                            <div class="task-card-actions">
+                                <button @click="toggleCustomListItem(item)" class="btn-task-action btn-task-secondary">↶ Restore</button>
+                                <button @click="showTaskHistory(item)" class="btn-task-action btn-task-secondary">History</button>
+                                <button @click="openEditTaskModal(item)" class="btn-task-action btn-task-secondary">Edit</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="archivedCustomListItems.length > 0" style="margin-top: 16px;">
+            <button @click="showArchived = !showArchived" class="btn btn--secondary btn--block">
+                <span x-text="`Archived Items (${archivedCustomListItems.length})`"></span>
+                <svg :style="`width: 16px; height: 16px; transition: transform 0.2s; flex-shrink: 0; ${showArchived ? 'transform: rotate(180deg);' : ''}`" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+            <div x-show="showArchived" x-collapse style="margin-top: 8px;" class="checklist">
+                <template x-for="task in archivedCustomListItems" :key="`archived-custom-list-${task.id}`">
+                    <div class="unified-task-card task-card-shopping-list task-card-checked">
+                        <div class="task-card-header">
+                            <i :class="'mdi mdi-' + (task.icon || selectedCustomListIcon)" class="task-card-icon"></i>
+                            <div class="task-card-title" x-text="task.title"></div>
+                        </div>
+                        <div class="task-card-metadata">
+                            <span class="task-badge badge-required">Archived</span>
+                        </div>
+                        <div class="task-card-actions">
+                            <button @click="restoreArchivedTask(task)" class="btn-task-action btn-task-complete">↶ Restore</button>
+                            <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary">Edit</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showAddCustomListItemModal" class="modal-overlay" x-cloak @click.self="closeAddCustomListItemModal()" @keydown.escape.window="showAddCustomListItemModal && closeAddCustomListItemModal()">
+        <div class="modal-content modal-content--md">
+            <div class="modal-header">
+                <h2 x-text="`Add ${selectedCustomListName} Item`"></h2>
+                <button @click="closeAddCustomListItemModal()" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <form @submit.prevent="submitCustomListItem()">
+                    <div class="form-field">
+                        <label class="form-field__label form-field__label--required">Item</label>
+                        <input type="text" class="form-field__input" x-model="newCustomListItem.title" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-field__label">Icon (optional)</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button type="button" class="btn btn--secondary" @click="showCustomListIconPicker = true">
+                                <i :class="'mdi mdi-' + (newCustomListItem.icon || selectedCustomListIcon)" style="font-size: 20px;"></i>
+                                <span>Choose Icon</span>
+                            </button>
+                            <template x-if="newCustomListItem.icon">
+                                <button type="button" class="btn btn--secondary btn--sm" @click="newCustomListItem.icon = null">Clear</button>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="task-form-actions">
+                        <button type="submit" class="btn btn--primary" :disabled="!newCustomListItem.title.trim()">Add Item</button>
+                        <button type="button" class="btn btn--secondary" @click="closeAddCustomListItemModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showCustomListIconPicker" class="modal-overlay" x-cloak @click.self="showCustomListIconPicker = false">
+        <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
+            <div class="modal-header">
+                <h2>Choose an Icon</h2>
+                <button @click="showCustomListIconPicker = false" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-field__input" x-model="customListIconSearch" placeholder="Search icons..." style="margin-bottom: 16px;">
+                <div x-show="!hasPersonalIconResults" style="text-align: center; padding: 20px; color: #999;">
+                    No icons found matching "<span x-text="customListIconSearch"></span>"
+                </div>
+                <template x-for="(icons, category) in filteredPersonalIcons" :key="category">
+                    <div x-show="icons.length > 0" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #666; font-size: 13px; text-transform: uppercase;" x-text="category"></h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
+                            <template x-for="icon in icons" :key="icon">
+                                <button type="button" @click="selectCustomListIcon(icon)" class="icon-picker-btn">
+                                    <i :class="'mdi mdi-' + icon" style="font-size: 24px;"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showEditTaskIconPicker" class="modal-overlay" x-cloak @click.self="showEditTaskIconPicker = false">
+        <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
+            <div class="modal-header">
+                <h2>Choose an Icon</h2>
+                <button @click="showEditTaskIconPicker = false" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-field__input" x-model="editTaskIconSearch" placeholder="Search icons..." style="margin-bottom: 16px;">
+                <div x-show="!hasEditTaskIconResults" style="text-align: center; padding: 20px; color: #999;">
+                    No icons found matching "<span x-text="editTaskIconSearch"></span>"
+                </div>
+                <template x-for="(icons, category) in filteredEditTaskIcons" :key="category">
+                    <div x-show="icons.length > 0" style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px; color: #666; font-size: 13px; text-transform: uppercase;" x-text="category"></h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
+                            <template x-for="icon in icons" :key="icon">
+                                <button type="button" @click="selectEditTaskIcon(icon)" class="icon-picker-btn">
+                                    <i :class="'mdi mdi-' + icon" style="font-size: 24px;"></i>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showEditTaskModal" class="modal-overlay" x-cloak @click.self="closeEditTaskModal()" @keydown.escape.window="showEditTaskModal && !showDeleteTaskConfirmModal && closeEditTaskModal()">
+        <div class="modal-content modal-content--md">
+            <div class="modal-header">
+                <h2>Edit Item</h2>
+                <button @click="closeEditTaskModal()" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <form @submit.prevent="submitEditTask()">
+                    <div class="form-field">
+                        <label class="form-field__label form-field__label--required">Title</label>
+                        <input type="text" class="form-field__input" x-model="editingTaskForm.title" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-field__label">Icon (optional)</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button type="button" class="btn btn--secondary" @click="showEditTaskIconPicker = true">
+                                <i :class="'mdi mdi-' + (editingTaskForm.icon || selectedCustomListIcon)" style="font-size: 20px;"></i>
+                                <span>Choose Icon</span>
+                            </button>
+                            <template x-if="editingTaskForm.icon">
+                                <button type="button" class="btn btn--secondary btn--sm" @click="editingTaskForm.icon = null">Clear</button>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label class="form-field__checkbox-label">
+                            <input type="checkbox" class="form-field__checkbox" x-model="editingTaskForm.is_active">
+                            <span>Active (uncheck to archive)</span>
+                        </label>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="button" class="btn btn--danger" x-show="editingTaskForm?.id" @click="deleteEditingTaskFromModal()">Delete Item</button>
+                        <button type="submit" class="btn btn--primary" :disabled="!editingTaskForm?.title?.trim()">Update Item</button>
+                        <button type="button" class="btn btn--secondary" @click="closeEditTaskModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="showDeleteTaskConfirmModal" class="modal-overlay" x-cloak @click.self="closeDeleteTaskConfirmModal()" @keydown.escape.window="showDeleteTaskConfirmModal && closeDeleteTaskConfirmModal()">
+        <div class="modal-content modal-content--sm">
+            <div class="modal-header">
+                <h2>Delete Item?</h2>
+                <button @click="closeDeleteTaskConfirmModal()" class="btn-close" :disabled="deletingTaskInProgress">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Delete "<strong x-text="pendingDeleteTask?.title || 'this item'"></strong>"?</p>
+                <p style="margin-top: 8px; color: #666; font-size: 14px;">This removes the item permanently.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn--secondary" @click="closeDeleteTaskConfirmModal()" :disabled="deletingTaskInProgress">Cancel</button>
+                <button type="button" class="btn btn--danger" @click="confirmDeleteTask()" :disabled="deletingTaskInProgress">
+                    <span x-show="!deletingTaskInProgress">Delete Item</span>
+                    <span x-show="deletingTaskInProgress">Deleting...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div x-show="taskHistoryModal.show" class="modal-overlay" x-cloak @click.self="closeTaskHistory()" @keydown.escape.window="taskHistoryModal.show && closeTaskHistory()">
+        <div class="modal-content modal-content--md modal-content--scrollable">
+            <div class="modal-header">
+                <h2>Item History</h2>
+                <button @click="closeTaskHistory()" class="btn-close">✕</button>
+            </div>
+            <div class="modal-body">
+                <h3 x-text="taskHistoryModal.task?.title"></h3>
+                <div class="history-stats-grid" x-show="taskHistoryModal.stats">
+                    <div class="history-stat-card">
+                        <div class="history-stat-label">Total completions</div>
+                        <div class="history-stat-value" x-text="taskHistoryModal.stats?.total_completions || 0"></div>
+                    </div>
+                    <div class="history-stat-card">
+                        <div class="history-stat-label">Last 30 days</div>
+                        <div class="history-stat-value" x-text="taskHistoryModal.stats?.completions_last_30_days || 0"></div>
+                    </div>
+                    <div class="history-stat-card">
+                        <div class="history-stat-label">Last completed</div>
+                        <div class="history-stat-value" style="font-size: 14px;" x-text="taskHistoryModal.stats?.last_completed_at ? formatRelativeTime(taskHistoryModal.stats.last_completed_at) : 'Never'"></div>
+                    </div>
+                </div>
+
+                <div x-show="taskHistoryModal.loading" class="empty-state">Loading history...</div>
+                <div x-show="!taskHistoryModal.loading && taskHistoryModal.history.length === 0" class="empty-state">No completion history yet.</div>
+                <div x-show="!taskHistoryModal.loading && taskHistoryModal.history.length > 0" class="history-list">
+                    <template x-for="entry in taskHistoryModal.history" :key="entry.date + '-' + (entry.completed_at || '')">
+                        <div class="history-item">
+                            <div class="history-date" x-text="formatHistoryDate(entry.completed_at || entry.date)"></div>
+                            <div class="history-profile" x-text="entry.source === 'custom_list' ? 'Completed from custom list' : 'Completed in daily checklist'"></div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function listsPage() {
+    return {
+        customLists: {{ custom_lists | tojson }},
+        customListTasks: {{ custom_list_tasks | tojson }},
+        allPersonalTasks: [],
+        activeCustomListId: {{ custom_lists[0]['id'] if custom_lists else 'null' }},
+        showCompleted: false,
+        showArchived: false,
+        showAddCustomListItemModal: false,
+        showCustomListIconPicker: false,
+        showEditTaskModal: false,
+        showEditTaskIconPicker: false,
+        showDeleteTaskConfirmModal: false,
+        pendingDeleteTask: null,
+        deletingTaskInProgress: false,
+        customListIconSearch: '',
+        editTaskIconSearch: '',
+
+        newCustomListItem: {
+            title: '',
+            icon: null
+        },
+        editingTaskForm: {
+            id: null,
+            title: '',
+            icon: null,
+            task_type: 'custom_list',
+            custom_list_id: null,
+            is_active: true
+        },
+        personalIconCategories: window.iconPickerCategories.personal,
+        taskHistoryModal: {
+            show: false,
+            task: null,
+            stats: null,
+            history: [],
+            loading: false
+        },
+
+        get enabledCustomLists() {
+            return this.customLists.filter((list) => list.is_enabled);
+        },
+        get selectedCustomList() {
+            if (!this.activeCustomListId) return null;
+            return this.enabledCustomLists.find((list) => list.id === this.activeCustomListId) || null;
+        },
+        get selectedCustomListName() {
+            return this.selectedCustomList?.name || 'List';
+        },
+        get selectedCustomListIcon() {
+            return this.selectedCustomList?.icon || 'view-list-outline';
+        },
+        get currentCustomListItems() {
+            if (!this.activeCustomListId) return [];
+            return this.customListTasks.filter((item) => item.custom_list_id === this.activeCustomListId);
+        },
+        get pendingCustomListItems() {
+            return this.currentCustomListItems.filter((item) => !item.completed_at);
+        },
+        get completedCustomListItems() {
+            return this.currentCustomListItems.filter((item) => !!item.completed_at);
+        },
+        get archivedCustomListItems() {
+            if (!this.activeCustomListId) return [];
+            return this.allPersonalTasks.filter((t) =>
+                t.task_type === 'custom_list' &&
+                t.custom_list_id === this.activeCustomListId &&
+                t.is_active === false
+            );
+        },
+        get filteredPersonalIcons() {
+            return window.iconPickerUtils.filterCategories(this.personalIconCategories, this.customListIconSearch);
+        },
+        get hasPersonalIconResults() {
+            return window.iconPickerUtils.hasVisibleIcons(this.personalIconCategories, this.customListIconSearch);
+        },
+        get filteredEditTaskIcons() {
+            return window.iconPickerUtils.filterCategories(this.personalIconCategories, this.editTaskIconSearch);
+        },
+        get hasEditTaskIconResults() {
+            return window.iconPickerUtils.hasVisibleIcons(this.personalIconCategories, this.editTaskIconSearch);
+        },
+        get showListQuickSwitch() {
+            return this.enabledCustomLists.length >= 6;
+        },
+        getCustomListPendingCount(listId) {
+            return this.customListTasks.filter((item) => item.custom_list_id === listId && !item.completed_at).length;
+        },
+
+        async init() {
+            await Promise.all([this.loadCustomLists(), this.loadCustomListTasks(), this.loadAllPersonalTasks()]);
+            this.ensureActiveCustomList();
+        },
+        ensureActiveCustomList() {
+            if (this.enabledCustomLists.length === 0) {
+                this.activeCustomListId = null;
+                return;
+            }
+            const activeExists = this.enabledCustomLists.some((list) => list.id === this.activeCustomListId);
+            if (activeExists) return;
+
+            const savedListId = Number.parseInt(localStorage.getItem('streaklet_active_custom_list_id') || '', 10);
+            const saved = this.enabledCustomLists.find((list) => list.id === savedListId);
+            this.activeCustomListId = saved ? saved.id : this.enabledCustomLists[0].id;
+        },
+        switchCustomList(listId) {
+            this.activeCustomListId = listId;
+            this.showCompleted = false;
+            this.showArchived = false;
+            localStorage.setItem('streaklet_active_custom_list_id', String(listId));
+        },
+        async loadCustomLists() {
+            try {
+                this.customLists = await api.customLists.list(false);
+            } catch (error) {
+                console.error('Error loading custom lists:', error);
+            }
+        },
+        async loadCustomListTasks() {
+            try {
+                this.customListTasks = await api.customLists.listItems(true, false);
+            } catch (error) {
+                console.error('Error loading custom list items:', error);
+            }
+        },
+        async loadAllPersonalTasks() {
+            try {
+                this.allPersonalTasks = await api.tasks.list();
+            } catch (error) {
+                console.error('Error loading personal tasks:', error);
+            }
+        },
+        async refreshViews() {
+            await Promise.all([this.loadCustomLists(), this.loadCustomListTasks(), this.loadAllPersonalTasks()]);
+            this.ensureActiveCustomList();
+        },
+
+        async toggleCustomListItem(item) {
+            if (!item || !item.custom_list_id) return;
+            try {
+                if (item.completed_at) {
+                    await api.customLists.uncompleteItem(item.custom_list_id, item.id);
+                } else {
+                    await api.customLists.completeItem(item.custom_list_id, item.id);
+                }
+                await this.loadCustomListTasks();
+            } catch (error) {
+                console.error('Error toggling custom list item:', error);
+            }
+        },
+        closeAddCustomListItemModal() {
+            this.showAddCustomListItemModal = false;
+            this.showCustomListIconPicker = false;
+            this.newCustomListItem = { title: '', icon: null };
+            this.customListIconSearch = '';
+        },
+        selectCustomListIcon(icon) {
+            this.newCustomListItem.icon = icon;
+            this.showCustomListIconPicker = false;
+            this.customListIconSearch = '';
+        },
+        selectEditTaskIcon(icon) {
+            this.editingTaskForm.icon = icon;
+            this.showEditTaskIconPicker = false;
+            this.editTaskIconSearch = '';
+        },
+        async submitCustomListItem() {
+            if (!this.activeCustomListId) {
+                toast.warning('Select a custom list first');
+                return;
+            }
+            if (!this.newCustomListItem.title.trim()) return;
+            try {
+                await api.customLists.createItem(this.activeCustomListId, {
+                    title: this.newCustomListItem.title,
+                    icon: this.newCustomListItem.icon
+                });
+                this.closeAddCustomListItemModal();
+                await this.refreshViews();
+                toast.success('List item created successfully');
+            } catch (error) {
+                console.error('Error creating custom list item:', error);
+                toast.error('Failed to create list item');
+            }
+        },
+
+        openEditTaskModal(task) {
+            this.editingTaskForm = {
+                id: task.id,
+                title: task.title || '',
+                icon: task.icon || null,
+                task_type: task.task_type || 'custom_list',
+                custom_list_id: task.custom_list_id || null,
+                is_active: task.is_active !== false
+            };
+            this.showEditTaskModal = true;
+        },
+        closeEditTaskModal() {
+            this.showEditTaskModal = false;
+            this.showEditTaskIconPicker = false;
+            this.editTaskIconSearch = '';
+            this.editingTaskForm = { id: null, title: '', icon: null, task_type: 'custom_list', custom_list_id: null, is_active: true };
+        },
+        async submitEditTask() {
+            if (!this.editingTaskForm?.title?.trim()) return;
+            try {
+                await api.tasks.update(this.editingTaskForm.id, {
+                    title: this.editingTaskForm.title,
+                    icon: this.editingTaskForm.icon,
+                    is_active: this.editingTaskForm.is_active
+                });
+                this.closeEditTaskModal();
+                await this.refreshViews();
+                toast.success('Item updated successfully');
+            } catch (error) {
+                console.error('Error updating item:', error);
+                toast.error('Failed to update item');
+            }
+        },
+        async restoreArchivedTask(task) {
+            if (!task?.id) return;
+            try {
+                await api.tasks.update(task.id, { is_active: true });
+                await this.refreshViews();
+                toast.success(`Restored "${task.title}"`);
+            } catch (error) {
+                console.error('Error restoring archived item:', error);
+                toast.error('Failed to restore item');
+            }
+        },
+
+        async deleteTaskFromPage(task) {
+            try {
+                if (!task.custom_list_id) {
+                    throw new Error('Missing custom list id');
+                }
+                await api.customLists.deleteItem(task.custom_list_id, task.id);
+                await this.refreshViews();
+                toast.success('Item deleted successfully');
+                return true;
+            } catch (error) {
+                console.error('Error deleting item:', error);
+                toast.error('Failed to delete item');
+                return false;
+            }
+        },
+        deleteEditingTaskFromModal() {
+            if (!this.editingTaskForm?.id) return;
+            this.pendingDeleteTask = {
+                id: this.editingTaskForm.id,
+                title: this.editingTaskForm.title,
+                task_type: this.editingTaskForm.task_type,
+                custom_list_id: this.editingTaskForm.custom_list_id
+            };
+            this.showDeleteTaskConfirmModal = true;
+        },
+        closeDeleteTaskConfirmModal() {
+            if (this.deletingTaskInProgress) return;
+            this.showDeleteTaskConfirmModal = false;
+            this.pendingDeleteTask = null;
+        },
+        async confirmDeleteTask() {
+            if (!this.pendingDeleteTask || this.deletingTaskInProgress) return;
+            this.deletingTaskInProgress = true;
+            const deleted = await this.deleteTaskFromPage(this.pendingDeleteTask);
+            this.deletingTaskInProgress = false;
+            if (!deleted) return;
+            this.closeDeleteTaskConfirmModal();
+            if (this.showEditTaskModal) this.closeEditTaskModal();
+        },
+
+        async showTaskHistory(task) {
+            this.taskHistoryModal = { show: true, task, stats: null, history: [], loading: true };
+            try {
+                const data = await api.tasks.history(task.id, 50);
+                this.taskHistoryModal.stats = data.stats;
+                this.taskHistoryModal.history = data.history || [];
+            } catch (error) {
+                console.error('Error loading item history:', error);
+                toast.error('Failed to load item history');
+            } finally {
+                this.taskHistoryModal.loading = false;
+            }
+        },
+        closeTaskHistory() {
+            this.taskHistoryModal = { show: false, task: null, stats: null, history: [], loading: false };
+        },
+        formatHistoryDate(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return String(value || '');
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        },
+        formatRelativeTime(value) {
+            if (!value) return 'Never';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'Never';
+
+            const now = new Date();
+            const diffMs = now - date;
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+
+            if (hours < 1) return 'Just now';
+            if (hours === 1) return '1 hour ago';
+            if (hours < 24) return `${hours} hours ago`;
+
+            const days = Math.floor(hours / 24);
+            if (days === 1) return 'Yesterday';
+            return `${days} days ago`;
+        }
+    }
+}
+</script>
+{% endblock %}

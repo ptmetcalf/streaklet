@@ -11,7 +11,8 @@ class TaskBase(BaseModel):
     is_active: bool = True
 
     # Task type
-    task_type: Literal['daily', 'punch_list', 'shopping_list', 'scheduled'] = 'daily'
+    task_type: Literal['daily', 'punch_list', 'shopping_list', 'custom_list', 'scheduled'] = 'daily'
+    custom_list_id: Optional[int] = None
 
     # Active since - only counts toward completion on dates >= this
     active_since: Optional[date] = None
@@ -72,7 +73,8 @@ class TaskUpdate(BaseModel):
     sort_order: Optional[int] = None
     is_required: Optional[bool] = None
     is_active: Optional[bool] = None
-    task_type: Optional[Literal['daily', 'punch_list', 'shopping_list', 'scheduled']] = None
+    task_type: Optional[Literal['daily', 'punch_list', 'shopping_list', 'custom_list', 'scheduled']] = None
+    custom_list_id: Optional[int] = None
     active_since: Optional[date] = None
     due_date: Optional[date] = None
     recurrence_pattern: Optional[Dict[str, Any]] = None
@@ -99,7 +101,7 @@ class TaskResponse(TaskBase):
 class TaskHistoryEntry(BaseModel):
     date: date
     completed_at: Optional[datetime] = None
-    source: Literal['check', 'punch_list', 'shopping_list'] = 'check'
+    source: Literal['check', 'punch_list', 'shopping_list', 'custom_list'] = 'check'
 
 
 class TaskHistoryStats(BaseModel):
@@ -112,6 +114,6 @@ class TaskHistoryStats(BaseModel):
 
 class TaskHistoryResponse(BaseModel):
     task_id: int
-    task_type: Literal['daily', 'punch_list', 'shopping_list', 'scheduled']
+    task_type: Literal['daily', 'punch_list', 'shopping_list', 'custom_list', 'scheduled']
     stats: TaskHistoryStats
     history: List[TaskHistoryEntry]

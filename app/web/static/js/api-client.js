@@ -278,6 +278,23 @@ window.api = {
         delete: (id) => ApiClient.delete(`/api/shopping-list/${id}`),
     },
 
+    // Custom list helpers
+    customLists: {
+        list: (includeDisabled = false) => ApiClient.get(`/api/custom-lists?include_disabled=${includeDisabled}`),
+        create: (data) => ApiClient.post('/api/custom-lists', data),
+        update: (id, data) => ApiClient.put(`/api/custom-lists/${id}`, data),
+        delete: (id) => ApiClient.delete(`/api/custom-lists/${id}`),
+        reorder: (listIds) => ApiClient.put('/api/custom-lists/reorder', { list_ids: listIds }),
+        listItems: (includeCompleted = true, includeInactive = false) =>
+            ApiClient.get(`/api/custom-lists/items?include_completed=${includeCompleted}&include_inactive=${includeInactive}`),
+        listItemsForList: (listId, includeCompleted = true, includeInactive = false) =>
+            ApiClient.get(`/api/custom-lists/${listId}/items?include_completed=${includeCompleted}&include_inactive=${includeInactive}`),
+        createItem: (listId, data) => ApiClient.post(`/api/custom-lists/${listId}/items`, data),
+        completeItem: (listId, itemId) => ApiClient.post(`/api/custom-lists/${listId}/items/${itemId}/complete`),
+        uncompleteItem: (listId, itemId) => ApiClient.delete(`/api/custom-lists/${listId}/items/${itemId}/complete`),
+        deleteItem: (listId, itemId) => ApiClient.delete(`/api/custom-lists/${listId}/items/${itemId}`),
+    },
+
     // Scheduled task helpers
     scheduled: {
         dueToday: () => ApiClient.get('/api/scheduled/due-today'),
@@ -351,7 +368,7 @@ if (typeof console !== 'undefined' && console.info) {
         'Task shortcuts': 'api.tasks.list(), api.tasks.create(data)',
         'Daily shortcuts': 'api.daily.today(), api.daily.toggleTask()',
         'Punch list': 'api.punchList.list(), api.punchList.complete(id)',
-        'Shopping list': 'api.shoppingList.list(), api.shoppingList.complete(id)',
+        'Custom lists': 'api.customLists.list(), api.customLists.createItem(listId, data)',
         'Profile prefs': 'api.profilePreferences.get(), api.profilePreferences.update(data)',
         'Household': 'api.household.list(), api.household.complete(id)',
         'Fitbit': 'api.fitbit.connection(), api.fitbit.dailySummary(date)',

@@ -27,10 +27,10 @@ test.use({ viewport: { width: 390, height: 844 } }); // iPhone 14 Pro
 test.beforeAll(async ({ request }) => {
   const cookie = 'profile_id=1';
 
-  // Rename default profile to John Smith and enable shopping list
+  // Rename default profile to John Smith
   await request.put(`${BASE}/api/profiles/1`, {
     headers: { Cookie: cookie },
-    data: { name: 'John Smith', color: '#3b82f6', show_shopping_list: true }
+    data: { name: 'John Smith', color: '#3b82f6' }
   });
 
   // Add a second profile for the profiles page screenshot
@@ -99,7 +99,16 @@ test.beforeAll(async ({ request }) => {
     }
   });
 
-  // Shopping list items
+  // Shopping list items (now backed by custom lists)
+  const listsResponse = await request.get(`${BASE}/api/custom-lists?include_disabled=true`, {
+    headers: { Cookie: cookie }
+  });
+  const lists = await listsResponse.json();
+  const shoppingList = lists.find((list) => list.template_key === 'shopping');
+  if (!shoppingList) {
+    throw new Error('Expected shopping custom list to exist');
+  }
+
   const shoppingItems = [
     { title: 'Milk (2%)', icon: 'mdi-bottle-soda' },
     { title: 'Eggs (dozen)', icon: 'mdi-egg' },
@@ -110,9 +119,9 @@ test.beforeAll(async ({ request }) => {
     { title: 'Bananas', icon: 'mdi-fruit-grapes' },
   ];
   for (const item of shoppingItems) {
-    await request.post(`${BASE}/api/tasks`, {
+    await request.post(`${BASE}/api/custom-lists/${shoppingList.id}/items`, {
       headers: { Cookie: cookie },
-      data: { ...item, task_type: 'shopping_list', is_required: false }
+      data: item
     });
   }
 
@@ -191,7 +200,7 @@ test('todo list tab', async ({ page }) => {
 });
 
 test('shopping list tab', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/lists');
   await page.waitForLoadState('networkidle');
   await page.locator('.tab-button', { hasText: 'Shopping' }).click();
   await page.waitForTimeout(300);

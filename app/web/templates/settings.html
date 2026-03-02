@@ -20,13 +20,46 @@
                     <div class="pref-description">Show confetti when all required tasks are completed.</div>
                 </div>
             </label>
-            <label class="pref-toggle" style="margin-top: 14px;">
-                <input type="checkbox" class="form-field__checkbox" x-model="shoppingListEnabled" @change="saveShoppingListPreference">
-                <div>
-                    <div class="pref-title">Show Shopping List in Today</div>
-                    <div class="pref-description">Add a dedicated shopping tab to track items you want to buy.</div>
+        </div>
+    </section>
+
+    <section class="settings-section">
+        <h2 class="section-title">Custom Lists</h2>
+        <div class="settings-card">
+            <p>Enable and organize lists that appear as tabs on Today → Lists.</p>
+
+            <div class="custom-list-editor" x-show="customLists.length === 0">
+                <div class="pref-description">No lists found yet.</div>
+            </div>
+
+            <template x-for="(list, index) in customLists" :key="list.id">
+                <div class="custom-list-row">
+                    <label class="custom-list-toggle">
+                        <input type="checkbox" class="form-field__checkbox" x-model="list.is_enabled" @change="toggleCustomListEnabled(list)">
+                        <span>Show</span>
+                    </label>
+                    <div class="custom-list-main">
+                        <div class="custom-list-name-row">
+                            <i :class="'mdi mdi-' + (list.icon || 'view-list-outline')" style="font-size: 18px;"></i>
+                            <input type="text" class="form-field__input" x-model="list.name" @blur="saveCustomList(list)" maxlength="80">
+                        </div>
+                    </div>
+                    <div class="custom-list-actions">
+                        <button class="btn btn--secondary btn--sm" @click="moveCustomList(index, -1)" :disabled="index === 0">↑</button>
+                        <button class="btn btn--secondary btn--sm" @click="moveCustomList(index, 1)" :disabled="index === customLists.length - 1">↓</button>
+                        <button class="btn btn--danger btn--sm" @click="deleteCustomList(list)">Delete</button>
+                    </div>
                 </div>
-            </label>
+            </template>
+
+            <div class="custom-list-create">
+                <h3>Add Custom List</h3>
+                <div class="custom-list-create-row">
+                    <input type="text" class="form-field__input" x-model="newCustomListName" placeholder="List name (e.g., Hardware)">
+                    <input type="text" class="form-field__input" x-model="newCustomListIcon" placeholder="mdi icon (optional)">
+                    <button class="btn btn--primary" @click="createCustomList" :disabled="!newCustomListName.trim()">Add</button>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -199,7 +232,9 @@ function settings() {
         fitbitLastSync: null,
         isSyncing: false,
         confettiEnabled: true,
-        shoppingListEnabled: false,
+        customLists: [],
+        newCustomListName: '',
+        newCustomListIcon: '',
         prefsSaved: false,
 
         fitbitPrefs: {
@@ -229,6 +264,7 @@ function settings() {
         async init() {
             await this.loadProfilePreferences();
             await this.migrateLegacyPreferencesIfNeeded();
+            await this.loadCustomLists();
 
             await this.loadFitbitStatus();
             await this.loadFitbitPreferences();
@@ -247,7 +283,6 @@ function settings() {
             try {
                 const preferences = await api.profilePreferences.get();
                 this.confettiEnabled = preferences.confetti_enabled;
-                this.shoppingListEnabled = preferences.show_shopping_list;
             } catch (error) {
                 console.error('Error loading profile preferences:', error);
             }
@@ -256,11 +291,9 @@ function settings() {
         async saveProfilePreferences() {
             try {
                 const preferences = await api.profilePreferences.update({
-                    confetti_enabled: this.confettiEnabled,
-                    show_shopping_list: this.shoppingListEnabled
+                    confetti_enabled: this.confettiEnabled
                 });
                 this.confettiEnabled = preferences.confetti_enabled;
-                this.shoppingListEnabled = preferences.show_shopping_list;
             } catch (error) {
                 console.error('Error saving profile preferences:', error);
                 toast.error('Failed to save preferences');
@@ -418,35 +451,10 @@ function settings() {
             this.saveProfilePreferences();
         },
 
-        getShoppingListPreferenceKey() {
-            let profileId = null;
-            if (window.Alpine) {
-                try {
-                    profileId = Alpine.store('profile')?.id;
-                } catch (e) {
-                    profileId = null;
-                }
-            }
-            profileId = profileId || this.getCookie('profile_id') || 'default';
-            return `streaklet_show_shopping_list_${profileId}`;
-        },
-
-        getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return null;
-        },
-
-        saveShoppingListPreference() {
-            this.saveProfilePreferences();
-        },
-
         async migrateLegacyPreferencesIfNeeded() {
             const legacyConfetti = localStorage.getItem('streaklet_confetti_enabled');
-            const legacyShopping = localStorage.getItem(this.getShoppingListPreferenceKey());
 
-            if (legacyConfetti === null && legacyShopping === null) {
+            if (legacyConfetti === null) {
                 return;
             }
 
@@ -454,18 +462,106 @@ function settings() {
             if (legacyConfetti !== null) {
                 payload.confetti_enabled = legacyConfetti === 'true';
             }
-            if (legacyShopping !== null) {
-                payload.show_shopping_list = legacyShopping === 'true';
-            }
 
             try {
                 const preferences = await api.profilePreferences.update(payload);
                 this.confettiEnabled = preferences.confetti_enabled;
-                this.shoppingListEnabled = preferences.show_shopping_list;
                 localStorage.removeItem('streaklet_confetti_enabled');
-                localStorage.removeItem(this.getShoppingListPreferenceKey());
             } catch (error) {
                 console.error('Error migrating legacy preferences:', error);
+            }
+        },
+
+        async loadCustomLists() {
+            try {
+                this.customLists = await api.customLists.list(true);
+            } catch (error) {
+                console.error('Error loading custom lists:', error);
+                toast.error('Failed to load custom lists');
+            }
+        },
+
+        async saveCustomList(list) {
+            if (!list || !list.id || !list.name?.trim()) {
+                await this.loadCustomLists();
+                return;
+            }
+            try {
+                await api.customLists.update(list.id, {
+                    name: list.name.trim(),
+                    icon: list.icon || null,
+                    is_enabled: !!list.is_enabled,
+                });
+                await this.loadCustomLists();
+            } catch (error) {
+                console.error('Error saving custom list:', error);
+                toast.error('Failed to save custom list');
+                await this.loadCustomLists();
+            }
+        },
+
+        async toggleCustomListEnabled(list) {
+            if (!list || !list.id) return;
+            try {
+                await api.customLists.update(list.id, { is_enabled: !!list.is_enabled });
+                await this.loadCustomLists();
+            } catch (error) {
+                console.error('Error toggling custom list:', error);
+                toast.error('Failed to update custom list');
+                await this.loadCustomLists();
+            }
+        },
+
+        async moveCustomList(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= this.customLists.length) return;
+
+            const reordered = [...this.customLists];
+            const [moved] = reordered.splice(index, 1);
+            reordered.splice(targetIndex, 0, moved);
+            this.customLists = reordered;
+
+            try {
+                await api.customLists.reorder(this.customLists.map((list) => list.id));
+                await this.loadCustomLists();
+            } catch (error) {
+                console.error('Error reordering custom lists:', error);
+                toast.error('Failed to reorder custom lists');
+                await this.loadCustomLists();
+            }
+        },
+
+        async createCustomList() {
+            const name = this.newCustomListName.trim();
+            if (!name) return;
+
+            try {
+                await api.customLists.create({
+                    name: name,
+                    icon: this.newCustomListIcon.trim() || null,
+                    is_enabled: true
+                });
+                this.newCustomListName = '';
+                this.newCustomListIcon = '';
+                await this.loadCustomLists();
+                toast.success('Custom list created');
+            } catch (error) {
+                console.error('Error creating custom list:', error);
+                toast.error('Failed to create custom list');
+            }
+        },
+
+        async deleteCustomList(list) {
+            if (!list || !list.id) return;
+            if (!confirm(`Delete "${list.name}" and all of its items?`)) return;
+
+            try {
+                await api.customLists.delete(list.id);
+                await this.loadCustomLists();
+                toast.success('Custom list deleted');
+            } catch (error) {
+                console.error('Error deleting custom list:', error);
+                toast.error('Failed to delete custom list');
             }
         }
     }

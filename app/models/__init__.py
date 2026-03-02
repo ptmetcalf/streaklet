@@ -4,5 +4,6 @@ from app.models.task_check import TaskCheck
 from app.models.fitbit_preferences import FitbitPreferences
 from app.models.household_task import HouseholdTask
 from app.models.household_completion import HouseholdCompletion
+from app.models.custom_list import CustomList
 
-__all__ = ["Task", "DailyStatus", "TaskCheck", "FitbitPreferences", "HouseholdTask", "HouseholdCompletion"]
+__all__ = ["Task", "DailyStatus", "TaskCheck", "FitbitPreferences", "HouseholdTask", "HouseholdCompletion", "CustomList"]

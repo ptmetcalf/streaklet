@@ -11,7 +11,7 @@ def test_create_shopping_item(client: TestClient, sample_profiles):
     assert response.status_code == 201
     data = response.json()
     assert data["title"] == "Dish soap"
-    assert data["task_type"] == "shopping_list"
+    assert data["task_type"] == "custom_list"
     assert data["is_required"] is False
     assert data["completed_at"] is None
 

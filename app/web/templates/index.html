@@ -36,13 +36,6 @@
             <span>To-Do</span>
             <span class="badge-count" x-show="todoCount > 0" x-text="todoCount"></span>
         </button>
-        <button class="tab-button"
-                x-show="shoppingListEnabled"
-                :class="{ 'active': activeTab === 'shopping_list' }"
-                @click="switchTab('shopping_list')">
-            <span>Shopping</span>
-            <span class="badge-count" x-show="shoppingCount > 0" x-text="shoppingCount"></span>
-        </button>
     </div>
 
     <!-- Daily Tasks Tab -->
@@ -352,93 +345,6 @@
         </div>
     </div>
 
-    <!-- Shopping List Tab -->
-    <div x-show="activeTab === 'shopping_list' && shoppingListEnabled" class="tab-content">
-        <div class="tab-content--panel">
-        <div class="checklist">
-            <template x-for="item in pendingShoppingItems" :key="item.id">
-                <div class="unified-task-card task-card-shopping-list">
-                    <div class="task-card-header">
-                        <i :class="'mdi mdi-' + (item.icon || 'cart-outline')" class="task-card-icon"></i>
-                        <div class="task-card-title" x-text="item.title"></div>
-                    </div>
-                    <div class="task-card-actions">
-                        <button @click="toggleShoppingItem(item)" class="btn-task-action btn-task-complete" data-mobile-icon="✓">
-                            ✓ Mark Purchased
-                        </button>
-                        <button @click="showTaskHistory(item)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
-                        <button @click="openEditTaskModal(item)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
-                    </div>
-                </div>
-            </template>
-
-            {{ task_ui.add_task_card('showAddShoppingModal = true', 'Add Shopping Item', 'Track something you want to buy') }}
-
-            <div x-show="pendingShoppingItems.length === 0 && purchasedShoppingItems.length === 0" class="empty-state">
-                <p>No shopping items yet.</p>
-            </div>
-        </div>
-
-        <div x-show="purchasedShoppingItems.length > 0" style="margin-top: 16px;">
-            <button @click="showPurchasedShopping = !showPurchasedShopping" class="btn btn--secondary btn--block">
-                <span x-text="`Purchased (${purchasedShoppingItems.length})`"></span>
-                <svg :style="`width: 16px; height: 16px; transition: transform 0.2s; flex-shrink: 0; ${showPurchasedShopping ? 'transform: rotate(180deg);' : ''}`" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-            </button>
-
-            <div x-show="showPurchasedShopping" x-collapse style="margin-top: 8px;">
-                <template x-for="item in purchasedShoppingItems" :key="item.id">
-                    <div class="unified-task-card task-card-shopping-list task-card-checked">
-                        <div class="task-card-header">
-                            <i :class="'mdi mdi-' + (item.icon || 'cart-outline')" class="task-card-icon"></i>
-                            <div class="task-card-title" x-text="item.title"></div>
-                        </div>
-                        <div class="task-card-metadata" x-show="item.completed_at">
-                            <span x-text="`Purchased ${formatCompletedDate(item.completed_at)}`"></span>
-                        </div>
-                        <div class="task-card-actions">
-                            <button @click="toggleShoppingItem(item)" class="btn-task-action btn-task-secondary">
-                                ↶ Move Back to List
-                            </button>
-                            <button @click="showTaskHistory(item)" class="btn-task-action btn-task-secondary">History</button>
-                            <button @click="openEditTaskModal(item)" class="btn-task-action btn-task-secondary">Edit</button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-
-        </div>
-
-        <div x-show="archivedShoppingItems.length > 0" style="margin-top: 16px;">
-            <button @click="showArchivedShopping = !showArchivedShopping" class="btn btn--secondary btn--block">
-                <span x-text="`Archived Shopping Items (${archivedShoppingItems.length})`"></span>
-                <svg :style="`width: 16px; height: 16px; transition: transform 0.2s; flex-shrink: 0; ${showArchivedShopping ? 'transform: rotate(180deg);' : ''}`" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-            </button>
-
-            <div x-show="showArchivedShopping" x-collapse style="margin-top: 8px;" class="checklist">
-                <template x-for="task in archivedShoppingItems" :key="`archived-shopping-${task.id}`">
-                    <div class="unified-task-card task-card-shopping-list task-card-checked">
-                        <div class="task-card-header">
-                            <i :class="'mdi mdi-' + (task.icon || 'cart-outline')" class="task-card-icon"></i>
-                            <div class="task-card-title" x-text="task.title"></div>
-                        </div>
-                        <div class="task-card-metadata">
-                            <span class="task-badge badge-required">Archived</span>
-                        </div>
-                        <div class="task-card-actions">
-                            <button @click="restoreArchivedTask(task)" class="btn-task-action btn-task-complete">↶ Restore</button>
-                            <button @click="openEditTaskModal(task)" class="btn-task-action btn-task-secondary">Edit</button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-    </div>
-
     <!-- Add Daily Task Modal -->
     <div x-show="showAddDailyTaskModal" class="modal-overlay" x-cloak @click.self="closeAddDailyTaskModal()" @keydown.escape.window="showAddDailyTaskModal && closeAddDailyTaskModal()">
         <div class="modal-content modal-content--md">
@@ -605,34 +511,34 @@
         </div>
     </div>
 
-    <!-- Add Shopping Item Modal -->
-    <div x-show="showAddShoppingModal" class="modal-overlay" x-cloak @click.self="closeAddShoppingModal()" @keydown.escape.window="showAddShoppingModal && closeAddShoppingModal()">
+    <!-- Add Custom List Item Modal -->
+    <div x-show="showAddCustomListItemModal" class="modal-overlay" x-cloak @click.self="closeAddCustomListItemModal()" @keydown.escape.window="showAddCustomListItemModal && closeAddCustomListItemModal()">
         <div class="modal-content modal-content--md">
             <div class="modal-header">
-                <h2>Add Shopping Item</h2>
-                <button @click="closeAddShoppingModal()" class="btn-close">✕</button>
+                <h2 x-text="`Add ${selectedCustomListName} Item`"></h2>
+                <button @click="closeAddCustomListItemModal()" class="btn-close">✕</button>
             </div>
             <div class="modal-body">
-                <form @submit.prevent="submitShoppingItem()">
+                <form @submit.prevent="submitCustomListItem()">
                     <div class="form-field">
                         <label class="form-field__label form-field__label--required">Item</label>
-                        <input type="text" class="form-field__input" x-model="newShopping.title" placeholder="e.g., Dish soap, AA batteries" required>
+                        <input type="text" class="form-field__input" x-model="newCustomListItem.title" placeholder="e.g., Dish soap, AA batteries" required>
                     </div>
                     <div class="form-field">
                         <label class="form-field__label">Icon (optional - auto-assigned from title if not selected)</label>
                         <div style="display: flex; align-items: center; gap: 12px;">
-                            <button type="button" class="btn btn--secondary" @click="showShoppingIconPicker = true">
-                                <i :class="'mdi mdi-' + (newShopping.icon || 'cart-outline')" style="font-size: 20px;"></i>
+                            <button type="button" class="btn btn--secondary" @click="showCustomListIconPicker = true">
+                                <i :class="'mdi mdi-' + (newCustomListItem.icon || selectedCustomListIcon)" style="font-size: 20px;"></i>
                                 <span>Choose Icon</span>
                             </button>
-                            <template x-if="newShopping.icon">
-                                <button type="button" class="btn btn--secondary btn--sm" @click="newShopping.icon = null">Clear</button>
+                            <template x-if="newCustomListItem.icon">
+                                <button type="button" class="btn btn--secondary btn--sm" @click="newCustomListItem.icon = null">Clear</button>
                             </template>
                         </div>
                     </div>
                     <div class="task-form-actions">
-                        <button type="submit" class="btn btn--primary" :disabled="!newShopping.title.trim()">Add Item</button>
-                        <button type="button" class="btn btn--secondary" @click="closeAddShoppingModal()">Cancel</button>
+                        <button type="submit" class="btn btn--primary" :disabled="!newCustomListItem.title.trim()">Add Item</button>
+                        <button type="button" class="btn btn--secondary" @click="closeAddCustomListItemModal()">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -695,24 +601,24 @@
         </div>
     </div>
 
-    <!-- Icon Picker Modal for Shopping -->
-    <div x-show="showShoppingIconPicker" class="modal-overlay" x-cloak @click.self="showShoppingIconPicker = false">
+    <!-- Icon Picker Modal for Custom List Items -->
+    <div x-show="showCustomListIconPicker" class="modal-overlay" x-cloak @click.self="showCustomListIconPicker = false">
         <div class="modal-content modal-content--md modal-content--scrollable" @click.stop>
             <div class="modal-header">
                 <h2>Choose an Icon</h2>
-                <button @click="showShoppingIconPicker = false" class="btn-close">✕</button>
+                <button @click="showCustomListIconPicker = false" class="btn-close">✕</button>
             </div>
             <div class="modal-body">
-                <input type="text" class="form-field__input" x-model="shoppingIconSearch" placeholder="Search icons..." style="margin-bottom: 16px;">
+                <input type="text" class="form-field__input" x-model="customListIconSearch" placeholder="Search icons..." style="margin-bottom: 16px;">
                 <div x-show="!hasPersonalIconResults" style="text-align: center; padding: 20px; color: #999;">
-                    No icons found matching "<span x-text="shoppingIconSearch"></span>"
+                    No icons found matching "<span x-text="customListIconSearch"></span>"
                 </div>
                 <template x-for="(icons, category) in filteredPersonalIcons" :key="category">
                     <div x-show="icons.length > 0" style="margin-bottom: 20px;">
                         <h4 style="margin-bottom: 10px; color: #666; font-size: 13px; text-transform: uppercase;" x-text="category"></h4>
                         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 8px;">
                             <template x-for="icon in icons" :key="icon">
-                                <button type="button" @click="selectShoppingIcon(icon)" class="icon-picker-btn">
+                                <button type="button" @click="selectCustomListIcon(icon)" class="icon-picker-btn">
                                     <i :class="'mdi mdi-' + icon" style="font-size: 24px;"></i>
                                 </button>
                             </template>
@@ -727,7 +633,7 @@
     <div x-show="showEditTaskModal" class="modal-overlay" x-cloak @click.self="closeEditTaskModal()" @keydown.escape.window="showEditTaskModal && !showDeleteTaskConfirmModal && closeEditTaskModal()">
         <div class="modal-content modal-content--md">
             <div class="modal-header">
-                <h2 x-text="editingTaskForm?.task_type === 'punch_list' ? 'Edit To-Do' : (editingTaskForm?.task_type === 'shopping_list' ? 'Edit Shopping Item' : 'Edit Task')"></h2>
+                <h2 x-text="editingTaskForm?.task_type === 'punch_list' ? 'Edit To-Do' : (editingTaskForm?.task_type === 'custom_list' ? 'Edit Item' : 'Edit Task')"></h2>
                 <button @click="closeEditTaskModal()" class="btn-close">✕</button>
             </div>
             <div class="modal-body">
@@ -752,13 +658,13 @@
                         <label class="form-field__label">Due Date (optional)</label>
                         <input type="date" class="form-field__input" x-model="editingTaskForm.due_date">
                     </div>
-                    <div class="form-field" x-show="editingTaskForm?.task_type !== 'punch_list' && editingTaskForm?.task_type !== 'shopping_list'">
+                    <div class="form-field" x-show="editingTaskForm?.task_type !== 'punch_list' && editingTaskForm?.task_type !== 'custom_list'">
                         <label class="form-field__checkbox-label">
                             <input type="checkbox" class="form-field__checkbox" x-model="editingTaskForm.is_required">
                             <span>Required for daily completion</span>
                         </label>
                     </div>
-                    <div class="form-field" x-show="editingTaskForm?.fitbit_metric_type && editingTaskForm?.task_type !== 'shopping_list'">
+                    <div class="form-field" x-show="editingTaskForm?.fitbit_metric_type && editingTaskForm?.task_type !== 'custom_list'">
                         <label class="form-field__checkbox-label">
                             <input type="checkbox" class="form-field__checkbox" x-model="editingTaskForm.fitbit_auto_check">
                             <span>Auto-check when Fitbit goal is met</span>
@@ -767,7 +673,7 @@
                             <span x-text="`Metric: ${formatMetricName(editingTaskForm.fitbit_metric_type)} | Goal: ${editingTaskForm.fitbit_goal_operator || 'gte'} ${editingTaskForm.fitbit_goal_value ?? '-'}`"></span>
                         </div>
                     </div>
-                    <div class="form-field" x-show="editingTaskForm?.task_type !== 'shopping_list'">
+                    <div class="form-field" x-show="editingTaskForm?.task_type !== 'custom_list'">
                         <label class="form-field__checkbox-label">
                             <input type="checkbox" class="form-field__checkbox" x-model="editingTaskForm.is_active">
                             <span>Active (uncheck to archive)</span>
@@ -804,10 +710,10 @@
                 <p style="margin-top: 8px; color: #666; font-size: 14px;" x-show="pendingDeleteTask?.task_type === 'punch_list'">
                     This removes the to-do item permanently.
                 </p>
-                <p style="margin-top: 8px; color: #666; font-size: 14px;" x-show="pendingDeleteTask?.task_type === 'shopping_list'">
-                    This removes the shopping item permanently.
+                <p style="margin-top: 8px; color: #666; font-size: 14px;" x-show="pendingDeleteTask?.task_type === 'custom_list'">
+                    This removes the list item permanently.
                 </p>
-                <p style="margin-top: 8px; color: #666; font-size: 14px;" x-show="pendingDeleteTask?.task_type !== 'punch_list' && pendingDeleteTask?.task_type !== 'shopping_list'">
+                <p style="margin-top: 8px; color: #666; font-size: 14px;" x-show="pendingDeleteTask?.task_type !== 'punch_list' && pendingDeleteTask?.task_type !== 'custom_list'">
                     This removes the task from your daily checklist.
                 </p>
             </div>
@@ -867,11 +773,11 @@
                         <div class="history-stat-label">Last 30 days</div>
                         <div class="history-stat-value" x-text="taskHistoryModal.stats?.completions_last_30_days || 0"></div>
                     </div>
-                    <div class="history-stat-card" x-show="taskHistoryModal.task?.task_type !== 'punch_list' && taskHistoryModal.task?.task_type !== 'shopping_list'">
+                    <div class="history-stat-card" x-show="taskHistoryModal.task?.task_type !== 'punch_list' && taskHistoryModal.task?.task_type !== 'custom_list'">
                         <div class="history-stat-label">Current streak</div>
                         <div class="history-stat-value" x-text="taskHistoryModal.stats?.current_streak || 0"></div>
                     </div>
-                    <div class="history-stat-card" x-show="taskHistoryModal.task?.task_type !== 'punch_list' && taskHistoryModal.task?.task_type !== 'shopping_list'">
+                    <div class="history-stat-card" x-show="taskHistoryModal.task?.task_type !== 'punch_list' && taskHistoryModal.task?.task_type !== 'custom_list'">
                         <div class="history-stat-label">Best streak</div>
                         <div class="history-stat-value" x-text="taskHistoryModal.stats?.best_streak || 0"></div>
                     </div>
@@ -891,7 +797,7 @@
                     <template x-for="entry in taskHistoryModal.history" :key="entry.date + '-' + (entry.completed_at || '')">
                         <div class="history-item">
                             <div class="history-date" x-text="formatHistoryDate(entry.completed_at || entry.date)"></div>
-                            <div class="history-profile" x-text="entry.source === 'punch_list' ? 'Completed from to-do list' : (entry.source === 'shopping_list' ? 'Completed from shopping list' : 'Completed in daily checklist')"></div>
+                            <div class="history-profile" x-text="entry.source === 'punch_list' ? 'Completed from to-do list' : (entry.source === 'custom_list' ? 'Completed from custom list' : 'Completed in daily checklist')"></div>
                         </div>
                     </template>
                 </div>
@@ -919,17 +825,18 @@ function checklist() {
         showToast: false,
         toastMessage: '',
 
-        // Punch list state (initialized with SSR data)
+        // Punch list and custom list state (initialized with SSR data)
         punchListTasks: {{ punch_list_tasks | tojson }},
         showCompletedTodos: false,
-        shoppingListTasks: {{ shopping_list_tasks | tojson }},
-        showPurchasedShopping: false,
+        customLists: {{ custom_lists | tojson }},
+        customListTasks: {{ custom_list_tasks | tojson }},
+        activeCustomListId: {{ custom_lists[0]['id'] if custom_lists else 'null' }},
+        showCompletedCustomLists: false,
         allPersonalTasks: [],
         showArchivedDaily: false,
         showArchivedTodos: false,
-        showArchivedShopping: false,
+        showArchivedCustomLists: false,
         confettiEnabled: true,
-        shoppingListEnabled: false,
 
         // Tab state
         activeTab: 'daily',
@@ -946,10 +853,10 @@ function checklist() {
         // Add task modals state
         showAddDailyTaskModal: false,
         showAddTodoModal: false,
-        showAddShoppingModal: false,
+        showAddCustomListItemModal: false,
         showDailyIconPicker: false,
         showTodoIconPicker: false,
-        showShoppingIconPicker: false,
+        showCustomListIconPicker: false,
         showEditTaskModal: false,
         showEditTaskIconPicker: false,
         showDeleteTaskConfirmModal: false,
@@ -958,7 +865,7 @@ function checklist() {
         fitbitConnected: false,
         dailyIconSearch: '',
         todoIconSearch: '',
-        shoppingIconSearch: '',
+        customListIconSearch: '',
         editTaskIconSearch: '',
 
         // New task forms
@@ -979,7 +886,7 @@ function checklist() {
             icon: null,
             due_date: null
         },
-        newShopping: {
+        newCustomListItem: {
             title: '',
             icon: null
         },
@@ -988,6 +895,7 @@ function checklist() {
             title: '',
             icon: null,
             task_type: 'daily',
+            custom_list_id: null,
             due_date: null,
             is_required: true,
             is_active: true,
@@ -1040,8 +948,8 @@ function checklist() {
             const scheduledCount = this.scheduledTasksFiltered.filter(t => !t.checked && t.is_required).length;
             return punchListCount + scheduledCount;
         },
-        get shoppingCount() {
-            return this.shoppingListTasks.filter(t => !t.completed_at).length;
+        get customListCount() {
+            return this.customListTasks.filter(t => !t.completed_at).length;
         },
         get activePunchListTasks() {
             return this.punchListTasks.filter(t => !t.completed_at);
@@ -1049,11 +957,28 @@ function checklist() {
         get completedPunchListTasks() {
             return this.punchListTasks.filter(t => t.completed_at);
         },
-        get pendingShoppingItems() {
-            return this.shoppingListTasks.filter(t => !t.completed_at);
+        get enabledCustomLists() {
+            return this.customLists.filter((list) => list.is_enabled);
         },
-        get purchasedShoppingItems() {
-            return this.shoppingListTasks.filter(t => !!t.completed_at);
+        get selectedCustomList() {
+            if (!this.activeCustomListId) return null;
+            return this.enabledCustomLists.find((list) => list.id === this.activeCustomListId) || null;
+        },
+        get selectedCustomListName() {
+            return this.selectedCustomList?.name || 'List';
+        },
+        get selectedCustomListIcon() {
+            return this.selectedCustomList?.icon || 'view-list-outline';
+        },
+        get currentCustomListItems() {
+            if (!this.activeCustomListId) return [];
+            return this.customListTasks.filter((item) => item.custom_list_id === this.activeCustomListId);
+        },
+        get pendingCustomListItems() {
+            return this.currentCustomListItems.filter((item) => !item.completed_at);
+        },
+        get completedCustomListItems() {
+            return this.currentCustomListItems.filter((item) => !!item.completed_at);
         },
         get archivedDailyTasks() {
             return this.allPersonalTasks.filter((t) => t.task_type === 'daily' && t.is_active === false);
@@ -1063,8 +988,16 @@ function checklist() {
                 (t.task_type === 'punch_list' || t.task_type === 'scheduled') && t.is_active === false
             );
         },
-        get archivedShoppingItems() {
-            return this.allPersonalTasks.filter((t) => t.task_type === 'shopping_list' && t.is_active === false);
+        get archivedCustomListItems() {
+            if (!this.activeCustomListId) return [];
+            return this.allPersonalTasks.filter((t) =>
+                t.task_type === 'custom_list' &&
+                t.custom_list_id === this.activeCustomListId &&
+                t.is_active === false
+            );
+        },
+        getCustomListPendingCount(listId) {
+            return this.customListTasks.filter((item) => item.custom_list_id === listId && !item.completed_at).length;
         },
 
         get formattedDate() {
@@ -1185,7 +1118,7 @@ function checklist() {
         get activePersonalIconSearch() {
             if (this.showDailyIconPicker) return this.dailyIconSearch;
             if (this.showTodoIconPicker) return this.todoIconSearch;
-            if (this.showShoppingIconPicker) return this.shoppingIconSearch;
+            if (this.showCustomListIconPicker) return this.customListIconSearch;
             return '';
         },
 
@@ -1208,11 +1141,29 @@ function checklist() {
 
         // Tab switching
         switchTab(tab) {
-            if (tab === 'shopping_list' && !this.shoppingListEnabled) {
-                return;
-            }
             this.activeTab = tab;
             localStorage.setItem('streaklet_last_tab', tab);
+        },
+
+        switchCustomList(listId) {
+            this.activeCustomListId = listId;
+            localStorage.setItem('streaklet_last_custom_list_id', String(listId));
+        },
+
+        ensureActiveCustomList() {
+            if (this.enabledCustomLists.length === 0) {
+                this.activeCustomListId = null;
+                return;
+            }
+
+            const activeExists = this.enabledCustomLists.some((list) => list.id === this.activeCustomListId);
+            if (activeExists) {
+                return;
+            }
+
+            const savedListId = Number.parseInt(localStorage.getItem('streaklet_last_custom_list_id') || '', 10);
+            const saved = this.enabledCustomLists.find((list) => list.id === savedListId);
+            this.activeCustomListId = saved ? saved.id : this.enabledCustomLists[0].id;
         },
 
         // Initialize with SSR data (no API calls needed)
@@ -1222,8 +1173,11 @@ function checklist() {
             await Promise.all([
                 this.loadFitbitStatus(),
                 this.loadProfilePreferences(),
+                this.loadCustomLists(),
+                this.loadCustomListTasks(),
                 this.loadAllPersonalTasks()
             ]);
+            this.ensureActiveCustomList();
             this.updateCelebration();
 
             // Restore last active tab
@@ -1236,11 +1190,13 @@ function checklist() {
                 return;
             }
 
-            if (lastTab && ['daily', 'punch_list', 'shopping_list'].includes(lastTab)) {
-                if (lastTab === 'shopping_list' && !this.shoppingListEnabled) {
-                    this.activeTab = 'daily';
-                    return;
-                }
+            if (lastTab === 'custom_lists') {
+                this.activeTab = 'daily';
+                localStorage.setItem('streaklet_last_tab', 'daily');
+                return;
+            }
+
+            if (lastTab && ['daily', 'punch_list'].includes(lastTab)) {
                 this.activeTab = lastTab;
             }
         },
@@ -1268,19 +1224,6 @@ function checklist() {
             }
         },
 
-        getLegacyShoppingListPreferenceKey() {
-            let profileId = null;
-            if (window.Alpine) {
-                try {
-                    profileId = Alpine.store('profile')?.id;
-                } catch (e) {
-                    profileId = null;
-                }
-            }
-            profileId = profileId || this.getCookie('profile_id') || 'default';
-            return `streaklet_show_shopping_list_${profileId}`;
-        },
-
         getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
@@ -1292,23 +1235,17 @@ function checklist() {
             try {
                 const preferences = await api.profilePreferences.get();
                 this.confettiEnabled = preferences.confetti_enabled;
-                this.shoppingListEnabled = preferences.show_shopping_list;
             } catch (error) {
                 console.error('Error loading profile preferences:', error);
             }
 
             await this.migrateLegacyPreferencesIfNeeded();
-
-            if (!this.shoppingListEnabled && this.activeTab === 'shopping_list') {
-                this.switchTab('daily');
-            }
         },
 
         async migrateLegacyPreferencesIfNeeded() {
             const legacyConfetti = localStorage.getItem('streaklet_confetti_enabled');
-            const legacyShopping = localStorage.getItem(this.getLegacyShoppingListPreferenceKey());
 
-            if (legacyConfetti === null && legacyShopping === null) {
+            if (legacyConfetti === null) {
                 return;
             }
 
@@ -1316,26 +1253,30 @@ function checklist() {
             if (legacyConfetti !== null) {
                 payload.confetti_enabled = legacyConfetti === 'true';
             }
-            if (legacyShopping !== null) {
-                payload.show_shopping_list = legacyShopping === 'true';
-            }
 
             try {
                 const preferences = await api.profilePreferences.update(payload);
                 this.confettiEnabled = preferences.confetti_enabled;
-                this.shoppingListEnabled = preferences.show_shopping_list;
                 localStorage.removeItem('streaklet_confetti_enabled');
-                localStorage.removeItem(this.getLegacyShoppingListPreferenceKey());
             } catch (error) {
                 console.error('Error migrating legacy preferences:', error);
             }
         },
 
-        async loadShoppingListTasks() {
+        async loadCustomLists() {
             try {
-                this.shoppingListTasks = await api.shoppingList.list(true);
+                this.customLists = await api.customLists.list(false);
+                this.ensureActiveCustomList();
             } catch (error) {
-                console.error('Error loading shopping list items:', error);
+                console.error('Error loading custom lists:', error);
+            }
+        },
+
+        async loadCustomListTasks() {
+            try {
+                this.customListTasks = await api.customLists.listItems(true, false);
+            } catch (error) {
+                console.error('Error loading custom list items:', error);
             }
         },
 
@@ -1351,9 +1292,11 @@ function checklist() {
             await Promise.all([
                 this.loadDailyTasks(),
                 this.loadPunchListTasks(),
-                this.loadShoppingListTasks(),
+                this.loadCustomLists(),
+                this.loadCustomListTasks(),
                 this.loadAllPersonalTasks()
             ]);
+            this.ensureActiveCustomList();
         },
 
         initializeBackfillMonthFromToday() {
@@ -1494,13 +1437,13 @@ function checklist() {
         taskTypeLabel(taskType) {
             if (taskType === 'scheduled') return 'Scheduled';
             if (taskType === 'punch_list') return 'To-Do';
-            if (taskType === 'shopping_list') return 'Shopping';
+            if (taskType === 'custom_list') return 'List Item';
             return 'Daily';
         },
 
         taskEntityNoun(taskType) {
             if (taskType === 'punch_list') return 'To-Do';
-            if (taskType === 'shopping_list') return 'Shopping Item';
+            if (taskType === 'custom_list') return 'Item';
             return 'Task';
         },
 
@@ -1622,16 +1565,17 @@ function checklist() {
             }
         },
 
-        async toggleShoppingItem(item) {
+        async toggleCustomListItem(item) {
+            if (!item || !item.custom_list_id) return;
             try {
                 if (item.completed_at) {
-                    await api.shoppingList.uncomplete(item.id);
+                    await api.customLists.uncompleteItem(item.custom_list_id, item.id);
                 } else {
-                    await api.shoppingList.complete(item.id);
+                    await api.customLists.completeItem(item.custom_list_id, item.id);
                 }
-                await this.loadShoppingListTasks();
+                await this.loadCustomListTasks();
             } catch (error) {
-                console.error('Error toggling shopping item:', error);
+                console.error('Error toggling custom list item:', error);
             }
         },
 
@@ -1668,13 +1612,14 @@ function checklist() {
             this.todoIconSearch = '';
         },
 
-        closeAddShoppingModal() {
-            this.showAddShoppingModal = false;
-            this.newShopping = {
+        closeAddCustomListItemModal() {
+            this.showAddCustomListItemModal = false;
+            this.showCustomListIconPicker = false;
+            this.newCustomListItem = {
                 title: '',
                 icon: null
             };
-            this.shoppingIconSearch = '';
+            this.customListIconSearch = '';
         },
 
         selectDailyIcon(icon) {
@@ -1689,10 +1634,10 @@ function checklist() {
             this.todoIconSearch = '';
         },
 
-        selectShoppingIcon(icon) {
-            this.newShopping.icon = icon;
-            this.showShoppingIconPicker = false;
-            this.shoppingIconSearch = '';
+        selectCustomListIcon(icon) {
+            this.newCustomListItem.icon = icon;
+            this.showCustomListIconPicker = false;
+            this.customListIconSearch = '';
         },
 
         onDailyTaskTypeChange() {
@@ -1786,6 +1731,7 @@ function checklist() {
                 title: task.title || '',
                 icon: task.icon || null,
                 task_type: task.task_type || 'daily',
+                custom_list_id: task.custom_list_id || null,
                 due_date: task.due_date || null,
                 is_required: task.is_required !== false,
                 is_active: task.is_active !== false,
@@ -1806,6 +1752,7 @@ function checklist() {
                 title: '',
                 icon: null,
                 task_type: 'daily',
+                custom_list_id: null,
                 due_date: null,
                 is_required: true,
                 is_active: true,
@@ -1837,7 +1784,7 @@ function checklist() {
 
                 if (taskType === 'punch_list') {
                     payload.due_date = this.editingTaskForm.due_date || null;
-                } else if (taskType !== 'shopping_list') {
+                } else if (taskType !== 'custom_list') {
                     payload.is_required = this.editingTaskForm.is_required;
                 }
 
@@ -1860,8 +1807,11 @@ function checklist() {
             try {
                 if (task.task_type === 'punch_list') {
                     await api.punchList.delete(task.id);
-                } else if (task.task_type === 'shopping_list') {
-                    await api.shoppingList.delete(task.id);
+                } else if (task.task_type === 'custom_list') {
+                    if (!task.custom_list_id) {
+                        throw new Error('Missing custom list id');
+                    }
+                    await api.customLists.deleteItem(task.custom_list_id, task.id);
                 } else {
                     await api.tasks.delete(task.id);
                 }
@@ -1883,7 +1833,8 @@ function checklist() {
             this.pendingDeleteTask = {
                 id: this.editingTaskForm.id,
                 title: this.editingTaskForm.title,
-                task_type: this.editingTaskForm.task_type
+                task_type: this.editingTaskForm.task_type,
+                custom_list_id: this.editingTaskForm.custom_list_id
             };
             this.showDeleteTaskConfirmModal = true;
         },
@@ -1990,21 +1941,25 @@ function checklist() {
             }
         },
 
-        async submitShoppingItem() {
-            if (!this.newShopping.title.trim()) return;
+        async submitCustomListItem() {
+            if (!this.activeCustomListId) {
+                toast.warning('Select a custom list first');
+                return;
+            }
+            if (!this.newCustomListItem.title.trim()) return;
 
             try {
-                await api.shoppingList.create({
-                    title: this.newShopping.title,
-                    icon: this.newShopping.icon
+                await api.customLists.createItem(this.activeCustomListId, {
+                    title: this.newCustomListItem.title,
+                    icon: this.newCustomListItem.icon
                 });
 
-                this.closeAddShoppingModal();
-                await Promise.all([this.loadShoppingListTasks(), this.loadAllPersonalTasks()]);
-                toast.success('Shopping item created successfully');
+                this.closeAddCustomListItemModal();
+                await Promise.all([this.loadCustomListTasks(), this.loadAllPersonalTasks()]);
+                toast.success('List item created successfully');
             } catch (error) {
-                console.error('Error creating shopping item:', error);
-                toast.error('Failed to create shopping item');
+                console.error('Error creating custom list item:', error);
+                toast.error('Failed to create list item');
             }
         },
 

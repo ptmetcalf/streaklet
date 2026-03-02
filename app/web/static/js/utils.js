@@ -260,6 +260,8 @@ window.formatMetricValue = function(value, metricType) {
  * @returns {string} Human-readable metric name
  */
 window.formatMetricName = function(key) {
+    if (!key) return '';
+
     const names = {
         'steps': 'Steps',
         'sleep_minutes': 'Sleep Duration',
@@ -355,24 +357,26 @@ window.formatFrequency = function(frequency) {
 
 /**
  * Get task type label for display
- * @param {string} taskType - Task type (daily, punch_list, shopping_list, scheduled)
+ * @param {string} taskType - Task type (daily, punch_list, shopping_list, custom_list, scheduled)
  * @returns {string} Human-readable label
  */
 window.getTaskTypeLabel = function(taskType) {
     if (taskType === 'punch_list') return 'Todo';
     if (taskType === 'shopping_list') return 'Shopping';
+    if (taskType === 'custom_list') return 'List Item';
     if (taskType === 'scheduled') return 'Scheduled';
     return 'Daily';
 };
 
 /**
  * Get task type badge class
- * @param {string} taskType - Task type (daily, punch_list, shopping_list, scheduled)
+ * @param {string} taskType - Task type (daily, punch_list, shopping_list, custom_list, scheduled)
  * @returns {string} CSS class name
  */
 window.getTaskTypeBadgeClass = function(taskType) {
     if (taskType === 'punch_list') return 'badge-todo';
     if (taskType === 'shopping_list') return 'badge-shopping';
+    if (taskType === 'custom_list') return 'badge-shopping';
     if (taskType === 'scheduled') return 'badge-scheduled';
     return 'badge-daily';
 };

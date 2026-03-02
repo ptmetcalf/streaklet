@@ -18,6 +18,14 @@ def test_settings_route(client: TestClient):
     assert response.headers["content-type"].startswith("text/html")
 
 
+def test_lists_route(client: TestClient):
+    """Test the custom lists page route renders successfully."""
+    response = client.get("/lists")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/html")
+
+
 def test_fitbit_route(client: TestClient):
     """Test the Fitbit metrics page route renders successfully."""
     response = client.get("/fitbit")

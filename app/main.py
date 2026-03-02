@@ -20,6 +20,7 @@ from app.api import (
     routes_scheduled,
     routes_household,
     routes_shopping_list,
+    routes_custom_lists,
 )
 from app.services import tasks as task_service, profiles as profile_service
 
@@ -73,6 +74,7 @@ app.include_router(routes_punch_list.router)
 app.include_router(routes_scheduled.router)
 app.include_router(routes_household.router)
 app.include_router(routes_shopping_list.router)
+app.include_router(routes_custom_lists.router)
 
 
 @app.get("/sw.js")
@@ -184,27 +186,30 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
         }
         punch_list_tasks.append(task_dict)
 
-    # Get shopping list items
-    shopping_list_tasks_query = db.query(Task).filter(
+    # Get enabled custom lists + all active custom list items
+    from app.services import custom_lists as custom_list_service
+    custom_lists = custom_list_service.get_custom_lists(db, profile_id, include_disabled=False)
+    custom_list_tasks_query = db.query(Task).filter(
         and_(
-            Task.task_type == 'shopping_list',
+            Task.task_type == 'custom_list',
             Task.user_id == profile_id,
             Task.is_active.is_(True)
         )
     ).order_by(Task.completed_at.isnot(None), Task.created_at.desc()).all()
 
-    shopping_list_tasks = []
-    for task in shopping_list_tasks_query:
+    custom_list_tasks = []
+    for task in custom_list_tasks_query:
         task_dict = {
             "id": task.id,
             "title": task.title,
             "icon": task.icon,
             "task_type": task.task_type,
+            "custom_list_id": task.custom_list_id,
             "is_active": task.is_active,
             "sort_order": task.sort_order,
             "completed_at": task.completed_at.isoformat() if task.completed_at else None,
         }
-        shopping_list_tasks.append(task_dict)
+        custom_list_tasks.append(task_dict)
 
     # Get streak info
     streak_info = streak_service.get_streak_info(db, profile_id)
@@ -221,7 +226,15 @@ async def home(request: Request, db: Session = Depends(get_db), profile_id: int 
         "request": request,
         "daily_tasks": daily_tasks,
         "punch_list_tasks": punch_list_tasks,
-        "shopping_list_tasks": shopping_list_tasks,
+        "custom_lists": [{
+            "id": custom_list.id,
+            "name": custom_list.name,
+            "icon": custom_list.icon,
+            "template_key": custom_list.template_key,
+            "is_enabled": custom_list.is_enabled,
+            "sort_order": custom_list.sort_order,
+        } for custom_list in custom_lists],
+        "custom_list_tasks": custom_list_tasks,
         "streak": streak_json,
         "date": today.isoformat(),
         "cache_bust": CACHE_BUST
@@ -234,6 +247,54 @@ async def settings(request: Request):
     return templates.TemplateResponse(request, "settings.html", {
         "request": request,
         "cache_bust": CACHE_BUST
+    })
+
+
+@app.get("/lists", response_class=HTMLResponse)
+async def custom_lists_page(
+    request: Request,
+    db: Session = Depends(get_db),
+    profile_id: int = Depends(get_profile_id)
+):
+    """Custom lists page with per-list tabs."""
+    from app.models.task import Task
+    from sqlalchemy import and_
+    from app.services import custom_lists as custom_list_service
+
+    custom_lists = custom_list_service.get_custom_lists(db, profile_id, include_disabled=False)
+    custom_list_tasks_query = db.query(Task).filter(
+        and_(
+            Task.task_type == 'custom_list',
+            Task.user_id == profile_id,
+            Task.is_active.is_(True)
+        )
+    ).order_by(Task.completed_at.isnot(None), Task.created_at.desc()).all()
+
+    custom_list_tasks = []
+    for task in custom_list_tasks_query:
+        custom_list_tasks.append({
+            "id": task.id,
+            "title": task.title,
+            "icon": task.icon,
+            "task_type": task.task_type,
+            "custom_list_id": task.custom_list_id,
+            "is_active": task.is_active,
+            "sort_order": task.sort_order,
+            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+        })
+
+    return templates.TemplateResponse(request, "lists.html", {
+        "request": request,
+        "custom_lists": [{
+            "id": custom_list.id,
+            "name": custom_list.name,
+            "icon": custom_list.icon,
+            "template_key": custom_list.template_key,
+            "is_enabled": custom_list.is_enabled,
+            "sort_order": custom_list.sort_order,
+        } for custom_list in custom_lists],
+        "custom_list_tasks": custom_list_tasks,
+        "cache_bust": CACHE_BUST,
     })
 
 

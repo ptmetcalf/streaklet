@@ -49,8 +49,8 @@
                             <span x-show="!isCompleting(task.id)">✓ Mark Complete</span>
                             <span x-show="isCompleting(task.id)">⏳</span>
                         </button>
-                        <button @click="openEditHouseholdTaskModal(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
                         <button @click="showHistory(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="🕘">History</button>
+                        <button @click="openEditHouseholdTaskModal(task)" class="btn-task-action btn-task-secondary" data-mobile-icon="✎">Edit</button>
                     </div>
                 </div>
             </template>

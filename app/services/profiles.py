@@ -43,8 +43,69 @@ def ensure_profile_preferences_columns(db: Session) -> None:
         ))
         altered = True
 
+    task_columns = {
+        row[1]
+        for row in db.execute(text("PRAGMA table_info(tasks)")).fetchall()
+    }
+    if "custom_list_id" not in task_columns:
+        db.execute(text(
+            "ALTER TABLE tasks "
+            "ADD COLUMN custom_list_id INTEGER"
+        ))
+        altered = True
+
+    custom_lists_table_exists = db.execute(text(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='custom_lists'"
+    )).fetchone()
+    if not custom_lists_table_exists:
+        db.execute(text(
+            "CREATE TABLE custom_lists ("
+            "id INTEGER PRIMARY KEY, "
+            "user_id INTEGER NOT NULL, "
+            "name VARCHAR NOT NULL, "
+            "icon VARCHAR, "
+            "template_key VARCHAR, "
+            "is_enabled BOOLEAN NOT NULL DEFAULT 1, "
+            "sort_order INTEGER NOT NULL DEFAULT 0, "
+            "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+            "updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+            "FOREIGN KEY(user_id) REFERENCES profiles (id)"
+            ")"
+        ))
+        db.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_custom_lists_user_name "
+            "ON custom_lists (user_id, name)"
+        ))
+        db.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_custom_lists_user_template_key "
+            "ON custom_lists (user_id, template_key)"
+        ))
+        db.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_custom_lists_user_id ON custom_lists (user_id)"
+        ))
+        altered = True
+
     if altered:
         db.commit()
+
+    from app.services import custom_lists as custom_list_service
+
+    profile_ids = [row[0] for row in db.execute(text("SELECT id FROM profiles")).fetchall()]
+    for profile_id in profile_ids:
+        custom_list_service.ensure_default_custom_lists_for_profile(db, profile_id)
+
+    db.execute(text(
+        "UPDATE tasks "
+        "SET task_type='custom_list', "
+        "    custom_list_id=("
+        "        SELECT id FROM custom_lists "
+        "        WHERE user_id = tasks.user_id AND template_key = 'shopping' "
+        "        LIMIT 1"
+        "    ), "
+        "    is_required=0 "
+        "WHERE task_type='shopping_list'"
+    ))
+    db.commit()
 
 
 def seed_default_profile(db: Session) -> None:
@@ -57,6 +118,9 @@ def seed_default_profile(db: Session) -> None:
         db.add(profile)
         db.commit()
 
+    from app.services import custom_lists as custom_list_service
+    custom_list_service.ensure_default_custom_lists_for_profile(db, profile_id=1)
+
 
 def seed_tasks_for_profile(db: Session, profile_id: int) -> None:
     """Create default tasks for a new profile."""
@@ -64,6 +128,9 @@ def seed_tasks_for_profile(db: Session, profile_id: int) -> None:
         task = Task(**task_data, user_id=profile_id)
         db.add(task)
     db.commit()
+
+    from app.services import custom_lists as custom_list_service
+    custom_list_service.ensure_default_custom_lists_for_profile(db, profile_id)
 
 
 def get_profiles(db: Session) -> List[Profile]:
