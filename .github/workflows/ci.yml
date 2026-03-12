@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [develop]
     paths-ignore:
       - 'docs/**'
       - 'mkdocs.yml'
@@ -15,6 +15,10 @@ on:
       - 'mkdocs.yml'
       - '**.md'
       - '.github/workflows/docs.yml'
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   lint:
