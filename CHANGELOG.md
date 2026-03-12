@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/ptmetcalf/streaklet/compare/v2.2.0...v2.2.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* unify household status and shared UI state ([b28bead](https://github.com/ptmetcalf/streaklet/commit/b28bead6f3ef171e71b6da5afc667d52e7a20de4))
+
 ## [2.2.0](https://github.com/ptmetcalf/streaklet/compare/v2.1.1...v2.2.0) (2026-03-02)
 
 
