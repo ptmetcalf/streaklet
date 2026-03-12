@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from datetime import date
 from app.core.db import get_db
 from app.core.profile_context import get_profile_id
@@ -132,16 +132,34 @@ async def get_day_info(
     if check_date > today:
         raise HTTPException(status_code=400, detail="Date cannot be in the future")
 
-    # For past dates: only show tasks with existing check records (historical snapshot).
-    # Don't call ensure_checks_exist_for_date, which would retroactively add new tasks
-    # to old days whenever the task list changes.
+    # For past dates: don't create missing checks, but do return tasks that were
+    # applicable on that date so the UI can repair missed days. Existing checks are
+    # also included to preserve historical data for tasks that may now be inactive.
     checks_for_date = check_service.get_checks_for_date(db, check_date, profile_id)
     task_ids_with_checks = [c.task_id for c in checks_for_date]
     checks_map = {c.task_id: c for c in checks_for_date}
 
     active_tasks = (
         db.query(TaskModel)
-        .filter(TaskModel.id.in_(task_ids_with_checks), TaskModel.user_id == profile_id)
+        .filter(
+            TaskModel.user_id == profile_id,
+            or_(
+                TaskModel.id.in_(task_ids_with_checks),
+                and_(
+                    TaskModel.is_active.is_(True),
+                    or_(
+                        TaskModel.active_since <= check_date,
+                        TaskModel.active_since.is_(None)
+                    ),
+                    TaskModel.task_type == 'daily',
+                ),
+                and_(
+                    TaskModel.is_active.is_(True),
+                    TaskModel.task_type == 'scheduled',
+                    TaskModel.next_occurrence_date == check_date,
+                ),
+            ),
+        )
         .order_by(TaskModel.sort_order)
         .all()
     )

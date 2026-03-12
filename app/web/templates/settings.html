@@ -425,7 +425,7 @@ function settings() {
                 await this.loadFitbitStatus();
 
                 // Signal other pages (e.g., Fitbit dashboard) to refresh data.
-                localStorage.setItem('streaklet_fitbit_sync_token', String(Date.now()));
+                window.streakletStorage.set(window.streakletStorageKeys.fitbitSyncToken, Date.now());
 
                 const totalMetrics = result?.details?.total_metrics;
                 const successDays = result?.details?.success_days;
@@ -452,21 +452,11 @@ function settings() {
         },
 
         async migrateLegacyPreferencesIfNeeded() {
-            const legacyConfetti = localStorage.getItem('streaklet_confetti_enabled');
-
-            if (legacyConfetti === null) {
-                return;
-            }
-
-            const payload = {};
-            if (legacyConfetti !== null) {
-                payload.confetti_enabled = legacyConfetti === 'true';
-            }
-
             try {
-                const preferences = await api.profilePreferences.update(payload);
-                this.confettiEnabled = preferences.confetti_enabled;
-                localStorage.removeItem('streaklet_confetti_enabled');
+                await window.migrateLegacyConfettiPreference(
+                    (payload) => api.profilePreferences.update(payload),
+                    (value) => { this.confettiEnabled = value; }
+                );
             } catch (error) {
                 console.error('Error migrating legacy preferences:', error);
             }

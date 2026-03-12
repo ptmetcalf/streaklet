@@ -106,5 +106,9 @@ class HouseholdTaskWithStatus(HouseholdTaskResponse):
     days_overdue: int = 0
     is_coming_soon: bool = False
     days_until_due: Optional[int] = None
+    status_text: str = ''
+    status_class: str = 'status-later'
+    priority_rank: int = 0
+    sort_days_until_due: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)

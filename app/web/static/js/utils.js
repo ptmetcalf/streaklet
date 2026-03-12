@@ -144,6 +144,91 @@ window.parseDateOnly = function(dateStr) {
 };
 
 // ============================================================================
+// SHARED STATE HELPERS
+// ============================================================================
+
+window.streakletStorageKeys = {
+    profileId: 'streaklet_profile_id',
+    profileName: 'streaklet_profile_name',
+    activeCustomListId: 'streaklet_active_custom_list_id',
+    legacyTodayCustomListId: 'streaklet_last_custom_list_id',
+    fitbitSyncToken: 'streaklet_fitbit_sync_token',
+    legacyConfettiEnabled: 'streaklet_confetti_enabled',
+};
+
+window.streakletCookies = {
+    get(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop().split(';').shift();
+        }
+        return null;
+    },
+
+    set(name, value, maxAge = 31536000) {
+        document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    },
+
+    remove(name) {
+        document.cookie = `${name}=; path=/; max-age=0`;
+    },
+};
+
+window.streakletStorage = {
+    get(key) {
+        return localStorage.getItem(key);
+    },
+
+    set(key, value) {
+        localStorage.setItem(key, String(value));
+    },
+
+    remove(key) {
+        localStorage.removeItem(key);
+    },
+
+    getNumber(key, legacyKeys = []) {
+        const keys = [key, ...legacyKeys];
+        for (const storageKey of keys) {
+            const rawValue = localStorage.getItem(storageKey);
+            if (rawValue === null) continue;
+
+            if (storageKey !== key) {
+                localStorage.setItem(key, rawValue);
+                localStorage.removeItem(storageKey);
+            }
+
+            const parsed = Number.parseInt(rawValue, 10);
+            return Number.isNaN(parsed) ? null : parsed;
+        }
+        return null;
+    },
+
+    getBoolean(key) {
+        const rawValue = localStorage.getItem(key);
+        if (rawValue === null) return null;
+        return rawValue === 'true';
+    },
+};
+
+window.migrateLegacyConfettiPreference = async function(updatePreferences, applyPreference) {
+    const legacyKey = window.streakletStorageKeys.legacyConfettiEnabled;
+    const legacyValue = window.streakletStorage.getBoolean(legacyKey);
+
+    if (legacyValue === null) {
+        return null;
+    }
+
+    const preferences = await updatePreferences({ confetti_enabled: legacyValue });
+    if (typeof applyPreference === 'function') {
+        applyPreference(preferences.confetti_enabled);
+    }
+    window.streakletStorage.remove(legacyKey);
+    return preferences;
+};
+
+// ============================================================================
 // METRIC & NUMBER FORMATTERS
 // ============================================================================
 
@@ -768,6 +853,7 @@ if (typeof console !== 'undefined' && console.info) {
     console.info('%c✨ Streaklet Utils Loaded', 'color: #52c41a; font-weight: bold;');
     console.info('Available functions:', {
         'Date/Time': ['formatDueDate', 'formatCompletedDate', 'formatDateDisplay', 'formatSyncTime', 'formatDateLocal', 'parseDateOnly', 'getTodayStr'],
+        'State': ['streakletCookies.get/set/remove', 'streakletStorage.get/set/remove/getNumber/getBoolean', 'migrateLegacyConfettiPreference'],
         'Metrics': ['formatNumber', 'formatDecimal', 'formatSleepHours', 'formatFitbitProgress', 'formatMetricValue', 'formatMetricName', 'formatTrend'],
         'Tasks': ['formatRecurrence', 'formatFrequency', 'getTaskTypeLabel', 'getTaskTypeBadgeClass'],
         'Validation': ['isTaskOverdue', 'getStreakBadgeClass'],

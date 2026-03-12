@@ -39,50 +39,33 @@
     <script>
         // Alpine.js profile store - manages profile selection via localStorage
         document.addEventListener('alpine:init', () => {
-            // Helper functions for cookie management
-            function getCookie(name) {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-                return null;
-            }
-
-            function setCookie(name, value, maxAge = 31536000) {
-                // maxAge default: 1 year in seconds
-                document.cookie = `${name}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-            }
-
-            function deleteCookie(name) {
-                document.cookie = `${name}=; path=/; max-age=0`;
-            }
-
             // Migrate from localStorage to cookies (one-time migration)
-            const localStorageProfileId = localStorage.getItem('streaklet_profile_id');
-            const localStorageProfileName = localStorage.getItem('streaklet_profile_name');
-            if (localStorageProfileId && !getCookie('profile_id')) {
-                setCookie('profile_id', localStorageProfileId);
-                setCookie('profile_name', localStorageProfileName || '');
+            const localStorageProfileId = window.streakletStorage.get(window.streakletStorageKeys.profileId);
+            const localStorageProfileName = window.streakletStorage.get(window.streakletStorageKeys.profileName);
+            if (localStorageProfileId && !window.streakletCookies.get('profile_id')) {
+                window.streakletCookies.set('profile_id', localStorageProfileId);
+                window.streakletCookies.set('profile_name', localStorageProfileName || '');
                 // Clean up localStorage after migration
-                localStorage.removeItem('streaklet_profile_id');
-                localStorage.removeItem('streaklet_profile_name');
+                window.streakletStorage.remove(window.streakletStorageKeys.profileId);
+                window.streakletStorage.remove(window.streakletStorageKeys.profileName);
             }
 
             Alpine.store('profile', {
-                id: parseInt(getCookie('profile_id')) || null,
-                name: getCookie('profile_name') || null,
+                id: parseInt(window.streakletCookies.get('profile_id')) || null,
+                name: window.streakletCookies.get('profile_name') || null,
 
                 setProfile(id, name) {
                     this.id = id;
                     this.name = name;
-                    setCookie('profile_id', id);
-                    setCookie('profile_name', name || '');
+                    window.streakletCookies.set('profile_id', id);
+                    window.streakletCookies.set('profile_name', name || '');
                 },
 
                 clearProfile() {
                     this.id = null;
                     this.name = null;
-                    deleteCookie('profile_id');
-                    deleteCookie('profile_name');
+                    window.streakletCookies.remove('profile_id');
+                    window.streakletCookies.remove('profile_name');
                 }
             });
         });
@@ -98,19 +81,7 @@
         // Check if profile is selected AND exists on page load (except on /profiles page)
         document.addEventListener('DOMContentLoaded', async () => {
             const currentPath = window.location.pathname;
-
-            function getCookie(name) {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-                return null;
-            }
-
-            function deleteCookie(name) {
-                document.cookie = `${name}=; path=/; max-age=0`;
-            }
-
-            const profileId = getCookie('profile_id');
+            const profileId = window.streakletCookies.get('profile_id');
 
             // If no profile selected, redirect to profile selection
             if (currentPath !== '/profiles' && !profileId) {
@@ -126,8 +97,8 @@
                     if (error && error.status === 404) {
                         // Profile doesn't exist anymore - clear and redirect
                         console.warn(`Profile ${profileId} not found, redirecting to profile selection`);
-                        deleteCookie('profile_id');
-                        deleteCookie('profile_name');
+                        window.streakletCookies.remove('profile_id');
+                        window.streakletCookies.remove('profile_name');
                         window.location.href = '/profiles';
                     } else {
                         console.error('Error validating profile:', error);
@@ -236,14 +207,7 @@
     {% block content %}{% endblock %}
 
     <nav class="nav" x-data="{ fitbitConnected: false, customListsEnabled: false }" x-init="async () => {
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return null;
-        }
-
-        const profileId = getCookie('profile_id');
+        const profileId = window.streakletCookies.get('profile_id');
         if (profileId) {
             try {
                 const data = await api.fitbit.connection();
@@ -256,7 +220,7 @@
             } catch (e) {}
         }
     }">
-        <a href="/" class="nav-item {{ 'active' if request.url.path == '/' else '' }}" title="Today's Checklist" onclick="localStorage.removeItem('streaklet_last_tab')">
+        <a href="/" class="nav-item {{ 'active' if request.url.path == '/' else '' }}" title="Today's Checklist">
             <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M9 11l3 3L22 4"></path>
                 <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>

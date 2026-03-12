@@ -616,7 +616,7 @@ function fitbitMetrics() {
                 await this.loadInsightsHubData();
             }
 
-            this.lastFitbitSyncToken = localStorage.getItem('streaklet_fitbit_sync_token');
+            this.lastFitbitSyncToken = window.streakletStorage.get(window.streakletStorageKeys.fitbitSyncToken);
             window.addEventListener('focus', () => this.checkForSyncRefresh());
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) {
@@ -626,7 +626,7 @@ function fitbitMetrics() {
         },
 
         async checkForSyncRefresh() {
-            const token = localStorage.getItem('streaklet_fitbit_sync_token');
+            const token = window.streakletStorage.get(window.streakletStorageKeys.fitbitSyncToken);
             if (!token || token === this.lastFitbitSyncToken) return;
 
             this.lastFitbitSyncToken = token;

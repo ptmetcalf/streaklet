@@ -430,7 +430,10 @@ function listsPage() {
             const activeExists = this.enabledCustomLists.some((list) => list.id === this.activeCustomListId);
             if (activeExists) return;
 
-            const savedListId = Number.parseInt(localStorage.getItem('streaklet_active_custom_list_id') || '', 10);
+            const savedListId = window.streakletStorage.getNumber(
+                window.streakletStorageKeys.activeCustomListId,
+                [window.streakletStorageKeys.legacyTodayCustomListId]
+            );
             const saved = this.enabledCustomLists.find((list) => list.id === savedListId);
             this.activeCustomListId = saved ? saved.id : this.enabledCustomLists[0].id;
         },
@@ -438,7 +441,7 @@ function listsPage() {
             this.activeCustomListId = listId;
             this.showCompleted = false;
             this.showArchived = false;
-            localStorage.setItem('streaklet_active_custom_list_id', String(listId));
+            window.streakletStorage.set(window.streakletStorageKeys.activeCustomListId, listId);
         },
         async loadCustomLists() {
             try {

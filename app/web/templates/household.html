@@ -36,9 +36,9 @@
                     <p class="task-description" x-show="task.description" x-text="task.description"></p>
                     <div class="task-card-metadata">
                         <span class="task-badge badge-frequency" :class="task.frequency"
-                              x-text="task.frequency === 'todo' ? 'To-Do' : formatFrequency(task.frequency)"></span>
-                        <span class="task-badge due-status-tag" :class="getStatusClass(task)"
-                              x-text="formatNextDue(task)"></span>
+                              x-text="formatFrequency(task.frequency)"></span>
+                        <span class="task-badge due-status-tag" :class="task.status_class"
+                              x-text="task.status_text"></span>
                         <span class="completion-info" x-show="task.last_completed_by_profile_name"
                               x-text="`last done by ${task.last_completed_by_profile_name}`"></span>
                     </div>
@@ -76,7 +76,7 @@
                     </div>
                     <div class="task-card-metadata">
                         <span class="task-badge badge-frequency" :class="task.frequency"
-                              x-text="task.frequency === 'todo' ? 'To-Do' : formatFrequency(task.frequency)"></span>
+                              x-text="formatFrequency(task.frequency)"></span>
                         <span class="task-badge badge-required">Archived</span>
                     </div>
                     <div class="task-card-actions">
@@ -447,7 +447,7 @@ function householdMaintenance() {
             this.prioritizedTasks = activeTasks
                 .filter(t => !recentIds.has(t.id))
                 .sort((a, b) => {
-                    const priorityDiff = this.getPriorityRank(a) - this.getPriorityRank(b);
+                    const priorityDiff = (a.priority_rank ?? Number.POSITIVE_INFINITY) - (b.priority_rank ?? Number.POSITIVE_INFINITY);
                     if (priorityDiff !== 0) return priorityDiff;
 
                     const dueDiff = this.getSortDaysUntilDue(a) - this.getSortDaysUntilDue(b);
@@ -468,7 +468,7 @@ function householdMaintenance() {
         },
 
         get hasVisibleTasks() {
-            return this.prioritizedTasks.length > 0 || this.archivedTasks.length > 0;
+            return this.prioritizedTasks.length > 0 || this.recentlyCompleted.length > 0 || this.archivedTasks.length > 0;
         },
 
         get householdHistoryStats() {
@@ -519,49 +519,11 @@ function householdMaintenance() {
             };
         },
 
-        formatNextDue(task) {
-            if (task.frequency === 'todo') {
-                if (task.due_date) return formatDueDate(task.due_date);
-                return 'No due date';
-            }
-            if (task.is_overdue) {
-                return `${task.days_overdue} day${task.days_overdue !== 1 ? 's' : ''} overdue`;
-            }
-            if (task.is_due || task.days_until_due === 0) return 'Due today';
-            if (task.days_until_due === 1) return 'Due tomorrow';
-            if (task.days_until_due !== null && task.days_until_due > 0) {
-                return `Due in ${task.days_until_due} day${task.days_until_due !== 1 ? 's' : ''}`;
-            }
-            if (task.next_due_date) {
-                const d = new Date(task.next_due_date + 'T00:00:00');
-                return `Due ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-            }
-            return '';
-        },
-
-        getPriorityRank(task) {
-            if (task.is_overdue) return 0;
-            if (task.is_due || task.days_until_due === 0) return 1;
-            if (task.is_coming_soon || task.days_until_due === 1) return 2;
-            if (task.frequency === 'todo' && !task.due_date) return 4;
-            return 3;
-        },
-
         getSortDaysUntilDue(task) {
-            if (task.is_overdue) {
-                return -(task.days_overdue || 0);
-            }
-            if (task.days_until_due === null || task.days_until_due === undefined) {
+            if (task.sort_days_until_due === null || task.sort_days_until_due === undefined) {
                 return Number.POSITIVE_INFINITY;
             }
-            return task.days_until_due;
-        },
-
-        getStatusClass(task) {
-            if (task.is_overdue) return 'status-overdue';
-            if (task.is_due || task.days_until_due === 0) return 'status-due';
-            if (task.is_coming_soon || task.days_until_due === 1) return 'status-soon';
-            return 'status-later';
+            return task.sort_days_until_due;
         },
 
         // All formatters now use global utils.js functions:
@@ -582,13 +544,7 @@ function householdMaintenance() {
                 await api.household.complete(task.id);
 
                 // Show success toast
-                function getCookie(name) {
-                    const value = `; ${document.cookie}`;
-                    const parts = value.split(`; ${name}=`);
-                    if (parts.length === 2) return parts.pop().split(';').shift();
-                    return null;
-                }
-                const profileName = getCookie('profile_name') || 'You';
+                const profileName = window.streakletCookies.get('profile_name') || 'You';
                 toast.success(`"${task.title}" marked complete by ${profileName}`);
 
                 // Wait for fade-out animation to complete

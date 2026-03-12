@@ -5,7 +5,7 @@ CRITICAL ARCHITECTURE NOTE:
 Unlike other services, household tasks are SHARED across all profiles (no profile_id filtering).
 profile_id is ONLY used for completion attribution (tracking WHO completed a task).
 """
-from typing import List, Optional, Dict
+from typing import Any, List, Optional, Dict
 from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -310,18 +310,152 @@ def is_task_due(task: HouseholdTask, last_completion: Optional[HouseholdCompleti
         # Always show todo items until completed (due date only affects overdue status)
         return True
 
-    # Never completed = due now
-    if not last_completion:
-        return True
-
-    # Calculate next due date after last completion
-    completion_date = last_completion.completed_at.date()
-    next_due = calculate_next_due_date(task, from_date=completion_date + timedelta(days=1))
+    next_due = get_task_status_next_due_date(task, last_completion)
 
     if next_due is None:
         return False
 
     return today >= next_due
+
+
+def get_task_status_next_due_date(
+    task: HouseholdTask,
+    last_completion: Optional[HouseholdCompletion] = None
+) -> Optional[date]:
+    """Return the due date that should be used for status and sorting."""
+    if task.frequency == 'todo':
+        return task.due_date
+
+    if last_completion:
+        if task.schedule_mode == 'rolling':
+            if task.next_due_date is not None:
+                return task.next_due_date
+
+            if task.frequency in FREQUENCY_THRESHOLDS:
+                completion_date = last_completion.completed_at.date()
+                return completion_date + timedelta(days=FREQUENCY_THRESHOLDS[task.frequency])
+
+            return None
+
+        completion_date = last_completion.completed_at.date()
+        return calculate_next_due_date(task, from_date=completion_date + timedelta(days=1))
+
+    if task.schedule_mode == 'rolling':
+        return task.next_due_date
+
+    if task.next_due_date is not None:
+        return task.next_due_date
+
+    created_date = task.created_at.date() if task.created_at else get_today()
+    return calculate_next_due_date(task, from_date=created_date - timedelta(days=1))
+
+
+def get_household_status_presentation(
+    task: HouseholdTask,
+    next_due_date: Optional[date],
+    is_due: bool,
+    is_overdue: bool,
+    days_overdue: int,
+    is_coming_soon: bool,
+    days_until_due: Optional[int]
+) -> Dict[str, Any]:
+    """Build a single status payload for household UI display and sorting."""
+    if task.frequency == 'todo':
+        if task.due_date is None:
+            return {
+                'status_text': 'No due date',
+                'status_class': 'status-later',
+                'priority_rank': 0,
+                'sort_days_until_due': None,
+            }
+
+        if is_overdue:
+            return {
+                'status_text': f'{days_overdue} day{"s" if days_overdue != 1 else ""} overdue',
+                'status_class': 'status-overdue',
+                'priority_rank': 0,
+                'sort_days_until_due': -days_overdue,
+            }
+
+        if days_until_due == 0 or is_due:
+            return {
+                'status_text': 'Due today',
+                'status_class': 'status-due',
+                'priority_rank': 0,
+                'sort_days_until_due': 0,
+            }
+
+        if days_until_due == 1:
+            return {
+                'status_text': 'Due tomorrow',
+                'status_class': 'status-soon',
+                'priority_rank': 0,
+                'sort_days_until_due': 1,
+            }
+
+        if days_until_due is not None and days_until_due > 0:
+            return {
+                'status_text': f'Due in {days_until_due} day{"s" if days_until_due != 1 else ""}',
+                'status_class': 'status-soon' if days_until_due <= 7 else 'status-later',
+                'priority_rank': 0,
+                'sort_days_until_due': days_until_due,
+            }
+
+    if is_overdue:
+        return {
+            'status_text': f'{days_overdue} day{"s" if days_overdue != 1 else ""} overdue',
+            'status_class': 'status-overdue',
+            'priority_rank': 1,
+            'sort_days_until_due': -days_overdue,
+        }
+
+    if is_due or days_until_due == 0:
+        return {
+            'status_text': 'Due today',
+            'status_class': 'status-due',
+            'priority_rank': 2,
+            'sort_days_until_due': 0,
+        }
+
+    if days_until_due == 1:
+        return {
+            'status_text': 'Due tomorrow',
+            'status_class': 'status-soon',
+            'priority_rank': 3,
+            'sort_days_until_due': 1,
+        }
+
+    if days_until_due is not None and days_until_due > 0:
+        return {
+            'status_text': f'Due in {days_until_due} day{"s" if days_until_due != 1 else ""}',
+            'status_class': 'status-soon' if is_coming_soon else 'status-later',
+            'priority_rank': 4 if is_coming_soon else 5,
+            'sort_days_until_due': days_until_due,
+        }
+
+    if next_due_date:
+        return {
+            'status_text': f'Due {next_due_date.strftime("%b")} {next_due_date.day}',
+            'status_class': 'status-later',
+            'priority_rank': 5,
+            'sort_days_until_due': days_until_due,
+        }
+
+    return {
+        'status_text': '',
+        'status_class': 'status-later',
+        'priority_rank': 6,
+        'sort_days_until_due': None,
+    }
+
+
+def _normalize_task_payload(payload: Any, *, exclude_unset: bool) -> Dict[str, Any]:
+    """Normalize dict-like or Pydantic task payloads into plain dicts."""
+    if payload is None:
+        return {}
+    if hasattr(payload, 'model_dump'):
+        return payload.model_dump(exclude_unset=exclude_unset)
+    return dict(payload)
 
 
 def get_all_household_tasks(db: Session, include_inactive: bool = False) -> List[HouseholdTask]:
@@ -364,34 +498,37 @@ def get_household_task_by_id(db: Session, task_id: int) -> Optional[HouseholdTas
     return db.query(HouseholdTask).filter(HouseholdTask.id == task_id).first()
 
 
-def create_household_task(db: Session, title: str, description: Optional[str], frequency: str,
-                         due_date: Optional[date] = None, icon: Optional[str] = None,
-                         sort_order: int = 0,
-                         schedule_mode: Optional[str] = 'calendar',
-                         recurrence_day_of_week: Optional[int] = None,
-                         recurrence_day_of_month: Optional[int] = None,
-                         recurrence_month: Optional[int] = None,
-                         recurrence_day: Optional[int] = None) -> HouseholdTask:
+def create_household_task(
+    db: Session,
+    task_data: Any = None,
+    **kwargs
+) -> HouseholdTask:
     """
     Create a new household task (SHARED - no profile association).
 
     Args:
         db: Database session
-        title: Task title
-        description: Optional task description
-        frequency: One of 'weekly', 'biweekly', 'monthly', 'quarterly', 'annual', 'todo'
-        due_date: Optional due date (primarily for to-do items)
-        icon: Optional Material Design Icon name (auto-assigned if None)
-        sort_order: Sort order for display
-        schedule_mode: 'calendar' (fixed dates) or 'rolling' (interval from completion)
-        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly/biweekly tasks
-        recurrence_day_of_month: 1-31 for monthly tasks
-        recurrence_month: 1-12 for annual/quarterly tasks
-        recurrence_day: 1-31 for annual tasks
+        task_data: HouseholdTaskCreate or dict payload
+        **kwargs: Direct field overrides for service-level callers
 
     Returns:
         Created HouseholdTask
     """
+    payload = _normalize_task_payload(task_data, exclude_unset=False)
+    payload.update(kwargs)
+
+    title = payload['title']
+    description = payload.get('description')
+    frequency = payload['frequency']
+    due_date = payload.get('due_date')
+    icon = payload.get('icon')
+    sort_order = payload.get('sort_order', 0)
+    schedule_mode = payload.get('schedule_mode', 'calendar')
+    recurrence_day_of_week = payload.get('recurrence_day_of_week')
+    recurrence_day_of_month = payload.get('recurrence_day_of_month')
+    recurrence_month = payload.get('recurrence_month')
+    recurrence_day = payload.get('recurrence_day')
+
     # Auto-assign icon if not provided
     if icon is None:
         icon = get_default_icon(title)
@@ -429,33 +566,20 @@ def create_household_task(db: Session, title: str, description: Optional[str], f
     return task
 
 
-def update_household_task(db: Session, task_id: int, title: Optional[str] = None,
-                         description: Optional[str] = None, frequency: Optional[str] = None,
-                         due_date: Optional[date] = None, icon: Optional[str] = None,
-                         sort_order: Optional[int] = None, is_active: Optional[bool] = None,
-                         schedule_mode: Optional[str] = None,
-                         recurrence_day_of_week: Optional[int] = None,
-                         recurrence_day_of_month: Optional[int] = None,
-                         recurrence_month: Optional[int] = None,
-                         recurrence_day: Optional[int] = None) -> Optional[HouseholdTask]:
+def update_household_task(
+    db: Session,
+    task_id: int,
+    task_update: Any = None,
+    **kwargs
+) -> Optional[HouseholdTask]:
     """
     Update an existing household task.
 
     Args:
         db: Database session
         task_id: Task ID to update
-        title: New title (if provided)
-        description: New description (if provided)
-        frequency: New frequency (if provided)
-        due_date: New due date (if provided)
-        icon: New icon (if provided)
-        sort_order: New sort order (if provided)
-        is_active: New active status (if provided)
-        schedule_mode: 'calendar' or 'rolling' (if provided)
-        recurrence_day_of_week: 0-6 (Mon-Sun) for weekly/biweekly tasks
-        recurrence_day_of_month: 1-31 for monthly tasks
-        recurrence_month: 1-12 for annual/quarterly tasks
-        recurrence_day: 1-31 for annual tasks
+        task_update: HouseholdTaskUpdate or dict payload
+        **kwargs: Direct field overrides for service-level callers
 
     Returns:
         Updated HouseholdTask or None if not found
@@ -464,30 +588,11 @@ def update_household_task(db: Session, task_id: int, title: Optional[str] = None
     if not task:
         return None
 
-    if title is not None:
-        task.title = title
-    if description is not None:
-        task.description = description
-    if frequency is not None:
-        task.frequency = frequency
-    if due_date is not None:
-        task.due_date = due_date
-    if icon is not None:
-        task.icon = icon
-    if sort_order is not None:
-        task.sort_order = sort_order
-    if is_active is not None:
-        task.is_active = is_active
-    if schedule_mode is not None:
-        task.schedule_mode = schedule_mode
-    if recurrence_day_of_week is not None:
-        task.recurrence_day_of_week = recurrence_day_of_week
-    if recurrence_day_of_month is not None:
-        task.recurrence_day_of_month = recurrence_day_of_month
-    if recurrence_month is not None:
-        task.recurrence_month = recurrence_month
-    if recurrence_day is not None:
-        task.recurrence_day = recurrence_day
+    update_data = _normalize_task_payload(task_update, exclude_unset=True)
+    update_data.update(kwargs)
+
+    for key, value in update_data.items():
+        setattr(task, key, value)
 
     task.updated_at = get_now()
     db.commit()
@@ -737,7 +842,11 @@ def get_task_with_status(db: Session, task_id: int, upcoming_days_threshold: int
         'days_overdue': 0,
         'is_completed': False,  # For to-do items
         'is_coming_soon': False,  # Due within upcoming_days_threshold
-        'days_until_due': None  # Days until due date (negative if overdue)
+        'days_until_due': None,  # Days until due date (negative if overdue)
+        'status_text': '',
+        'status_class': 'status-later',
+        'priority_rank': 0,
+        'sort_days_until_due': None,
     }
 
     if last_completion:
@@ -764,9 +873,7 @@ def get_task_with_status(db: Session, task_id: int, upcoming_days_threshold: int
         # For to-do items, mark as completed (will be filtered from list)
         is_todo_completed = task.frequency == 'todo'
 
-        # Calculate next due date from completion date (for calendar-based recurrence)
-        completion_date = last_completion.completed_at.date()
-        next_due_date = calculate_next_due_date(task, from_date=completion_date + timedelta(days=1))
+        next_due_date = get_task_status_next_due_date(task, last_completion)
         is_due = is_task_due(task, last_completion)
 
         # Calculate is_overdue using calendar-based logic
@@ -808,8 +915,7 @@ def get_task_with_status(db: Session, task_id: int, upcoming_days_threshold: int
         })
     else:
         # No completion yet
-        # Calculate next due date from today
-        next_due_date = calculate_next_due_date(task)
+        next_due_date = get_task_status_next_due_date(task, None)
         is_due = is_task_due(task, None)
 
         today = get_today()
@@ -841,6 +947,18 @@ def get_task_with_status(db: Session, task_id: int, upcoming_days_threshold: int
         result['days_overdue'] = days_overdue
         result['is_coming_soon'] = is_coming_soon
         result['days_until_due'] = days_until_due
+
+    result.update(
+        get_household_status_presentation(
+            task,
+            result['next_due_date'],
+            result['is_due'],
+            result['is_overdue'],
+            result['days_overdue'],
+            result['is_coming_soon'],
+            result['days_until_due'],
+        )
+    )
 
     return result
 

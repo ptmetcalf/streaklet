@@ -409,3 +409,52 @@ def test_get_specific_day_includes_task_streaks(client: TestClient, test_db: Ses
     assert "task_streak_milestone" in task1
     # Streak calculation should work for any date
     assert task1["task_streak"] == 3
+
+
+def test_get_specific_past_day_without_seeded_checks_returns_applicable_tasks(
+    client: TestClient,
+    sample_tasks,
+):
+    """Past-day repair flow should still show tasks even when checks were never pre-created."""
+    yesterday = get_today() - timedelta(days=1)
+
+    response = client.get(f"/api/days/{yesterday}", cookies={"profile_id": "1"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["date"] == yesterday.isoformat()
+    assert [task["id"] for task in data["tasks"]] == [1, 2, 3]
+    assert all(task["checked"] is False for task in data["tasks"])
+
+
+def test_get_specific_past_day_keeps_historical_checked_inactive_tasks(
+    client: TestClient,
+    test_db: Session,
+    sample_profiles,
+):
+    """Historical checks should remain visible even if the task is now inactive."""
+    from app.models.task import Task
+
+    yesterday = get_today() - timedelta(days=1)
+    task = Task(
+        id=10,
+        user_id=1,
+        title="Inactive historical task",
+        sort_order=10,
+        is_required=True,
+        is_active=False,
+        active_since=yesterday - timedelta(days=10),
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    check_service.update_task_check(test_db, yesterday, task_id=10, checked=True, profile_id=1)
+
+    response = client.get(f"/api/days/{yesterday}", cookies={"profile_id": "1"})
+
+    assert response.status_code == 200
+    data = response.json()
+
+    historical_task = next(task for task in data["tasks"] if task["id"] == 10)
+    assert historical_task["checked"] is True

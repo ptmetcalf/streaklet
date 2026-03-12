@@ -332,7 +332,7 @@
                             <div class="task-card-title" x-text="task.title"></div>
                         </div>
                         <div class="task-card-metadata">
-                            <span class="task-badge" x-text="taskTypeLabel(task.task_type)"></span>
+                            <span class="task-badge" x-text="getTaskTypeLabel(task.task_type)"></span>
                             <span class="task-badge badge-required">Archived</span>
                         </div>
                         <div class="task-card-actions">
@@ -1142,12 +1142,11 @@ function checklist() {
         // Tab switching
         switchTab(tab) {
             this.activeTab = tab;
-            localStorage.setItem('streaklet_last_tab', tab);
         },
 
         switchCustomList(listId) {
             this.activeCustomListId = listId;
-            localStorage.setItem('streaklet_last_custom_list_id', String(listId));
+            window.streakletStorage.set(window.streakletStorageKeys.activeCustomListId, listId);
         },
 
         ensureActiveCustomList() {
@@ -1161,7 +1160,10 @@ function checklist() {
                 return;
             }
 
-            const savedListId = Number.parseInt(localStorage.getItem('streaklet_last_custom_list_id') || '', 10);
+            const savedListId = window.streakletStorage.getNumber(
+                window.streakletStorageKeys.activeCustomListId,
+                [window.streakletStorageKeys.legacyTodayCustomListId]
+            );
             const saved = this.enabledCustomLists.find((list) => list.id === savedListId);
             this.activeCustomListId = saved ? saved.id : this.enabledCustomLists[0].id;
         },
@@ -1169,7 +1171,10 @@ function checklist() {
         // Initialize with SSR data (no API calls needed)
         async initWithSSRData() {
             // Data is already loaded from server
-            // Just restore UI state and update celebration
+            // Always open Today on the daily tab and restore supporting UI state.
+            this.activeTab = 'daily';
+            this.showBackfillPanel = false;
+
             await Promise.all([
                 this.loadFitbitStatus(),
                 this.loadProfilePreferences(),
@@ -1179,26 +1184,6 @@ function checklist() {
             ]);
             this.ensureActiveCustomList();
             this.updateCelebration();
-
-            // Restore last active tab
-            const lastTab = localStorage.getItem('streaklet_last_tab');
-            if (lastTab === 'history') {
-                this.activeTab = 'daily';
-                localStorage.setItem('streaklet_last_tab', 'daily');
-                this.showBackfillPanel = true;
-                await this.ensureBackfillCalendarLoaded();
-                return;
-            }
-
-            if (lastTab === 'custom_lists') {
-                this.activeTab = 'daily';
-                localStorage.setItem('streaklet_last_tab', 'daily');
-                return;
-            }
-
-            if (lastTab && ['daily', 'punch_list'].includes(lastTab)) {
-                this.activeTab = lastTab;
-            }
         },
 
         async loadDailyTasks() {
@@ -1224,13 +1209,6 @@ function checklist() {
             }
         },
 
-        getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-            return null;
-        },
-
         async loadProfilePreferences() {
             try {
                 const preferences = await api.profilePreferences.get();
@@ -1243,21 +1221,11 @@ function checklist() {
         },
 
         async migrateLegacyPreferencesIfNeeded() {
-            const legacyConfetti = localStorage.getItem('streaklet_confetti_enabled');
-
-            if (legacyConfetti === null) {
-                return;
-            }
-
-            const payload = {};
-            if (legacyConfetti !== null) {
-                payload.confetti_enabled = legacyConfetti === 'true';
-            }
-
             try {
-                const preferences = await api.profilePreferences.update(payload);
-                this.confettiEnabled = preferences.confetti_enabled;
-                localStorage.removeItem('streaklet_confetti_enabled');
+                await window.migrateLegacyConfettiPreference(
+                    (payload) => api.profilePreferences.update(payload),
+                    (value) => { this.confettiEnabled = value; }
+                );
             } catch (error) {
                 console.error('Error migrating legacy preferences:', error);
             }
@@ -1432,13 +1400,6 @@ function checklist() {
                 console.error('Error updating backfill task:', error);
                 toast.error('Failed to update task for selected day');
             }
-        },
-
-        taskTypeLabel(taskType) {
-            if (taskType === 'scheduled') return 'Scheduled';
-            if (taskType === 'punch_list') return 'To-Do';
-            if (taskType === 'custom_list') return 'List Item';
-            return 'Daily';
         },
 
         taskEntityNoun(taskType) {

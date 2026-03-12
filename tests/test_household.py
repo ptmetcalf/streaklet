@@ -9,6 +9,7 @@ Key test scenarios:
 5. API endpoints work without X-Profile-Id header (except completion)
 """
 import pytest
+from datetime import date
 from freezegun import freeze_time
 
 from app.models.household_task import HouseholdTask
@@ -238,6 +239,29 @@ def test_get_task_with_status_never_completed(test_db, sample_household_tasks):
     assert status["is_overdue"] is False  # Never completed = not overdue
 
 
+def test_get_task_with_status_never_completed_future_schedule_not_due(test_db):
+    """Never-completed recurring tasks should respect their configured first schedule."""
+    from datetime import datetime
+
+    task = HouseholdTask(
+        title="Future monthly task",
+        frequency="monthly",
+        schedule_mode="calendar",
+        recurrence_day_of_month=25,
+        created_at=datetime(2025, 12, 14, 9, 0, 0),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    status = household_service.get_task_with_status(test_db, task.id)
+
+    assert status["is_due"] is False
+    assert status["is_overdue"] is False
+    assert status["next_due_date"].isoformat() == "2025-12-25"
+    assert status["days_until_due"] == 11
+
+
 def test_get_task_with_status_recently_completed(test_db, sample_household_tasks, sample_profiles):
     """Test task status for a recently completed task."""
     task = sample_household_tasks[0]  # Weekly task
@@ -309,6 +333,25 @@ def test_api_list_tasks_with_frequency_filter(client, sample_household_tasks):
     assert tasks[0]["frequency"] == "weekly"
 
 
+def test_api_list_tasks_with_biweekly_frequency_filter(client, test_db):
+    """Biweekly tasks should be supported by the list filter."""
+    task = HouseholdTask(
+        title="Biweekly task",
+        frequency="biweekly",
+        sort_order=1,
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    response = client.get("/api/household/tasks?frequency=biweekly")
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert len(tasks) == 1
+    assert tasks[0]["frequency"] == "biweekly"
+
+
 def test_api_get_single_task(client, sample_household_tasks):
     """Test getting a single task with status."""
     task = sample_household_tasks[0]
@@ -351,6 +394,31 @@ def test_api_update_task(client, sample_household_tasks):
     updated = response.json()
     assert updated["title"] == "Updated Title"
     assert updated["frequency"] == "monthly"
+
+
+def test_api_update_task_can_clear_nullable_fields(client, test_db):
+    """Explicit null values should clear nullable household task fields."""
+    task = HouseholdTask(
+        title="Clearable task",
+        description="Needs clearing",
+        frequency="todo",
+        due_date=date(2025, 12, 20),
+        icon="broom",
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    response = client.put(
+        f"/api/household/tasks/{task.id}",
+        json={"description": None, "due_date": None, "icon": None}
+    )
+
+    assert response.status_code == 200
+    updated = response.json()
+    assert updated["description"] is None
+    assert updated["due_date"] is None
+    assert updated["icon"] is None
 
 
 def test_api_delete_task(client, sample_household_tasks):
@@ -637,6 +705,37 @@ def test_rolling_early_completion_still_uses_actual_date(test_db, sample_profile
     # Should be due Jan 25 + 30 days = Feb 24, NOT Feb 1 + 30 days
     expected_date = date(2026, 2, 24)
     assert task.next_due_date == expected_date
+
+
+@freeze_time("2026-03-11 12:00:00", tz_offset=-6)
+def test_get_task_with_status_uses_stored_due_date_for_rolling_monthly_tasks(test_db, sample_profiles):
+    """Rolling status should use the persisted next_due_date, not calendar recurrence fields."""
+    from datetime import date
+    from freezegun import freeze_time as freeze
+
+    task = HouseholdTask(
+        title="Oil wood kitchen stuff",
+        frequency="monthly",
+        schedule_mode="rolling",
+        recurrence_day_of_month=25,
+        next_due_date=date(2026, 2, 25),
+        is_active=True
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    with freeze("2026-02-18 12:00:00", tz_offset=-6):
+        household_service.mark_task_complete(test_db, task.id, profile_id=1)
+
+    test_db.refresh(task)
+    assert task.next_due_date == date(2026, 3, 20)
+
+    status = household_service.get_task_with_status(test_db, task.id)
+
+    assert status["next_due_date"] == date(2026, 3, 20)
+    assert status["is_overdue"] is False
+    assert status["days_overdue"] == 0
+    assert status["days_until_due"] == 9
 
 
 @freeze_time("2026-02-01 12:00:00", tz_offset=-6)
